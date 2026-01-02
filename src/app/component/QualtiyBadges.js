@@ -21,7 +21,7 @@ export default function QualityBadges() {
   return (
     <section className="bg-neutral-50 border-t border-neutral-200">
       <div className="mx-auto max-w-7xl px-6 py-24">
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-2xl font-semibold tracking-tight text-black">
           Quality & Compliance
         </h2>
 
@@ -35,7 +35,7 @@ export default function QualityBadges() {
               key={badge.title}
               className="rounded-2xl bg-white border border-neutral-200 p-6"
             >
-              <h3 className="text-sm font-semibold uppercase tracking-wide">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-black">
                 {badge.title}
               </h3>
               <p className="mt-3 text-sm text-neutral-600">

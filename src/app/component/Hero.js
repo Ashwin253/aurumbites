@@ -13,7 +13,7 @@ export default function Hero() {
           Trusted Dairy Sourcing for Businesses & Consumers
         </h1>
 
-        <p className="mt-6 max-w-2xl text-lg text-neutral-600">
+        <p className="mt-6 max-w-2xl text-lg text-neutral-600 dark:text-neutral-200">
           We source high-quality dairy products from local and international
           partners, delivering consistency, reliability, and quality across
           B2B and select D2C channels.
@@ -28,7 +28,7 @@ export default function Hero() {
           </a>
           <a
             href="/about"
-            className="rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 hover:border-neutral-400 transition"
+            className="rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 hover:border-neutral-400 dark:text-neutral-200 transition"
           >
             Learn More
           </a>

@@ -21,7 +21,7 @@ export default function ProductCategories() {
   return (
     <section className="bg-white border-t border-neutral-200">
       <div className="mx-auto max-w-7xl px-6 py-24">
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-2xl text-black font-semibold tracking-tight">
           Product Categories
         </h2>
 
@@ -36,7 +36,7 @@ export default function ProductCategories() {
               key={item.title}
               className="rounded-2xl border border-neutral-200 p-6"
             >
-              <h3 className="text-lg font-medium">{item.title}</h3>
+              <h3 className="text-lg font-medium text-black">{item.title}</h3>
               <p className="mt-3 text-sm text-neutral-600">
                 {item.desc}
               </p>

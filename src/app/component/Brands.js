@@ -23,7 +23,7 @@ export default function Brands() {
   return (
     <section className="bg-white border-t border-neutral-200">
       <div className="mx-auto max-w-7xl px-6 py-20">
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-2xl font-semibold tracking-tight text-black">
           Brands We Work With
         </h2>
 

@@ -3,7 +3,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-neutral-200">
       <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-        <div className="text-xl font-semibold tracking-tight">
+        <div className="text-xl font-semibold tracking-tight  text-black ">
           AURUM BITES
         </div>
 

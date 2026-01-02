@@ -2,21 +2,29 @@ import Image from "next/image";
 
 const brands = [
   {
-    name: "Amul",
-    src: "/brands/amul.jpg",
+    name: "President",
+    src: "/brands/president.jpg",
   },
   {
-    name: "Britannia",
-    src: "/brands/britannia.jpg",
+    name: "Cremeitalia",
+    src: "/brands/cremeitalia.jpg",
   },
   {
-    name: "Mother Dairy",
-    src: "/brands/motherdairy.jpg",
+    name: "Modern Dairy",
+    src: "/brands/moderndairy.jpg",
   },
   {
-    name: "Paras Dairy",
-    src: "/brands/parasdairy.jpg",
+    name: "Pasta Zara",
+    src: "/brands/pastazara.jpg",
   },
+  {
+    name:"dairycraft",
+    src:"/brands/dairycraft.jpg",
+  },
+  {
+    name:"dlecta",
+    src:"/brands/dlecta.jpg",
+  }
 ];
 
 export default function Brands() {

@@ -1,20 +1,27 @@
 const categories = [
   {
-    title: "Milk & Milk Derivatives",
-    desc: "Fresh, UHT, skimmed and full-cream milk for bulk supply.",
+    title: "Butter",
+    desc: "Unsalted, salted  butter.",
   },
   {
-    title: "Butter & Cream",
-    desc: "Cooking, baking and industrial-grade dairy solutions.",
-  },
-  {
-    title: "Cheese & Specialty Dairy",
+    title: "Mozzarella",
     desc: "Mozzarella, cheddar, processed and imported cheeses.",
   },
   {
-    title: "Paneer, Curd & Value-Added",
+    title: "Parmeshan ",
+    desc: "Mozzarella, cheddar, processed and imported cheeses.",
+  },
+  {
+    title: "Burrata",
     desc: "Paneer, curd, yogurt and customized dairy products.",
   },
+  {
+    title: "Pasta",
+    desc: "Baked, frozen and fresh pasta.",
+  },{
+    title:"Chaddar",
+    desc:"Freshly made chaddar and customized dairy products.",
+  }
 ];
 
 export default function ProductCategories() {

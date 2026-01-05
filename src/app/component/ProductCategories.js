@@ -39,7 +39,7 @@ export default function ProductCategories() {
               >
                 {/* Background image with fallback */}
                 <Image
-                  src={`/product/${imageName}.jpg`}
+                  src={`/products/${imageName}.jpg`}
                   alt={item.title}
                   width={140}
                 height={80}

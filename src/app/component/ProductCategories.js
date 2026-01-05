@@ -1,4 +1,7 @@
 "use client";
+
+import Image from "next/image";
+
 const categories = [
   { title: "Butter" },
   { title: "Mozzarella" },
@@ -35,15 +38,14 @@ export default function ProductCategories() {
                 `}
               >
                 {/* Background image with fallback */}
-                <img
+                <Image
                   src={`/product/${imageName}.jpg`}
                   alt={item.title}
+                  width={140}
+                height={80}
+              
                   className="absolute inset-0 h-full w-full object-cover scale-110"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "/product/dairy.jpg";
-                  }}
-                />
+                 />
 
                 {/* Soft overlay */}
                 <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />

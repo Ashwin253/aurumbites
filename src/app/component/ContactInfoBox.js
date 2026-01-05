@@ -17,7 +17,7 @@ export default function ContactInfoBox() {
             href="tel:+919711036369"
             className="font-medium text-neutral-900 hover:underline"
           >
-            +91 9711036369
+            +91-9711036369
           </a>
         </div>
 
@@ -27,7 +27,7 @@ export default function ContactInfoBox() {
             href="tel:+919654979085"
             className="font-medium text-neutral-900 hover:underline"
           >
-            +919654979085
+            +91-9654979085
           </a>
         </div>
 
@@ -37,7 +37,16 @@ export default function ContactInfoBox() {
             href="mailto:info@aurumbites.co.in"
             className="font-medium text-neutral-900 hover:underline"
           >
-            info@dairyco.com
+info@aurumbites.co.in  
+          </a>
+        </div>
+        <div>
+          📍{" "}
+          <a
+            href="https://maps.app.goo.gl/DXYfqxWQf7QfGM349"
+            className="font-medium text-neutral-900 hover:underline"
+          >
+            B, 189, Street No. 17, Chhatarpur Enclave Phase 2,<br/> Chattarpur Enclave, Chhatarpur, New Delhi, Delhi 110074
           </a>
         </div>
       </div>

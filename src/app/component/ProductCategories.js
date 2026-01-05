@@ -1,34 +1,18 @@
+"use client";
 const categories = [
-  {
-    title: "Butter",
-    desc: "Unsalted, salted  butter.",
-  },
-  {
-    title: "Mozzarella",
-    desc: "Mozzarella, cheddar, processed and imported cheeses.",
-  },
-  {
-    title: "Parmeshan ",
-    desc: "Mozzarella, cheddar, processed and imported cheeses.",
-  },
-  {
-    title: "Burrata",
-    desc: "Paneer, curd, yogurt and customized dairy products.",
-  },
-  {
-    title: "Pasta",
-    desc: "Baked, frozen and fresh pasta.",
-  },{
-    title:"Chaddar",
-    desc:"Freshly made chaddar and customized dairy products.",
-  }
+  { title: "Butter" },
+  { title: "Mozzarella" },
+  { title: "Parmesan" },
+  { title: "Burrata" },
+  { title: "Pasta" },
+  { title: "Cheddar" },
 ];
 
 export default function ProductCategories() {
   return (
     <section className="bg-white border-t border-neutral-200">
       <div className="mx-auto max-w-7xl px-6 py-24">
-        <h2 className="text-2xl text-black font-semibold tracking-tight">
+        <h2 className="text-2xl font-semibold text-black tracking-tight">
           Product Categories
         </h2>
 
@@ -37,18 +21,40 @@ export default function ProductCategories() {
           consumer supply.
         </p>
 
-        <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map((item) => (
-            <div
-              key={item.title}
-              className="rounded-2xl border border-neutral-200 p-6"
-            >
-              <h3 className="text-lg font-medium text-black">{item.title}</h3>
-              <p className="mt-3 text-sm text-neutral-600">
-                {item.desc}
-              </p>
-            </div>
-          ))}
+        <div className="mt-14 grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((item, index) => {
+            const isZigZagRow = Math.floor(index / 3) % 2 !== 0;
+            const imageName = item.title.toLowerCase();
+
+            return (
+              <div
+                key={item.title}
+                className={`relative h-44 overflow-hidden rounded-2xl flex items-center justify-center
+                  transition-transform duration-300 hover:scale-[1.02]
+                  ${isZigZagRow ? "lg:translate-y-6" : ""}
+                `}
+              >
+                {/* Background image with fallback */}
+                <img
+                  src={`/categories/${imageName}.jpg`}
+                  alt={item.title}
+                  className="absolute inset-0 h-full w-full object-cover scale-110"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "/categories/dairy.jpg";
+                  }}
+                />
+
+                {/* Soft overlay */}
+                <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
+
+                {/* Title */}
+                <h3 className="relative z-10 text-3xl font-extrabold tracking-wide text-neutral-900">
+                  {item.title}
+                </h3>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

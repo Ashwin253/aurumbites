@@ -36,12 +36,12 @@ export default function ProductCategories() {
               >
                 {/* Background image with fallback */}
                 <img
-                  src={`/categories/${imageName}.jpg`}
+                  src={`/product/${imageName}.jpg`}
                   alt={item.title}
                   className="absolute inset-0 h-full w-full object-cover scale-110"
                   onError={(e) => {
                     e.currentTarget.src =
-                      "/categories/dairy.jpg";
+                      "/product/dairy.jpg";
                   }}
                 />
 

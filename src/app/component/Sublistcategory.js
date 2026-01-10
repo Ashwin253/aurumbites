@@ -70,12 +70,9 @@ const DATA = [
 ];
 
 export default function ResponsiveCatalog() {
-  const [active, setActive] = useState(0);
+ const [active, setActive] = useState(0);
   const [openMobile, setOpenMobile] = useState(null);
 
-  const toggleMobile = (i) => {
-    setOpenMobile(openMobile === i ? null : i);
-  };
   return (
     <section className="max-w-6xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -89,13 +86,18 @@ export default function ResponsiveCatalog() {
                 {/* CATEGORY CARD */}
                 <div
                   onMouseEnter={() => setActive(i)}
-                  onClick={() => toggleMobile(i)}
+                  onClick={() =>
+                    setOpenMobile(isOpen ? null : i)
+                  }
                   className={`h-24 rounded-2xl border p-4 flex items-center justify-between
                     cursor-pointer transition-all
+                    border-gray-200 bg-white text-gray-900
+                    hover:shadow-lg
+                    dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:shadow-none
                     ${
                       active === i
-                        ? "bg-[#0b1537] text-white shadow-xl"
-                        : "bg-white hover:shadow-lg"
+                        ? "md:bg-[#0b1537] md:text-white md:border-[#0b1537]"
+                        : ""
                     }`}
                 >
                   <div>
@@ -107,16 +109,16 @@ export default function ResponsiveCatalog() {
                     </h3>
                   </div>
 
-                  {/* PLUS / MINUS (MOBILE ONLY) */}
-                  <div className="md:hidden text-2xl font-light">
+                  {/* PLUS / MINUS (MOBILE) */}
+                  <span className="md:hidden text-2xl font-light">
                     {isOpen ? "−" : "+"}
-                  </div>
+                  </span>
                 </div>
 
                 {/* MOBILE DETAILS */}
                 <div
                   className={`md:hidden overflow-hidden transition-all duration-300
-                    ${isOpen ? "max-h-[600px] mt-4" : "max-h-0"}
+                    ${isOpen ? "max-h-[700px] mt-4" : "max-h-0"}
                   `}
                 >
                   <MobileDetails cat={cat} />
@@ -126,10 +128,12 @@ export default function ResponsiveCatalog() {
           })}
         </div>
 
-        {/* DESKTOP DETAILS CARD */}
+        {/* DESKTOP DETAILS */}
         <div className="hidden md:block md:col-span-2">
-          <div className="h-full min-h-[420px] rounded-3xl border bg-white p-8 shadow-lg">
-            <h2 className="text-2xl font-semibold text-[#0b1537] mb-6">
+          <div className="min-h-[440px] rounded-3xl border p-8 shadow-lg
+                          bg-white border-gray-200
+                          dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
+            <h2 className="text-2xl font-semibold mb-6 text-[#0b1537] dark:text-[#fde4bc]">
               {DATA[active].title}
             </h2>
 
@@ -138,8 +142,11 @@ export default function ResponsiveCatalog() {
               {DATA[active].items.map((item) => (
                 <span
                   key={item}
-                  className="px-4 py-2 text-sm rounded-full bg-gray-100
-                             hover:bg-[#fde4bc] transition"
+                  className="px-4 py-2 text-sm rounded-full
+                             bg-gray-100 text-gray-800
+                             hover:bg-[#fde4bc]
+                             dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700
+                             transition"
                 >
                   {item}
                 </span>
@@ -151,7 +158,7 @@ export default function ResponsiveCatalog() {
               {DATA[active].images.map((img, idx) => (
                 <div
                   key={idx}
-                  className="h-28 rounded-xl overflow-hidden bg-gray-100"
+                  className="h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800"
                 >
                   <img
                     src={img}
@@ -171,8 +178,10 @@ export default function ResponsiveCatalog() {
 /* MOBILE DETAILS */
 function MobileDetails({ cat }) {
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <h4 className="font-semibold text-[#0b1537] mb-4">
+    <div className="rounded-2xl border p-5 shadow-sm
+                    bg-white border-gray-200
+                    dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
+      <h4 className="font-semibold mb-4 text-[#0b1537] dark:text-[#fde4bc]">
         {cat.title}
       </h4>
 
@@ -180,7 +189,9 @@ function MobileDetails({ cat }) {
         {cat.items.map((item) => (
           <span
             key={item}
-            className="px-3 py-1.5 text-xs rounded-full bg-gray-100"
+            className="px-3 py-1.5 text-xs rounded-full
+                       bg-gray-100 text-gray-800
+                       dark:bg-slate-800 dark:text-slate-100"
           >
             {item}
           </span>
@@ -189,7 +200,10 @@ function MobileDetails({ cat }) {
 
       <div className="grid grid-cols-3 gap-3">
         {cat.images.map((img, i) => (
-          <div key={i} className="h-20 rounded-lg overflow-hidden">
+          <div
+            key={i}
+            className="h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800"
+          >
             <img
               src={img}
               className="h-full w-full object-cover"

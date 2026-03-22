@@ -389,6 +389,41 @@ function formatMoney(amount, currencyCode) {
   }).format(Number(amount));
 }
 
+function calculateCartSummary(lines = []) {
+  const totalQuantity = lines.reduce((sum, line) => sum + (line.quantity || 0), 0);
+  const pricedLines = lines.filter(
+    (line) => typeof line.amount === "number" && line.currencyCode
+  );
+
+  if (pricedLines.length !== lines.length || pricedLines.length === 0) {
+    return {
+      totalQuantity,
+      subtotal: null,
+      subtotalAmount: null,
+    };
+  }
+
+  const currencyCode = pricedLines[0].currencyCode;
+  const subtotalAmount = pricedLines.reduce(
+    (sum, line) => sum + line.amount * line.quantity,
+    0
+  );
+
+  if (pricedLines.some((line) => line.currencyCode !== currencyCode)) {
+    return {
+      totalQuantity,
+      subtotal: null,
+      subtotalAmount: null,
+    };
+  }
+
+  return {
+    totalQuantity,
+    subtotalAmount,
+    subtotal: formatMoney(subtotalAmount, currencyCode),
+  };
+}
+
 function normalizeCollection(collection) {
   return {
     id: collection.id,
@@ -480,6 +515,7 @@ function normalizeCart(cart) {
       checkoutUrl: null,
       totalQuantity: 0,
       subtotal: null,
+      subtotalAmount: null,
       lines: [],
     };
   }
@@ -493,6 +529,9 @@ function normalizeCart(cart) {
           cart.cost.subtotalAmount.amount,
           cart.cost.subtotalAmount.currencyCode
         )
+      : null,
+    subtotalAmount: cart.cost?.subtotalAmount?.amount
+      ? Number(cart.cost.subtotalAmount.amount)
       : null,
     lines:
       cart.lines?.edges?.map(({ node }) => ({
@@ -643,6 +682,7 @@ export function getFallbackCart(cookieValue) {
       checkoutUrl: null,
       totalQuantity: 0,
       subtotal: null,
+      subtotalAmount: null,
       lines: [],
     };
   }
@@ -654,6 +694,7 @@ export function getFallbackCart(cookieValue) {
       checkoutUrl: null,
       totalQuantity: parsed.totalQuantity || 0,
       subtotal: parsed.subtotal || null,
+      subtotalAmount: parsed.subtotalAmount ?? null,
       lines: parsed.lines || [],
     };
   } catch {
@@ -662,6 +703,7 @@ export function getFallbackCart(cookieValue) {
       checkoutUrl: null,
       totalQuantity: 0,
       subtotal: null,
+      subtotalAmount: null,
       lines: [],
     };
   }
@@ -671,6 +713,7 @@ export function serializeFallbackCart(cart) {
   return JSON.stringify({
     totalQuantity: cart.totalQuantity,
     subtotal: cart.subtotal,
+    subtotalAmount: cart.subtotalAmount ?? null,
     lines: cart.lines,
   });
 }
@@ -684,7 +727,20 @@ export function buildFallbackCartItem(product, quantity = 1) {
     title: product.title,
     variantTitle: "Preview item",
     price: product.price,
+    amount: typeof product.amount === "number" ? product.amount : null,
+    currencyCode: product.currencyCode || "",
     image: product.image,
+  };
+}
+
+export function recalculateFallbackCart(cart) {
+  const summary = calculateCartSummary(cart.lines);
+
+  return {
+    ...cart,
+    totalQuantity: summary.totalQuantity,
+    subtotal: summary.subtotal,
+    subtotalAmount: summary.subtotalAmount,
   };
 }
 

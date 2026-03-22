@@ -1,8 +1,16 @@
 import Link from "next/link";
 import Navbar from "../component/Navbar";
 import { getCartState } from "./actions";
-import { CartNotice, CartPanel, CollectionFilters, ProductCard, StatusPanel } from "./ShopUi";
+import {
+  CartNotice,
+  CartPanel,
+  CollectionFilters,
+  MobileCartWidget,
+  ProductCard,
+  StatusPanel,
+} from "./ShopUi";
 import { getShopPageData, getShopifySetup } from "../../lib/shopify";
+import { getStorefrontMode } from "../../lib/storefront";
 
 export const metadata = {
   title: "Shop | Aurum Bites",
@@ -15,6 +23,7 @@ export default async function ShopPage({ searchParams }) {
   const collectionHandle = params?.collection || "all";
   const cartStatus = params?.cart || "";
 
+  const storefrontMode = getStorefrontMode();
   const [{ isConfigured, products, shop, error, collections, activeCollection }, setup, cartState] =
     await Promise.all([
       getShopPageData({ first: 9, collectionHandle }),
@@ -78,6 +87,12 @@ export default async function ShopPage({ searchParams }) {
 
         <section className="mx-auto max-w-7xl px-6 py-16">
           <CartNotice status={cartStatus} />
+          <MobileCartWidget
+            cart={cartState.cart}
+            isConfigured={cartState.isConfigured}
+            redirectTo={redirectTo}
+            isEnquiryOnly={storefrontMode.isEnquiryOnly}
+          />
 
           <div className="mt-6 grid gap-10 lg:grid-cols-[1.45fr_0.75fr]">
             <div>
@@ -106,6 +121,7 @@ export default async function ShopPage({ searchParams }) {
                       key={product.id}
                       product={product}
                       redirectTo={redirectTo}
+                      isEnquiryOnly={storefrontMode.isEnquiryOnly}
                     />
                   ))
                 ) : (
@@ -120,6 +136,8 @@ export default async function ShopPage({ searchParams }) {
               cart={cartState.cart}
               isConfigured={cartState.isConfigured}
               redirectTo={redirectTo}
+              isEnquiryOnly={storefrontMode.isEnquiryOnly}
+              className="hidden lg:block"
             />
           </div>
         </section>

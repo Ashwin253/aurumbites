@@ -4,8 +4,45 @@
 import ContactForm from "../component/ContactForm";
 import ContactInfoBox from "../component/ContactInfoBox";
 import Navbar from "../component/Navbar";
+import { getCartState } from "../shop/actions";
 
-export default function ContactPage() {
+function getLargeOrderRequirement(cart) {
+  const isLargeOrder =
+    cart.totalQuantity > 5 ||
+    (cart.subtotalAmount !== null && cart.subtotalAmount > 2000);
+
+  if (!isLargeOrder || cart.lines.length === 0) {
+    return "";
+  }
+
+  const itemLines = cart.lines.map((line) => {
+    const variantSuffix =
+      line.variantTitle &&
+      line.variantTitle !== "Default Title" &&
+      line.variantTitle !== "Preview item"
+        ? ` (${line.variantTitle})`
+        : "";
+
+    return `- ${line.title}${variantSuffix} x ${line.quantity}${line.price ? ` - ${line.price}` : ""}`;
+  });
+
+  return [
+    "Large order enquiry",
+    `Total items: ${cart.totalQuantity}`,
+    cart.subtotal ? `Cart value: ${cart.subtotal}` : null,
+    "Required products:",
+    ...itemLines,
+    "",
+    "Please share bulk pricing, delivery timeline, and availability.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export default async function ContactPage() {
+  const cartState = await getCartState();
+  const initialMessage = getLargeOrderRequirement(cartState.cart);
+
   return (
     <>
       <Navbar />
@@ -21,7 +58,7 @@ export default function ContactPage() {
         </p>
 
         <div className="mt-10 space-y-6">
-        <ContactForm/>
+        <ContactForm initialMessage={initialMessage} />
         </div>
       </main>
 

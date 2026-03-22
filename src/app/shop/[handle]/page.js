@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import Navbar from "../../component/Navbar";
 import { getCartState } from "../actions";
 import { addToCartAction } from "../actions";
-import { CartNotice, CartPanel } from "../ShopUi";
+import { CartNotice, CartPanel, MobileCartWidget } from "../ShopUi";
 import { getProductByHandle } from "../../../lib/shopify";
+import { getStorefrontMode } from "../../../lib/storefront";
 
 export async function generateMetadata({ params }) {
   const { handle } = await params;
@@ -24,6 +25,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductDetailPage({ params, searchParams }) {
+  const storefrontMode = getStorefrontMode();
   const { handle } = await params;
   const query = await searchParams;
   const cartStatus = query?.cart || "";
@@ -54,6 +56,12 @@ export default async function ProductDetailPage({ params, searchParams }) {
             </div>
 
             <CartNotice status={cartStatus} />
+            <MobileCartWidget
+              cart={cartState.cart}
+              isConfigured={cartState.isConfigured}
+              redirectTo={`/shop/${product.handle}`}
+              isEnquiryOnly={storefrontMode.isEnquiryOnly}
+            />
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_0.8fr]">
               <div className="overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm">
@@ -114,7 +122,9 @@ export default async function ProductDetailPage({ params, searchParams }) {
                     {product.featured || "Storefront product"}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-neutral-600">
-                    {error
+                    {storefrontMode.isEnquiryOnly
+                      ? "This product can be added to your enquiry list and shared through the contact form."
+                      : error
                       ? "The page is showing preview content because the store could not be reached right now."
                       : isConfigured
                       ? "This product is connected to the live store and can be added directly to the cart."
@@ -147,7 +157,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
                       type="submit"
                       className="rounded-full bg-neutral-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
                     >
-                      Add to cart
+                      {storefrontMode.isEnquiryOnly ? "Add to enquiry" : "Add to cart"}
                     </button>
                     <Link
                       href={
@@ -171,6 +181,8 @@ export default async function ProductDetailPage({ params, searchParams }) {
             cart={cartState.cart}
             isConfigured={cartState.isConfigured}
             redirectTo={`/shop/${product.handle}`}
+            isEnquiryOnly={storefrontMode.isEnquiryOnly}
+            className="hidden lg:block"
           />
         </section>
       </main>

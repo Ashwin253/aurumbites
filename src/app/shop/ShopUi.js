@@ -1,8 +1,23 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { addToCartAction, removeFromCartAction } from "./actions";
 
-export function StatusPanel({ configured, error, storeDomain }) {
+export function StatusPanel({ configured, error, storeDomain, isEnquiryOnly }) {
+  if (isEnquiryOnly) {
+    return (
+      <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+        <p className="font-semibold">Enquiry mode is active</p>
+        <p className="mt-2">
+          The storefront is currently collecting requirements through the
+          contact form instead of taking online orders.
+        </p>
+      </div>
+    );
+  }
+
   if (configured && !error) {
     return (
       <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-900">
@@ -108,7 +123,7 @@ export function CollectionFilters({ collections, activeHandle }) {
   );
 }
 
-export function ProductCard({ product, redirectTo }) {
+export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
   return (
     <article className="overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm">
       <Link href={`/shop/${product.handle}`} className="block">
@@ -181,7 +196,7 @@ export function ProductCard({ product, redirectTo }) {
               type="submit"
               className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
             >
-              Add to cart
+              {isEnquiryOnly ? "Add to enquiry" : "Add to cart"}
             </button>
           </form>
         </div>
@@ -190,9 +205,17 @@ export function ProductCard({ product, redirectTo }) {
   );
 }
 
-export function CartPanel({ cart, isConfigured, redirectTo }) {
+export function CartPanel({
+  cart,
+  isConfigured,
+  redirectTo,
+  className = "",
+  isEnquiryOnly = false,
+}) {
   return (
-    <aside className="rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm">
+    <aside
+      className={`rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm ${className}`.trim()}
+    >
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">
@@ -212,7 +235,9 @@ export function CartPanel({ cart, isConfigured, redirectTo }) {
       </div>
 
       <p className="mt-4 text-sm leading-6 text-neutral-600">
-        {isConfigured
+        {isEnquiryOnly
+          ? "These selected items will be shared through the enquiry form instead of online checkout."
+          : isConfigured
           ? "Cart lines are synced with your store, and checkout will continue there."
           : "Preview mode stores cart items locally until the store connection is complete."}
       </p>
@@ -220,7 +245,7 @@ export function CartPanel({ cart, isConfigured, redirectTo }) {
       <div className="mt-6 space-y-4">
         {cart.lines.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
-            Add a product to start the checkout flow.
+            Add a product to start your enquiry.
           </div>
         ) : (
           cart.lines.map((line) => (
@@ -253,7 +278,7 @@ export function CartPanel({ cart, isConfigured, redirectTo }) {
       </div>
 
       <div className="mt-6">
-        {isConfigured && cart.checkoutUrl ? (
+        {!isEnquiryOnly && isConfigured && cart.checkoutUrl ? (
           <a
             href={cart.checkoutUrl}
             target="_blank"
@@ -267,10 +292,76 @@ export function CartPanel({ cart, isConfigured, redirectTo }) {
             href="/contact"
             className="inline-flex w-full items-center justify-center rounded-full border  px-5 py-3 text-sm font-extrabold border-black text-black transition hover:border-neutral-400"
           >
-            For larger orders, please get in touch.
+            Share enquiry
           </Link>
         )}
       </div>
     </aside>
+  );
+}
+
+export function MobileCartWidget({ cart, isConfigured, redirectTo, isEnquiryOnly }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="lg:hidden">
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="fixed right-4 bottom-4 z-40 inline-flex items-center gap-3 rounded-full bg-neutral-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(23,23,23,0.24)] transition hover:bg-neutral-800"
+        aria-label="Open cart"
+      >
+        <span>Cart</span>
+        <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold">
+          {cart.totalQuantity}
+        </span>
+      </button>
+
+      {isOpen ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/40"
+            aria-label="Close cart"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-[2rem] bg-neutral-50 p-4 shadow-2xl">
+            <div className="mx-auto mb-4 h-1.5 w-16 rounded-full bg-neutral-300" />
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
+                  Quick cart
+                </p>
+                <p className="mt-1 text-sm text-neutral-600">
+                  Review items without leaving the page.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
+              >
+                Close
+              </button>
+            </div>
+            <CartPanel
+              cart={cart}
+              isConfigured={isConfigured}
+              redirectTo={redirectTo}
+              isEnquiryOnly={isEnquiryOnly}
+              className="border-none shadow-none"
+            />
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }

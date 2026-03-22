@@ -7,10 +7,13 @@ import {
   buildFallbackCartItem,
   getFallbackCart,
   getFallbackProduct,
+  getProductByHandle,
   getShopifySetup,
+  recalculateFallbackCart,
   removeLinesFromCart,
   serializeFallbackCart,
 } from "../../lib/shopify";
+import { getStorefrontMode } from "../../lib/storefront";
 
 const SHOPIFY_CART_COOKIE = "aurum_shopify_cart_id";
 const PREVIEW_CART_COOKIE = "aurum_preview_cart";
@@ -29,14 +32,19 @@ export async function addToCartAction(formData) {
   const quantity = Number(formData.get("quantity") || "1");
   const store = await cookies();
   const setup = getShopifySetup();
+  const storefrontMode = getStorefrontMode();
 
   if (!handle) {
     redirect(appendStatus(redirectTo, "missing-product"));
   }
 
-  if (!setup.isConfigured) {
-    const product = getFallbackProduct(handle);
+  if (!setup.isConfigured || storefrontMode.isEnquiryOnly) {
     const currentCart = getFallbackCart(store.get(PREVIEW_CART_COOKIE)?.value);
+    const { product: liveProduct } =
+      setup.isConfigured && storefrontMode.isEnquiryOnly
+        ? await getProductByHandle(handle)
+        : { product: null };
+    const product = liveProduct || getFallbackProduct(handle);
 
     if (!product) {
       redirect(appendStatus(redirectTo, "missing-product"));
@@ -52,12 +60,9 @@ export async function addToCartAction(formData) {
       currentCart.lines.push(buildFallbackCartItem(product, quantity));
     }
 
-    currentCart.totalQuantity = currentCart.lines.reduce(
-      (sum, line) => sum + line.quantity,
-      0
-    );
+    const nextCart = recalculateFallbackCart(currentCart);
 
-    store.set(PREVIEW_CART_COOKIE, serializeFallbackCart(currentCart), {
+    store.set(PREVIEW_CART_COOKIE, serializeFallbackCart(nextCart), {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
@@ -97,21 +102,19 @@ export async function removeFromCartAction(formData) {
   const redirectTo = formData.get("redirectTo") || "/shop";
   const store = await cookies();
   const setup = getShopifySetup();
+  const storefrontMode = getStorefrontMode();
 
-  if (!setup.isConfigured) {
+  if (!setup.isConfigured || storefrontMode.isEnquiryOnly) {
     const currentCart = getFallbackCart(store.get(PREVIEW_CART_COOKIE)?.value);
     currentCart.lines = currentCart.lines.filter(
       (line) => line.productHandle !== handle
     );
-    currentCart.totalQuantity = currentCart.lines.reduce(
-      (sum, line) => sum + line.quantity,
-      0
-    );
+    const nextCart = recalculateFallbackCart(currentCart);
 
-    if (currentCart.lines.length === 0) {
+    if (nextCart.lines.length === 0) {
       store.delete(PREVIEW_CART_COOKIE);
     } else {
-      store.set(PREVIEW_CART_COOKIE, serializeFallbackCart(currentCart), {
+      store.set(PREVIEW_CART_COOKIE, serializeFallbackCart(nextCart), {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
@@ -138,8 +141,9 @@ export async function removeFromCartAction(formData) {
 export async function getCartState() {
   const store = await cookies();
   const setup = getShopifySetup();
+  const storefrontMode = getStorefrontMode();
 
-  if (!setup.isConfigured) {
+  if (!setup.isConfigured || storefrontMode.isEnquiryOnly) {
     return {
       isConfigured: false,
       cart: getFallbackCart(store.get(PREVIEW_CART_COOKIE)?.value),
@@ -156,6 +160,7 @@ export async function getCartState() {
         checkoutUrl: null,
         totalQuantity: 0,
         subtotal: null,
+        subtotalAmount: null,
         lines: [],
       },
     };
@@ -175,6 +180,7 @@ export async function getCartState() {
         checkoutUrl: null,
         totalQuantity: 0,
         subtotal: null,
+        subtotalAmount: null,
         lines: [],
       },
     };

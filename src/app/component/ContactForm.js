@@ -2,7 +2,7 @@
 
 import { useForm, ValidationError } from "@formspree/react";
 
-export default function ContactForm() {
+export default function ContactForm({ initialMessage = "" }) {
   const [state, handleSubmit] = useForm("meeogqqd");
 
   if (state.succeeded) {
@@ -70,6 +70,7 @@ export default function ContactForm() {
           name="message"
           rows={4}
           required
+          defaultValue={initialMessage}
           className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
         />
         <ValidationError

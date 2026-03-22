@@ -27,10 +27,10 @@ export default function Hero() {
             Get in Touch
           </a>
           <a
-            href="/about"
-            className="rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 hover:border-neutral-400 dark:text-neutral-200  transition"
+            href="/shop"
+            className="rounded-full border border-neutral-300 px-6 py-3 text-sm font-bold text-black hover:border-neutral-400 dark:text-neutral-200  transition"
           >
-            Learn More
+            Shop Now
           </a>
         </div>
       </div>

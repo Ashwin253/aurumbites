@@ -81,7 +81,7 @@ export default async function ShopPage({ searchParams }) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 py-16">
+        <section className="mx-auto max-w-7xl px-2 py-6">
           <CartNotice status={cartStatus} />
           <MobileCartWidget
             cart={cartState.cart}
@@ -90,7 +90,7 @@ export default async function ShopPage({ searchParams }) {
             isEnquiryOnly={storefrontMode.isEnquiryOnly}
           />
 
-          <div className="mt-6 grid gap-10 lg:grid-cols-[1.45fr_0.75fr]">
+          <div className="mt-2 grid gap-10 lg:grid-cols-[1.45fr_0.75fr]">
             <div>
               {/* <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -115,13 +115,13 @@ export default async function ShopPage({ searchParams }) {
                 collectionHandle={collectionHandle}
                 productTypeHandle={productTypeHandle}
               />
-
-              <ProductTypeFilters
+                {/* All type  */}
+              {/* <ProductTypeFilters
                 productTypes={productTypes}
                 activeHandle={activeProductType}
                 collectionHandle={collectionHandle}
                 brandHandle={brandHandle}
-              />
+              /> */}
 
               <div className="mt-10 grid gap-6 md:grid-cols-2">
                 {products.length > 0 ? (

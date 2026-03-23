@@ -303,111 +303,244 @@ export function CollectionFilters({
   brandHandle = "all",
   productTypeHandle = "all",
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const activeCollection = collections.find((c) => c.handle === activeHandle) || collections[0];
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
   return (
-    <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {collections.map((collection) => {
-        const isActive = collection.handle === activeHandle;
-        const query = new URLSearchParams();
-        const logo = getFilterLogo(collection);
+    <div className="relative mt-8">
+      {/* Mobile Trigger */}
+      <div className="sm:hidden">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full rounded-full border border-neutral-300 bg-white px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-neutral-400 flex justify-between items-center"
+        >
+          <span>{activeCollection.title}</span>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
 
-        if (collection.handle && collection.handle !== "all") {
-          query.set("collection", collection.handle);
-        }
+        {isOpen && (
+          <>
+            <button
+              type="button"
+              className="fixed inset-0 z-40 bg-black/40"
+              aria-label="Close filters"
+              onClick={() => setIsOpen(false)}
+            />
+            <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70vh] overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl">
+              <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-neutral-300" />
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm font-semibold text-neutral-900">Collections</p>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="space-y-1">
+                {collections.map((collection) => {
+                  const isActive = collection.handle === activeHandle;
+                  const query = new URLSearchParams();
+                  if (collection.handle && collection.handle !== "all") query.set("collection", collection.handle);
+                  if (brandHandle && brandHandle !== "all") query.set("brand", brandHandle);
+                  if (productTypeHandle && productTypeHandle !== "all") query.set("type", productTypeHandle);
+                  const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+                  const logo = getFilterLogo(collection);
+                  return (
+                    <Link
+                      key={collection.id}
+                      href={href}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                        isActive
+                          ? "bg-neutral-950 text-white"
+                          : "text-neutral-700 hover:bg-neutral-100"
+                      }`}
+                    >
+                      {logo ? (
+                        <span className={`relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border ${
+                          isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
+                        }`}>
+                          <Image src={logo} alt="" fill className="object-contain p-1" />
+                        </span>
+                      ) : (
+                        <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+                          isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
+                        }`}>
+                          {collection.title === "All Brand" ? "All" : collection.title.slice(0, 1)}
+                        </span>
+                      )}
+                      <span className="flex-1">{collection.title}</span>
+                      {isActive && (
+                        <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
-        if (brandHandle && brandHandle !== "all") {
-          query.set("brand", brandHandle);
-        }
+      {/* Desktop Grid */}
+      <div className="hidden sm:grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {collections.map((collection) => {
+          const isActive = collection.handle === activeHandle;
+          const query = new URLSearchParams();
+          const logo = getFilterLogo(collection);
 
-        if (productTypeHandle && productTypeHandle !== "all") {
-          query.set("type", productTypeHandle);
-        }
+          if (collection.handle && collection.handle !== "all") {
+            query.set("collection", collection.handle);
+          }
 
-        const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+          if (brandHandle && brandHandle !== "all") {
+            query.set("brand", brandHandle);
+          }
 
-        return (
-          <Link
-            key={collection.id}
-            href={href}
-            className={`flex min-h-20 items-center gap-4 rounded-[1.5rem] border px-5 py-4 text-left text-base font-semibold transition ${
-              isActive
-                ? "border-neutral-950 bg-neutral-950 text-white"
-                : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-500"
-            }`}
-          >
-            {logo ? (
-              <span
-                className={`relative h-11 w-11 overflow-hidden rounded-2xl border ${
-                  isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
-                }`}
-              >
-                <Image
-                  src={logo}
-                  alt={`${collection.title} logo`}
-                  fill
-                  className="object-contain p-1.5"
-                />
-              </span>
-            ) : (
-              <span
-                className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold ${
-                  isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
-                }`}
-              >
-                {collection.title === "All Brands" ? "All" : collection.title.slice(0, 1)}
-              </span>
-            )}
-            <span className="leading-5">{collection.title}</span>
-          </Link>
-        );
-      })}
+          if (productTypeHandle && productTypeHandle !== "all") {
+            query.set("type", productTypeHandle);
+          }
+
+          const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+
+          return (
+            <Link
+              key={collection.id}
+              href={href}
+              className={`flex min-h-20 items-center gap-4 rounded-[1.5rem] border px-5 py-4 text-left text-base font-semibold transition ${
+                isActive
+                  ? "border-neutral-950 bg-neutral-950 text-white"
+                  : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-500"
+              }`}
+            >
+              {logo ? (
+                <span
+                  className={`relative h-11 w-11 overflow-hidden rounded-2xl border ${
+                    isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
+                  }`}
+                >
+                  <Image
+                    src={logo}
+                    alt={`${collection.title} logo`}
+                    fill
+                    className="object-contain p-1.5"
+                  />
+                </span>
+              ) : (
+                <span
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold ${
+                    isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
+                  }`}
+                >
+                  {collection.title === "All Brand" ? "All" : collection.title.slice(0, 1)}
+                </span>
+              )}
+              <span className="leading-5">{collection.title}</span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
-
 export function ProductTypeFilters({
   productTypes,
   activeHandle,
   collectionHandle = "all",
   brandHandle = "all",
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (!productTypes?.length) {
     return null;
   }
 
+  const activeProductType = productTypes.find((p) => p.handle === activeHandle) || productTypes[0];
+
   return (
-    <div className="mt-4 flex flex-wrap gap-3">
-      {productTypes.map((productType) => {
-        const isActive = productType.handle === activeHandle;
-        const query = new URLSearchParams();
+    <div className="relative mt-4">
+      {/* Mobile Dropdown */}
+      <div className="sm:hidden">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full rounded-full border border-neutral-300 bg-white px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-neutral-400 flex justify-between items-center"
+        >
+          <span>{activeProductType.title}</span>
+          <svg className={`w-5 h-5 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        {isOpen && (
+          <div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg">
+            <div className="py-1">
+              {productTypes.map((productType) => {
+                const query = new URLSearchParams();
+                if (collectionHandle && collectionHandle !== "all") {
+                  query.set("collection", collectionHandle);
+                }
+                if (brandHandle && brandHandle !== "all") {
+                  query.set("brand", brandHandle);
+                }
+                if (productType.handle && productType.handle !== "all") {
+                  query.set("type", productType.handle);
+                }
+                const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+                return (
+                  <Link
+                    key={productType.handle}
+                    href={href}
+                    onClick={() => setIsOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {productType.title}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
-        if (collectionHandle && collectionHandle !== "all") {
-          query.set("collection", collectionHandle);
-        }
+      {/* Desktop Links */}
+      <div className="hidden sm:flex flex-wrap gap-3">
+        {productTypes.map((productType) => {
+          const isActive = productType.handle === activeHandle;
+          const query = new URLSearchParams();
 
-        if (brandHandle && brandHandle !== "all") {
-          query.set("brand", brandHandle);
-        }
+          if (collectionHandle && collectionHandle !== "all") {
+            query.set("collection", collectionHandle);
+          }
 
-        if (productType.handle && productType.handle !== "all") {
-          query.set("type", productType.handle);
-        }
+          if (brandHandle && brandHandle !== "all") {
+            query.set("brand", brandHandle);
+          }
 
-        const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+          if (productType.handle && productType.handle !== "all") {
+            query.set("type", productType.handle);
+          }
 
-        return (
-          <Link
-            key={productType.handle}
-            href={href}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition ${
-              isActive
-                ? "bg-amber-600 text-white"
-                : "border border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300"
-            }`}
-          >
-            {productType.title}
-          </Link>
-        );
-      })}
+          const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+
+          return (
+            <Link
+              key={productType.handle}
+              href={href}
+              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+                isActive
+                  ? "bg-amber-600 text-white"
+                  : "border border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300"
+              }`}
+            >
+              {productType.title}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -701,7 +701,7 @@ export async function getShopPageData({
           );
 
     const collections = [
-      { id: "all", handle: "all", title: "All Brands", description: "" },
+      { id: "all", handle: "all", title: "All Brand", description: "" },
       ...data.collections.edges.map(({ node }) => normalizeCollection(node)),
     ];
     const selectedCollection = data.collection

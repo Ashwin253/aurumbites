@@ -7,6 +7,7 @@ import { addToCartAction } from "../actions";
 import { CartNotice, CartPanel, MobileCartWidget } from "../ShopUi";
 import { getProductByHandle } from "../../../lib/shopify";
 import { getStorefrontMode } from "../../../lib/storefront";
+import SocialShareButtons from "../../component/SocialShareButtons";
 
 export async function generateMetadata({ params }) {
   const { handle } = await params;
@@ -75,9 +76,9 @@ export default async function ProductDetailPage({ params, searchParams }) {
                     />
                   ) : (
                     <div className="flex h-full items-end bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.32),_transparent_45%),linear-gradient(135deg,_#faf5e8,_#f5efe2_55%,_#ebe1cc)] p-8">
-                      <span className="text-sm font-medium uppercase tracking-[0.25em] text-neutral-600">
+                      {/* <span className="text-sm font-medium uppercase tracking-[0.25em] text-neutral-600">
                         Aurum Bites
-                      </span>
+                      </span> */}
                     </div>
                   )}
                 </div>
@@ -88,49 +89,54 @@ export default async function ProductDetailPage({ params, searchParams }) {
                   <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
                     Product detail
                   </p>
+                  {product.vendor ? (
+                    <p className="mt-3 text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                      {product.vendor}
+                    </p>
+                  ) : null}
                   <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-950">
                     {product.title}
                   </h1>
-                  <p className="mt-3 text-lg text-neutral-600">
-                    {product.longDescription || product.description}
-                  </p>
+                  <SocialShareButtons title={product.title} />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {/* <div className="rounded-3xl border border-neutral-200 bg-white p-5">
+                    <p className="text-sm text-neutral-500">Brand</p>
+                    <p className="mt-2 text-xl font-semibold text-neutral-950">
+                      {product.vendor || "Aurum Bites"}
+                    </p>
+                  </div> */}
                   <div className="rounded-3xl border border-neutral-200 bg-white p-5">
                     <p className="text-sm text-neutral-500">Price</p>
                     <p className="mt-2 text-xl font-semibold text-neutral-950">
                       {product.price}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-neutral-200 bg-white p-5">
+                  {/* <div className="rounded-3xl border border-neutral-200 bg-white p-5">
                     <p className="text-sm text-neutral-500">Status</p>
                     <p className="mt-2 text-xl font-semibold text-neutral-950">
                       {product.availableForSale ? "Available" : "Made to order"}
                     </p>
-                  </div>
-                  <div className="rounded-3xl border border-neutral-200 bg-white p-5">
+                  </div> */}
+                  {/* <div className="rounded-3xl border border-neutral-200 bg-white p-5">
                     <p className="text-sm text-neutral-500">Collection</p>
                     <p className="mt-2 text-xl font-semibold capitalize text-neutral-950">
                       {relatedLabel.replaceAll("-", " ")}
                     </p>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm">
-                  <p className="text-sm text-neutral-500">
+                  {/* <p className="text-sm text-neutral-500">
                     {product.featured || "Storefront product"}
-                  </p>
-                  <p className="mt-3 text-sm leading-6 text-neutral-600">
-                    {storefrontMode.isEnquiryOnly
-                      ? "This product can be added to your enquiry list and shared through the contact form."
-                      : error
-                      ? "The page is showing preview content because the store could not be reached right now."
-                      : isConfigured
-                      ? "This product is connected to the live store and can be added directly to the cart."
-                      : "This product is currently using preview content until the store connection is complete."}
-                  </p>
-
+                  </p> */}
+                                  <div
+                                    className="mt-3 text-lg text-neutral-600"
+                                    dangerouslySetInnerHTML={{
+                                      __html: product.longDescription || product.description,
+                                    }}
+                                  />                  
                   <form action={addToCartAction} className="mt-6 flex flex-col gap-4 sm:flex-row">
                     <input type="hidden" name="handle" value={product.handle} />
                     <input

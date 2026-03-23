@@ -3,7 +3,208 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useForm, ValidationError } from "@formspree/react";
 import { addToCartAction, removeFromCartAction } from "./actions";
+
+const FILTER_LOGO_MAP = {
+  president: "/brands/president.jpg",
+  cremeitalia: "/brands/cremeitalia.jpg",
+  "modern dairy": "/brands/moderndairy.jpg",
+  moderndairy: "/brands/moderndairy.jpg",
+  "pasta zara": "/brands/pastazara.jpg",
+  pastazara: "/brands/pastazara.jpg",
+  "dairy craft": "/brands/dairycraft.png",
+  dlecta: "/brands/dlecta.jpg",
+  amul: "/brands/amul.jpg",
+  Prabhat: "/brands/prabhatdairy.png",
+};
+
+function getFilterLogo(item) {
+  const handleKey = (item.handle || "").toLowerCase();
+  const titleKey = (item.title || "").toLowerCase();
+
+  return FILTER_LOGO_MAP[handleKey] || FILTER_LOGO_MAP[titleKey] || null;
+}
+
+function isLargeOrder(cart) {
+  return (
+    cart.totalQuantity > 5 ||
+    (cart.subtotalAmount !== null && cart.subtotalAmount > 2000)
+  );
+}
+
+function buildCartSummary(cart) {
+  if (!cart?.lines?.length) {
+    return "";
+  }
+
+  const itemLines = cart.lines.map((line) => {
+    const variantSuffix =
+      line.variantTitle &&
+      line.variantTitle !== "Default Title" &&
+      line.variantTitle !== "Preview item"
+        ? ` (${line.variantTitle})`
+        : "";
+
+    return `- ${line.title}${variantSuffix} x ${line.quantity}${line.price ? ` - ${line.price}` : ""}`;
+  });
+
+  return [
+    "Large order request from cart",
+    `Total items: ${cart.totalQuantity}`,
+    cart.subtotal ? `Cart value: ${cart.subtotal}` : null,
+    "Requested products:",
+    ...itemLines,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function LargeOrderCartForm({ cart }) {
+  const [state, handleSubmit] = useForm("meeogqqd");
+  const [step, setStep] = useState(1);
+  const cartSummary = buildCartSummary(cart);
+  const [contactDetails, setContactDetails] = useState({
+    name: "",
+    phone: "",
+  });
+
+  if (state.succeeded) {
+    return (
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+        <p className="font-semibold">Request sent</p>
+        <p className="mt-2">
+          We received your cart details and will contact you shortly.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-amber-950">
+            Large order support
+          </p>
+          <p className="mt-1 text-sm leading-6 text-amber-900">
+            Orders above Rs 2000 or more than 5 items are handled manually so
+            we can confirm availability and delivery with you.
+          </p>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">
+          Step {step} of 2
+        </span>
+      </div>
+
+      {step === 1 ? (
+        <div className="mt-4 space-y-4">
+          <div>
+            <label
+              htmlFor="cart-order-name"
+              className="block text-sm font-medium text-neutral-700"
+            >
+              Name
+            </label>
+            <input
+              id="cart-order-name"
+              name="name_preview"
+              type="text"
+              required
+              value={contactDetails.name}
+              onChange={(event) =>
+                setContactDetails((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
+              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="cart-order-phone"
+              className="block text-sm font-medium text-neutral-700"
+            >
+              Phone number
+            </label>
+            <input
+              id="cart-order-phone"
+              name="phone_preview"
+              type="tel"
+              required
+              value={contactDetails.phone}
+              onChange={(event) =>
+                setContactDetails((current) => ({
+                  ...current,
+                  phone: event.target.value,
+                }))
+              }
+              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            disabled={!contactDetails.name.trim() || !contactDetails.phone.trim()}
+            className="inline-flex w-full items-center justify-center rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+          <input type="hidden" name="name" value={contactDetails.name} />
+          <input type="hidden" name="phone" value={contactDetails.phone} />
+          <input type="hidden" name="cart_summary" value={cartSummary} />
+          <input type="hidden" name="order_total" value={cart.subtotal || ""} />
+          <input type="hidden" name="total_items" value={String(cart.totalQuantity)} />
+
+          <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm text-neutral-700">
+            <p className="font-medium text-neutral-900">{contactDetails.name}</p>
+            <p className="mt-1">{contactDetails.phone}</p>
+          </div>
+
+          <div className="rounded-2xl border border-amber-200 bg-white p-4">
+            <p className="text-sm font-medium text-neutral-900">Cart summary</p>
+            <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-6 text-neutral-700">
+              {cartSummary}
+            </pre>
+          </div>
+
+          <ValidationError
+            prefix="Phone"
+            field="phone"
+            errors={state.errors}
+          />
+
+          <div className="rounded-2xl border border-dashed border-amber-300 px-4 py-3 text-sm text-amber-950">
+            Your cart will be submitted along with your contact details.
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-300 px-5 py-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
+            >
+              Edit details
+            </button>
+            <button
+              type="submit"
+              disabled={state.submitting}
+              className="inline-flex flex-1 items-center justify-center rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
+            >
+              {state.submitting ? "Sending..." : "Proceed to enquire"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
 
 export function StatusPanel({ configured, error, storeDomain, isEnquiryOnly }) {
   if (isEnquiryOnly) {
@@ -96,26 +297,162 @@ export function CartNotice({ status }) {
   );
 }
 
-export function CollectionFilters({ collections, activeHandle }) {
+export function CollectionFilters({
+  collections,
+  activeHandle,
+  brandHandle = "all",
+  productTypeHandle = "all",
+}) {
   return (
-    <div className="mt-8 flex flex-wrap gap-3">
+    <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {collections.map((collection) => {
         const isActive = collection.handle === activeHandle;
+        const query = new URLSearchParams();
+        const logo = getFilterLogo(collection);
+
+        if (collection.handle && collection.handle !== "all") {
+          query.set("collection", collection.handle);
+        }
+
+        if (brandHandle && brandHandle !== "all") {
+          query.set("brand", brandHandle);
+        }
+
+        if (productTypeHandle && productTypeHandle !== "all") {
+          query.set("type", productTypeHandle);
+        }
+
+        const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+
         return (
           <Link
             key={collection.id}
-            href={
-              collection.handle === "all"
-                ? "/shop"
-                : `/shop?collection=${collection.handle}`
-            }
+            href={href}
+            className={`flex min-h-20 items-center gap-4 rounded-[1.5rem] border px-5 py-4 text-left text-base font-semibold transition ${
+              isActive
+                ? "border-neutral-950 bg-neutral-950 text-white"
+                : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-500"
+            }`}
+          >
+            {logo ? (
+              <span
+                className={`relative h-11 w-11 overflow-hidden rounded-2xl border ${
+                  isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
+                }`}
+              >
+                <Image
+                  src={logo}
+                  alt={`${collection.title} logo`}
+                  fill
+                  className="object-contain p-1.5"
+                />
+              </span>
+            ) : (
+              <span
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold ${
+                  isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
+                }`}
+              >
+                {collection.title === "All Brands" ? "All" : collection.title.slice(0, 1)}
+              </span>
+            )}
+            <span className="leading-5">{collection.title}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ProductTypeFilters({
+  productTypes,
+  activeHandle,
+  collectionHandle = "all",
+  brandHandle = "all",
+}) {
+  if (!productTypes?.length) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-3">
+      {productTypes.map((productType) => {
+        const isActive = productType.handle === activeHandle;
+        const query = new URLSearchParams();
+
+        if (collectionHandle && collectionHandle !== "all") {
+          query.set("collection", collectionHandle);
+        }
+
+        if (brandHandle && brandHandle !== "all") {
+          query.set("brand", brandHandle);
+        }
+
+        if (productType.handle && productType.handle !== "all") {
+          query.set("type", productType.handle);
+        }
+
+        const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+
+        return (
+          <Link
+            key={productType.handle}
+            href={href}
+            className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+              isActive
+                ? "bg-amber-600 text-white"
+                : "border border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300"
+            }`}
+          >
+            {productType.title}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+export function BrandFilters({
+  brands,
+  activeHandle,
+  collectionHandle = "all",
+  productTypeHandle = "all",
+}) {
+  if (!brands?.length) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-3">
+      {brands.map((brand) => {
+        const isActive = brand.handle === activeHandle;
+        const query = new URLSearchParams();
+
+        if (collectionHandle && collectionHandle !== "all") {
+          query.set("collection", collectionHandle);
+        }
+
+        if (brand.handle && brand.handle !== "all") {
+          query.set("brand", brand.handle);
+        }
+
+        if (productTypeHandle && productTypeHandle !== "all") {
+          query.set("type", productTypeHandle);
+        }
+
+        const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+
+        return (
+          <Link
+            key={brand.handle}
+            href={href}
             className={`rounded-full px-5 py-2 text-sm font-medium transition ${
               isActive
                 ? "bg-neutral-950 text-white"
                 : "border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400"
             }`}
           >
-            {collection.title}
+            {brand.title}
           </Link>
         );
       })}
@@ -148,9 +485,14 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
       <div className="space-y-4 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
+            {product.vendor ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                {product.vendor}
+              </p>
+            ) : null}
             <Link
               href={`/shop/${product.handle}`}
-              className="text-xl font-semibold text-neutral-950 hover:text-neutral-700"
+              className="mt-1 block text-xl font-semibold text-neutral-950 hover:text-neutral-700"
             >
               {product.title}
             </Link>
@@ -161,9 +503,9 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
           </span>
         </div>
 
-        <p className="min-h-16 text-sm leading-6 text-neutral-600">
+        {/* <p className="min-h-16 text-sm leading-6 text-neutral-600">
           {product.description || "Product details will appear here."}
-        </p>
+        </p> */}
 
         <div className="flex items-center justify-between border-t border-neutral-200 pt-4 text-sm">
           <span
@@ -196,7 +538,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
               type="submit"
               className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
             >
-              {isEnquiryOnly ? "Add to enquiry" : "Add to cart"}
+              {isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}
             </button>
           </form>
         </div>
@@ -212,6 +554,20 @@ export function CartPanel({
   className = "",
   isEnquiryOnly = false,
 }) {
+  const shouldUseLargeOrderForm = !isEnquiryOnly && isLargeOrder(cart);
+  const infoBoxClassName = shouldUseLargeOrderForm
+    ? "border-amber-200 bg-amber-50 text-amber-900"
+    : !isEnquiryOnly && isConfigured
+    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+    : "border-neutral-200 bg-neutral-50 text-neutral-700";
+  const infoMessage = isEnquiryOnly
+    ? "Online checkout is currently disabled, so all orders are being collected as enquiries."
+    : shouldUseLargeOrderForm
+    ? "This cart is above the fast-checkout limit. Please share your name and phone number, then proceed to enquire."
+    : isConfigured
+    ? "This cart is eligible for Shopify checkout. Use Continue to checkout to complete the order online."
+    : "Shopify checkout is not available yet because the store connection is still using preview mode.";
+
   return (
     <aside
       className={`rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm ${className}`.trim()}
@@ -237,10 +593,16 @@ export function CartPanel({
       <p className="mt-4 text-sm leading-6 text-neutral-600">
         {isEnquiryOnly
           ? "These selected items will be shared through the enquiry form instead of online checkout."
+          : shouldUseLargeOrderForm
+          ? "This cart qualifies for manual confirmation, so checkout is replaced with a quick request form."
           : isConfigured
           ? "Cart lines are synced with your store, and checkout will continue there."
           : "Preview mode stores cart items locally until the store connection is complete."}
       </p>
+
+      <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${infoBoxClassName}`}>
+        {infoMessage}
+      </div>
 
       <div className="mt-6 space-y-4">
         {cart.lines.length === 0 ? (
@@ -278,7 +640,9 @@ export function CartPanel({
       </div>
 
       <div className="mt-6">
-        {!isEnquiryOnly && isConfigured && cart.checkoutUrl ? (
+        {shouldUseLargeOrderForm ? (
+          <LargeOrderCartForm cart={cart} />
+        ) : !isEnquiryOnly && isConfigured && cart.checkoutUrl ? (
           <a
             href={cart.checkoutUrl}
             target="_blank"
@@ -288,12 +652,9 @@ export function CartPanel({
             Continue to checkout
           </a>
         ) : (
-          <Link
-            href="/contact"
-            className="inline-flex w-full items-center justify-center rounded-full border  px-5 py-3 text-sm font-extrabold border-black text-black transition hover:border-neutral-400"
-          >
-            Share enquiry
-          </Link>
+          <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
+            Add more items to continue.
+          </div>
         )}
       </div>
     </aside>

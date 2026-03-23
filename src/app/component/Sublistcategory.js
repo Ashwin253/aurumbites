@@ -55,18 +55,7 @@ const DATA = [
       "Olive Oil",
     ],
     images: ["/img/fries.jpg", "/img/penne.jpg", "/img/spaghetti.jpg"],
-  },{
-    title: "Frozen Non-Veg",
-    items: [
-      "Chicken",
-      "Mutton",
-      "Pork",
-      "Prawns",
-      "Lobsters",
-      "Octopus",
-    ],
-    images: ["/img/chicken.jpg", "/img/mutton.jpg", "/img/pork.jpg"],
-  }
+  },
 ];
 
 export default function ResponsiveCatalog() {

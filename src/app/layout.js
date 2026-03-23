@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AddToHomeScreenButton from "./component/AddToHomeScreenButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Aurum Bites - Premium Dairy Distributors",
   description: "Reliable sourcing and distribution of high-quality dairy products for businesses and consumers.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Aurum Bites",
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -21,6 +27,7 @@ export default function RootLayout({ children }) {
      <html lang="en" className="dark">
       <body className="bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
         {children}
+        <AddToHomeScreenButton />
       </body>
     </html>
   );

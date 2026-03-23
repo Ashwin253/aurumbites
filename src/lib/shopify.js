@@ -32,6 +32,8 @@ const FALLBACK_PRODUCTS = [
     id: "fallback-butter",
     handle: "cultured-butter",
     title: "Cultured Butter",
+    vendor: "Modern Dairy",
+    productType: "Butter",
     description:
       "Creamy, premium butter for retail shelves, food service, and bulk distribution.",
     longDescription:
@@ -50,6 +52,8 @@ const FALLBACK_PRODUCTS = [
     id: "fallback-mozzarella",
     handle: "fresh-mozzarella",
     title: "Fresh Mozzarella",
+    vendor: "Dlecta",
+    productType: "Cheese",
     description:
       "Soft, clean-flavored mozzarella suited for horeca, deli, and consumer packs.",
     longDescription:
@@ -68,6 +72,8 @@ const FALLBACK_PRODUCTS = [
     id: "fallback-parmesan",
     handle: "aged-parmesan",
     title: "Aged Parmesan",
+    vendor: "President",
+    productType: "Cheese",
     description:
       "Hard cheese with reliable quality and strong flavor for B2B supply needs.",
     longDescription:
@@ -86,6 +92,8 @@ const FALLBACK_PRODUCTS = [
     id: "fallback-burrata",
     handle: "artisan-burrata",
     title: "Artisan Burrata",
+    vendor: "Cremeitalia",
+    productType: "Cheese",
     description:
       "A creamy specialty cheese for premium menus, platters, and retail showcases.",
     longDescription:
@@ -127,6 +135,8 @@ const SHOP_PAGE_QUERY = `#graphql
           id
           handle
           title
+          vendor
+          productType
           description
           availableForSale
           tags
@@ -192,6 +202,8 @@ const COLLECTION_PRODUCTS_QUERY = `#graphql
             id
             handle
             title
+            vendor
+            productType
             description
             availableForSale
             tags
@@ -240,7 +252,10 @@ const PRODUCT_QUERY = `#graphql
       id
       handle
       title
+      vendor
+      productType
       description
+      descriptionHtml
       tags
       availableForSale
       featuredImage {
@@ -441,8 +456,10 @@ function normalizeProduct(node) {
     id: node.id,
     handle: node.handle,
     title: node.title,
+    vendor: node.vendor || "",
+    productType: node.productType || "",
     description: node.description,
-    longDescription: node.description,
+    longDescription: node.descriptionHtml || node.description,
     availableForSale: node.availableForSale,
     image: node.featuredImage
       ? {
@@ -508,6 +525,88 @@ function getFallbackProducts(collectionHandle = "all") {
   );
 }
 
+function normalizeProductTypeLabel(productType) {
+  const trimmed = (productType || "").trim();
+  return trimmed || "Other";
+}
+
+function normalizeBrandLabel(brand) {
+  const trimmed = (brand || "").trim();
+  return trimmed || "Other";
+}
+
+function toProductTypeHandle(productType) {
+  return normalizeProductTypeLabel(productType)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function toBrandHandle(brand) {
+  return normalizeBrandLabel(brand)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function buildBrands(products = []) {
+  const seen = new Map();
+
+  products.forEach((product) => {
+    const title = normalizeBrandLabel(product.vendor);
+    const handle = toBrandHandle(title);
+
+    if (!seen.has(handle)) {
+      seen.set(handle, { handle, title });
+    }
+  });
+
+  return [
+    { handle: "all", title: "All brands" },
+    ...Array.from(seen.values()).sort((left, right) =>
+      left.title.localeCompare(right.title)
+    ),
+  ];
+}
+
+function filterProductsByBrand(products = [], brandHandle = "all") {
+  if (!brandHandle || brandHandle === "all") {
+    return products;
+  }
+
+  return products.filter((product) => toBrandHandle(product.vendor) === brandHandle);
+}
+
+function buildProductTypes(products = []) {
+  const seen = new Map();
+
+  products.forEach((product) => {
+    const title = normalizeProductTypeLabel(product.productType);
+    const handle = toProductTypeHandle(title);
+
+    if (!seen.has(handle)) {
+      seen.set(handle, { handle, title });
+    }
+  });
+
+  return [
+    { handle: "all", title: "All types" },
+    ...Array.from(seen.values()).sort((left, right) =>
+      left.title.localeCompare(right.title)
+    ),
+  ];
+}
+
+function filterProductsByType(products = [], productTypeHandle = "all") {
+  if (!productTypeHandle || productTypeHandle === "all") {
+    return products;
+  }
+
+  return products.filter(
+    (product) => toProductTypeHandle(product.productType) === productTypeHandle
+  );
+}
+
 function normalizeCart(cart) {
   if (!cart) {
     return {
@@ -559,20 +658,31 @@ function normalizeCart(cart) {
   };
 }
 
-export async function getShopPageData({ first = 6, collectionHandle = "all" } = {}) {
+export async function getShopPageData({
+  first = 6,
+  collectionHandle = "all",
+  brandHandle = "all",
+  productTypeHandle = "all",
+} = {}) {
   const config = getShopifyConfig();
 
   if (!config.isConfigured) {
     const collections = getFallbackCollections();
+    const allProducts = getFallbackProducts(collectionHandle);
+    const brandFilteredProducts = filterProductsByBrand(allProducts, brandHandle);
     return {
       isConfigured: false,
       shop: null,
       error: null,
       collections,
+      brands: buildBrands(allProducts),
+      activeBrand: brandHandle,
+      productTypes: buildProductTypes(allProducts),
+      activeProductType: productTypeHandle,
       activeCollection:
         collections.find((collection) => collection.handle === collectionHandle) ||
         collections[0],
-      products: getFallbackProducts(collectionHandle),
+      products: filterProductsByType(brandFilteredProducts, productTypeHandle),
     };
   }
 
@@ -591,7 +701,7 @@ export async function getShopPageData({ first = 6, collectionHandle = "all" } = 
           );
 
     const collections = [
-      { id: "all", handle: "all", title: "All products", description: "" },
+      { id: "all", handle: "all", title: "All Brands", description: "" },
       ...data.collections.edges.map(({ node }) => normalizeCollection(node)),
     ];
     const selectedCollection = data.collection
@@ -601,20 +711,31 @@ export async function getShopPageData({ first = 6, collectionHandle = "all" } = 
       selectedCollection?.handle && collectionHandle !== "all"
         ? data.collection.products.edges
         : data.products.edges;
+    const normalizedProducts = productEdges.map(({ node }) => normalizeProduct(node));
+    const brandFilteredProducts = filterProductsByBrand(
+      normalizedProducts,
+      brandHandle
+    );
 
     return {
       isConfigured: true,
       shop: data.shop,
       error: null,
       collections,
+      brands: buildBrands(normalizedProducts),
+      activeBrand: brandHandle,
+      productTypes: buildProductTypes(normalizedProducts),
+      activeProductType: productTypeHandle,
       activeCollection:
         selectedCollection ||
         collections.find((collection) => collection.handle === collectionHandle) ||
         collections[0],
-      products: productEdges.map(({ node }) => normalizeProduct(node)),
+      products: filterProductsByType(brandFilteredProducts, productTypeHandle),
     };
   } catch (error) {
     const collections = getFallbackCollections();
+    const allProducts = getFallbackProducts(collectionHandle);
+    const brandFilteredProducts = filterProductsByBrand(allProducts, brandHandle);
     return {
       isConfigured: true,
       shop: null,
@@ -623,10 +744,14 @@ export async function getShopPageData({ first = 6, collectionHandle = "all" } = 
           ? error.message
           : "Unable to load products from Shopify.",
       collections,
+      brands: buildBrands(allProducts),
+      activeBrand: brandHandle,
+      productTypes: buildProductTypes(allProducts),
+      activeProductType: productTypeHandle,
       activeCollection:
         collections.find((collection) => collection.handle === collectionHandle) ||
         collections[0],
-      products: getFallbackProducts(collectionHandle),
+      products: filterProductsByType(brandFilteredProducts, productTypeHandle),
     };
   }
 }

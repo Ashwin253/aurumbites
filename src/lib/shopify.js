@@ -562,7 +562,7 @@ function buildBrands(products = []) {
   });
 
   return [
-    { handle: "all", title: "All brands" },
+    { handle: "all", title: "All " },
     ...Array.from(seen.values()).sort((left, right) =>
       left.title.localeCompare(right.title)
     ),

@@ -10,7 +10,7 @@ import Navbar from "./component/Navbar";
 import ProductCategories from "./component/ProductCategories";
 // import ProductCategories from "./component/ProductCategories";
 import QualityBadges from "./component/QualtiyBadges";
-import HoverListView from "./component/Sublistcategory";
+// import HoverListView from "./component/Sublistcategory";
 
 export default function HomePage() {
   return (
@@ -19,7 +19,7 @@ export default function HomePage() {
 
       <main>
         <Hero />
-        <HoverListView/>
+        {/* <HoverListView/> */}
         {/* <ProductCategories /> */}
         <Brands/>
         <QualityBadges />

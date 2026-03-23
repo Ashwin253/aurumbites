@@ -418,44 +418,91 @@ export function BrandFilters({
   collectionHandle = "all",
   productTypeHandle = "all",
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (!brands?.length) {
     return null;
   }
 
+  const activeBrand = brands.find((b) => b.handle === activeHandle) || brands[0];
+
   return (
-    <div className="mt-4 flex flex-wrap gap-3">
-      {brands.map((brand) => {
-        const isActive = brand.handle === activeHandle;
-        const query = new URLSearchParams();
+    <div className="relative mt-4">
+      {/* Mobile Dropdown */}
+      <div className="sm:hidden">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full rounded-full border border-neutral-300 bg-white px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-neutral-400 flex justify-between items-center"
+        >
+          <span>{activeBrand.title}</span>
+          <svg className={`w-5 h-5 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        {isOpen && (
+          <div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg">
+            <div className="py-1">
+              {brands.map((brand) => {
+                const query = new URLSearchParams();
+                if (collectionHandle && collectionHandle !== "all") {
+                  query.set("collection", collectionHandle);
+                }
+                if (brand.handle && brand.handle !== "all") {
+                  query.set("brand", brand.handle);
+                }
+                if (productTypeHandle && productTypeHandle !== "all") {
+                  query.set("type", productTypeHandle);
+                }
+                const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+                return (
+                  <Link
+                    key={brand.handle}
+                    href={href}
+                    onClick={() => setIsOpen(false)}
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {brand.title}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
-        if (collectionHandle && collectionHandle !== "all") {
-          query.set("collection", collectionHandle);
-        }
+      {/* Desktop Links */}
+      <div className="hidden sm:flex flex-wrap gap-3">
+        {brands.map((brand) => {
+          const isActive = brand.handle === activeHandle;
+          const query = new URLSearchParams();
 
-        if (brand.handle && brand.handle !== "all") {
-          query.set("brand", brand.handle);
-        }
+          if (collectionHandle && collectionHandle !== "all") {
+            query.set("collection", collectionHandle);
+          }
 
-        if (productTypeHandle && productTypeHandle !== "all") {
-          query.set("type", productTypeHandle);
-        }
+          if (brand.handle && brand.handle !== "all") {
+            query.set("brand", brand.handle);
+          }
 
-        const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+          if (productTypeHandle && productTypeHandle !== "all") {
+            query.set("type", productTypeHandle);
+          }
 
-        return (
-          <Link
-            key={brand.handle}
-            href={href}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition ${
-              isActive
-                ? "bg-neutral-950 text-white"
-                : "border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400"
-            }`}
-          >
-            {brand.title}
-          </Link>
-        );
-      })}
+          const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+
+          return (
+            <Link
+              key={brand.handle}
+              href={href}
+              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+                isActive
+                  ? "bg-neutral-950 text-white"
+                  : "border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400"
+              }`}
+            >
+              {brand.title}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -723,6 +770,208 @@ export function MobileCartWidget({ cart, isConfigured, redirectTo, isEnquiryOnly
           </div>
         </>
       ) : null}
+    </div>
+  );
+}
+
+const SUB_CATEGORY_DATA = [
+  {
+    title: "Dairy Spreads & Cream",
+    items: [
+      "Salted Butter",
+      "Unsalted Butter",
+      "Fresh Cream",
+      "Sour Cream",
+      "Cooking Cream",
+      "Whipping Cream",
+    ],
+    images: ["/categories/saltedbutter.jpg", "/categories/freshcream.jpg", "/categories/whippingcream.png"],
+  },
+  {
+    title: "Cheese",
+    items: [
+      "Mozzarella",
+      "Burrata",
+      "Ricotta",
+      "Mascarpone",
+      "Scamorza",
+      "Fiordilatte",
+    ],
+    images: ["/categories/mozerellacheese.jpg", "/categories/Mascarpone.png", "/categories/FreshCheese.png"],
+  },
+  {
+     title: "Imported Cheese",
+    items: [
+      "Blue Cheese",
+      "Parmesan",
+      "Cheddar Mild White",
+      "Cheddar Mild Coloured",
+      "Brie",
+      "Camembert",
+      "Soft Goat Cheese",
+      "Edam Mild Ball",
+      "Feta Cheese",
+      "Emmental",
+    ],
+    images: ["/categories/CREAMCHEESE.png", "/categories/dlectacheese.webp", "/categories/BriePresident.png"],
+  },
+  {title: "Dry",
+    items: [
+      "Fries",
+      "Penne",
+      "Spaghetti",
+      "Farfalle",
+      "Fusilli",
+      "Pelati",
+      "Olives",
+      "Olive Oil",
+    ],
+    images: ["/img/fries.jpg", "/img/penne.jpg", "/img/spaghetti.jpg"],
+  },
+];
+
+export function Sublistcategory() {
+ const [active, setActive] = useState(0);
+  const [openMobile, setOpenMobile] = useState(null);
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 py-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* CATEGORY LIST */}
+        <div className="space-y-4">
+          {SUB_CATEGORY_DATA.map((cat, i) => {
+            const isOpen = openMobile === i;
+
+            return (
+              <div key={cat.title}>
+                {/* CATEGORY CARD */}
+                <div
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() =>
+                    setOpenMobile(isOpen ? null : i)
+                  }
+                  className={`h-24 rounded-2xl border p-4 flex items-center justify-between
+                    cursor-pointer transition-all
+                    border-gray-200 bg-white text-gray-900
+                    hover:shadow-lg
+                    dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:shadow-none
+                    ${
+                      active === i
+                        ? "md:bg-[#0b1537] md:text-white md:border-[#0b1537]"
+                        : ""
+                    }`}
+                >
+                  <div>
+                    <p className="text-xs uppercase tracking-wider opacity-70">
+                      Category
+                    </p>
+                    <h3 className="text-lg font-semibold">
+                      {cat.title}
+                    </h3>
+                  </div>
+
+                  {/* PLUS / MINUS (MOBILE) */}
+                  <span className="md:hidden text-2xl font-light">
+                    {isOpen ? "−" : "+"}
+                  </span>
+                </div>
+
+                {/* MOBILE DETAILS */}
+                <div
+                  className={`md:hidden overflow-hidden transition-all duration-300
+                    ${isOpen ? "max-h-[700px] mt-4" : "max-h-0"}
+                  `}
+                >
+                  <SubCategoryMobileDetails cat={cat} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* DESKTOP DETAILS */}
+        <div className="hidden md:block md:col-span-2">
+          <div className="min-h-[440px] rounded-3xl border p-8 shadow-lg
+                          bg-white border-gray-200
+                          dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
+            <h2 className="text-2xl font-semibold mb-6 text-[#0b1537] dark:text-[#fde4bc]">
+              {SUB_CATEGORY_DATA[active].title}
+            </h2>
+
+            {/* ITEMS */}
+            <div className="flex flex-wrap gap-3 mb-8">
+              {SUB_CATEGORY_DATA[active].items.map((item) => (
+                <span
+                  key={item}
+                  className="px-4 py-2 text-sm rounded-full
+                             bg-gray-100 text-gray-800
+                             hover:bg-[#fde4bc]
+                             dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700
+                             transition"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+
+            {/* IMAGE STRIP */}
+            <div className="grid grid-cols-3 gap-4">
+              {SUB_CATEGORY_DATA[active].images.map((img, idx) => (
+                <div
+                  key={idx}
+                  className="h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800"
+                >
+                  <img
+                    src={img}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SubCategoryMobileDetails({ cat }) {
+  return (
+    <div className="rounded-2xl border p-5 shadow-sm
+                    bg-white border-gray-200
+                    dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
+      <h4 className="font-semibold mb-4 text-[#0b1537] dark:text-[#fde4bc]">
+        {cat.title}
+      </h4>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {cat.items.map((item) => (
+          <span
+            key={item}
+            className="px-3 py-1.5 text-xs rounded-full
+                       bg-gray-100 text-gray-800
+                       dark:bg-slate-800 dark:text-slate-100"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {cat.images.map((img, i) => (
+          <div
+            key={i}
+            className="h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800"
+          >
+            <img
+              src={img}
+              className="h-full w-full object-cover"
+              alt=""
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -9,6 +9,8 @@ import {
   ProductCard,
   ProductTypeFilters,
   StatusPanel,
+  BrandFilters,
+  Sublistcategory,
 } from "./ShopUi";
 import { getShopPageData, getShopifySetup } from "../../lib/shopify";
 import { getStorefrontMode } from "../../lib/storefront";
@@ -35,6 +37,8 @@ export default async function ShopPage({ searchParams }) {
       error,
       collections,
       activeCollection,
+      brands,
+      activeBrand,
       productTypes,
       activeProductType,
     },
@@ -105,6 +109,12 @@ export default async function ShopPage({ searchParams }) {
                     : "Preview catalog while the store connection is being finalized"}
                 </p>
               </div> */}
+               <BrandFilters
+                brands={brands}
+                activeHandle={activeBrand}
+                collectionHandle={collectionHandle}
+                productTypeHandle={productTypeHandle}
+              />
 
               <ProductTypeFilters
                 productTypes={productTypes}
@@ -140,6 +150,7 @@ export default async function ShopPage({ searchParams }) {
             />
           </div>
         </section>
+        <Sublistcategory />
       </main>
     </>
   );

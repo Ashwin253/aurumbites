@@ -20,7 +20,7 @@ export default function HomePage() {
       <main>
         <Hero />
         <HoverListView/>
-        <ProductCategories />
+        {/* <ProductCategories /> */}
         <Brands/>
         <QualityBadges />
       </main>

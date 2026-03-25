@@ -17,9 +17,9 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-300/90">
+        {/* <p className="text-xs font-extrabold uppercase tracking-[0.35em] text-[#0c1238]">
           Premium Dairy Collection
-        </p>
+        </p> */}
 
         <h1 className="mt-4 text-5xl font-bold tracking-tight text-white sm:text-7xl">
           Finest Gourmet
@@ -39,7 +39,7 @@ export default function Hero() {
           </a>
           <a
             href="/contact"
-            className="rounded-full bg-amber-400 px-7 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-amber-300"
+            className="rounded-full bg-[#0c1238] px-7 py-3 text-sm font-semibold text-white transition hover:bg-[#0c1238]/90"
           >
             Get in Touch
           </a>

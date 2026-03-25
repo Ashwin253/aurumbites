@@ -64,3 +64,21 @@ body {
   mask-composite: exclude;
   pointer-events: none;
 }
+
+@keyframes brands-carousel-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.brands-carousel-track {
+  animation: brands-carousel-scroll 36s linear infinite;
+  will-change: transform;
+}
+
+.brands-carousel-track:hover {
+  animation-play-state: paused;
+}

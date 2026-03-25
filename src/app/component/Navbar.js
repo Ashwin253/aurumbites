@@ -86,7 +86,7 @@ export default function Navbar() {
               href={link.href}
               className={
                 link.variant === "solid"
-                  ? "flex items-center gap-2 rounded-full border border-[#cfb57a] bg-[#f4e5bd] px-5 py-2.5 text-sm font-bold text-[#1d1810] shadow-[0_10px_24px_rgba(212,168,83,0.22)] transition hover:bg-[#f0ddb0]"
+                  ? "flex items-center gap-2 rounded-md border border-[#0c1238] bg-[#ffe8c2] px-5 py-2.5 text-sm font-bold text-black shadow-[0_10px_24px_rgba(212,168,83,0.22)] transition hover:bg-[#f0ddb0]"
                   : "rounded-full px-4 py-2.5 text-sm font-bold tracking-[0.08em] text-white transition hover:bg-white/8 hover:text-[#f4e5bd]"
               }
             >

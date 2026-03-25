@@ -27,6 +27,8 @@ const brands = [
   }
 ];
 
+const carouselBrands = [...brands, ...brands];
+
 export default function Brands() {
   return (
     <section className="bg-white border-t border-neutral-200">
@@ -40,21 +42,26 @@ export default function Brands() {
           to ensure consistent quality and reliable supply.
         </p>
 
-        <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
-          {brands.map((brand) => (
-            <div
-              key={brand.name}
-              className="flex items-center justify-center rounded-2xl  border-neutral-200 bg-white p-2 transition-shadow hover:shadow-xl"
-            >
-              <Image
-                src={brand.src}
-                alt={`${brand.name} logo`}
-                width={140}
-                height={80}
-                className="object-contain opacity-80 hover:opacity-100 transition"
-              />
-            </div>
-          ))}
+        <div className="relative mt-12 overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-white to-transparent" />
+          {/* <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-white to-transparent" /> */}
+
+          <div className="brands-carousel-track flex w-max items-center gap-4">
+            {carouselBrands.map((brand, index) => (
+              <div
+                key={`${brand.name}-${index}`}
+                className="flex h-28 w-40  items-center justify-center  bg-white p-4  hover:shadow-xl"
+              >
+                <Image
+                  src={brand.src}
+                  alt={`${brand.name} logo`}
+                  width={140}
+                  height={80}
+                  className="max-h-16 w-auto object-contain opacity-90 transition hover:opacity-100"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <p className="mt-8 text-xs text-neutral-500">

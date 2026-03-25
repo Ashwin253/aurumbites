@@ -5,6 +5,7 @@
 // import Footer from "@/components/Footer";
 
 import Brands from "./component/Brands";
+import Footer from "./component/Footer";
 import Hero from "./component/Hero";
 import Navbar from "./component/Navbar";
 import ProductCategories from "./component/ProductCategories";
@@ -29,7 +30,7 @@ export default function HomePage() {
 
       </main>
 
-      {/* <Footer /> */}
+      <Footer />
     </>
   );
 }

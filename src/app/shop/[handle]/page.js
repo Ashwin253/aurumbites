@@ -2,9 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "../../component/Navbar";
-import { getCartState } from "../actions";
 import { addToCartAction } from "../actions";
-import { CartNotice, CartPanel, MobileCartWidget } from "../ShopUi";
+import { CartNotice } from "../ShopServerUi";
 import { getProductByHandle } from "../../../lib/shopify";
 import { getStorefrontMode } from "../../../lib/storefront";
 import SocialShareButtons from "../../component/SocialShareButtons";
@@ -30,10 +29,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
   const { handle } = await params;
   const query = await searchParams;
   const cartStatus = query?.cart || "";
-  const [{ product, error, isConfigured }, cartState] = await Promise.all([
-    getProductByHandle(handle),
-    getCartState(),
-  ]);
+  const [{ product }] = await Promise.all([getProductByHandle(handle)]);
 
   if (!product) {
     notFound();
@@ -57,12 +53,6 @@ export default async function ProductDetailPage({ params, searchParams }) {
             </div>
 
             <CartNotice status={cartStatus} />
-            <MobileCartWidget
-              cart={cartState.cart}
-              isConfigured={cartState.isConfigured}
-              redirectTo={`/shop/${product.handle}`}
-              isEnquiryOnly={storefrontMode.isEnquiryOnly}
-            />
 
             <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_0.8fr]">
               <div className="overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm">
@@ -180,16 +170,6 @@ export default async function ProductDetailPage({ params, searchParams }) {
               </div>
             </div>
           </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-6 py-16">
-          <CartPanel
-            cart={cartState.cart}
-            isConfigured={cartState.isConfigured}
-            redirectTo={`/shop/${product.handle}`}
-            isEnquiryOnly={storefrontMode.isEnquiryOnly}
-            className="hidden lg:block"
-          />
         </section>
       </main>
     </>

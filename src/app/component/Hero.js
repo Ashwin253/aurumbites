@@ -1,36 +1,47 @@
-// components/Hero.tsx
-import React from 'react';
+import React from "react";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-7xl px-6 py-28">
-        <p className="text-sm font-medium text-neutral-500 uppercase tracking-wider">
-          Dairy Distribution
+    <section className="relative h-[90vh] min-h-[520px] overflow-hidden">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      >
+        <source src="/dairyproduct.mp4" type="video/mp4" />
+      </video>
+
+      {/* dark gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-300/90">
+          Premium Dairy Collection
         </p>
 
-        <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-          Trusted Dairy Sourcing for Businesses & Consumers
+        <h1 className="mt-4 text-5xl font-bold tracking-tight text-white sm:text-7xl">
+          Finest Gourmet
         </h1>
 
-        <p className="mt-6 max-w-2xl line-clamp-3 text-lg text-neutral-600 dark:text-neutral-200">
-          We source high-quality dairy products from local and international
-          partners, delivering consistency, reliability, and quality across
-          B2B and select D2C channels.
+        <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
+          Curated dairy sourced from the world&apos;s finest producers,
+          delivered with uncompromising quality.
         </p>
 
         <div className="mt-10 flex gap-4">
           <a
-            href="/contact"
-            className="rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white hover:bg-neutral-800 transition"
-          >
-            Get in Touch
-          </a>
-          <a
             href="/shop"
-            className="rounded-full border border-neutral-300 px-6 py-3 text-sm font-bold text-black hover:border-neutral-400 dark:text-neutral-200  transition"
+            className="rounded-full bg-white/10 px-7 py-3 text-sm font-semibold text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20"
           >
             Shop Now
+          </a>
+          <a
+            href="/contact"
+            className="rounded-full bg-amber-400 px-7 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-amber-300"
+          >
+            Get in Touch
           </a>
         </div>
       </div>

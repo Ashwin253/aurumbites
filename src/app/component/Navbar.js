@@ -64,13 +64,15 @@ export default function Navbar() {
   }, [isOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Image src="/logo.jpg" alt="logo" width={50} height={50} />
+    <header className="sticky top-0 z-50 border-b border-[#d8c39a] bg-[#0f0d09]/96 shadow-[0_18px_48px_rgba(15,13,9,0.38)] backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+        <div className="flex items-center gap-3">
+          <div className="overflow-hidden rounded-2xl border border-white/15 shadow-[0_12px_30px_rgba(0,0,0,0.24)]">
+            <Image src="/logo.jpg" alt="logo" width={52} height={52} />
+          </div>
           <Link
             href="/"
-            className="text-base font-bold leading-tight text-black"
+            className="text-base font-extrabold leading-tight tracking-[0.18em] text-white"
             onClick={() => setIsOpen(false)}
           >
             AURUM <br /> BITES
@@ -84,8 +86,8 @@ export default function Navbar() {
               href={link.href}
               className={
                 link.variant === "solid"
-                  ? "flex items-center gap-2 rounded-md bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
-                  : "px-3 py-2 text-sm font-bold text-neutral-800 transition hover:text-neutral-900"
+                  ? "flex items-center gap-2 rounded-full border border-[#cfb57a] bg-[#f4e5bd] px-5 py-2.5 text-sm font-bold text-[#1d1810] shadow-[0_10px_24px_rgba(212,168,83,0.22)] transition hover:bg-[#f0ddb0]"
+                  : "rounded-full px-4 py-2.5 text-sm font-bold tracking-[0.08em] text-white transition hover:bg-white/8 hover:text-[#f4e5bd]"
               }
             >
               {link.icon}
@@ -98,7 +100,7 @@ export default function Navbar() {
           type="button"
           aria-expanded={isOpen}
           aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 text-neutral-900 transition hover:border-neutral-400 md:hidden"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#cfb57a]/60 bg-white/6 text-white transition hover:border-[#cfb57a] md:hidden"
           onClick={() => setIsOpen((open) => !open)}
         >
           <span className="flex h-4 w-5 flex-col justify-between">
@@ -122,7 +124,7 @@ export default function Navbar() {
       </div>
 
       {isOpen ? (
-        <div className="border-t border-neutral-200 bg-white px-6 py-4 md:hidden">
+        <div className="border-t border-[#d8c39a]/40 bg-[#16120d]/98 px-6 py-4 md:hidden">
           <nav className="flex flex-col gap-3">
             {navLinks.map((link) => (
               <Link
@@ -130,8 +132,8 @@ export default function Navbar() {
                 href={link.href}
                 className={
                   link.variant === "solid"
-                    ? "flex items-center justify-center gap-2 rounded-2xl bg-neutral-900 px-5 py-3 text-center text-sm font-medium text-white transition hover:bg-neutral-800"
-                    : "rounded-2xl border border-neutral-200 px-5 py-3 text-center text-sm font-semibold text-neutral-900 transition hover:border-neutral-300"
+                    ? "flex items-center justify-center gap-2 rounded-2xl border border-[#cfb57a] bg-[#f4e5bd] px-5 py-3 text-center text-sm font-bold text-[#1d1810] transition hover:bg-[#f0ddb0]"
+                    : "rounded-2xl border border-white/15 bg-white/4 px-5 py-3 text-center text-sm font-bold tracking-[0.08em] text-white transition hover:border-[#cfb57a]/60 hover:text-[#f4e5bd]"
                 }
                 onClick={() => setIsOpen(false)}
               >

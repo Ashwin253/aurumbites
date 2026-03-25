@@ -19,7 +19,7 @@ const badges = [
 
 export default function QualityBadges() {
   return (
-    <section className="bg-neutral-50 border-t border-neutral-200">
+    <section className="bg-white border-t border-white/10">
       <div className="mx-auto max-w-7xl px-6 py-24">
         <h2 className="text-2xl font-semibold tracking-tight text-black">
           Quality & Compliance
@@ -33,12 +33,12 @@ export default function QualityBadges() {
           {badges.map((badge) => (
             <div
               key={badge.title}
-              className="rounded-2xl bg-white border border-neutral-200 p-6"
+              className="glossy-card rounded-2xl bg-white/55 ring-1 ring-black/45 p-6 transition hover:bg-white/10"
             >
               <h3 className="text-sm font-semibold uppercase tracking-wide text-black">
                 {badge.title}
               </h3>
-              <p className="mt-3 text-sm text-neutral-600">
+              <p className="mt-3 text-sm text-neutral-700">
                 {badge.desc}
               </p>
             </div>

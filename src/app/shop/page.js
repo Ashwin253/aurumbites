@@ -1,18 +1,7 @@
-import Link from "next/link";
 import Navbar from "../component/Navbar";
-import { getCartState } from "./actions";
-import {
-  CartNotice,
-  CartPanel,
-  CollectionFilters,
-  MobileCartWidget,
-  ProductCard,
-  ProductTypeFilters,
-  StatusPanel,
-  BrandFilters,
-  Sublistcategory,
-} from "./ShopUi";
-import { getShopPageData, getShopifySetup } from "../../lib/shopify";
+import { CartNotice } from "./ShopServerUi";
+import { ShopCatalog } from "./ShopUi";
+import { getShopPageData } from "../../lib/shopify";
 import { getStorefrontMode } from "../../lib/storefront";
 
 export const metadata = {
@@ -42,12 +31,8 @@ export default async function ShopPage({ searchParams }) {
       productTypes,
       activeProductType,
     },
-    setup,
-    cartState,
   ] = await Promise.all([
     getShopPageData({ first: 9, collectionHandle, brandHandle, productTypeHandle }),
-    Promise.resolve(getShopifySetup()),
-    getCartState(),
   ]);
 
   const redirectParams = new URLSearchParams();
@@ -65,92 +50,67 @@ export default async function ShopPage({ searchParams }) {
     ? `/shop?${redirectParams.toString()}`
     : "/shop";
 
+  const introCopy =
+    activeCollection.description ||
+    shop?.description ||
+    "Curated dairy, cheese, and pantry essentials selected for hospitality teams, gourmet retail, and premium kitchens.";
+
   return (
     <>
       <Navbar />
 
-      <main className="bg-neutral-50">
-        <section className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-12">
-              <CollectionFilters
-                collections={collections}
-                activeHandle={activeCollection.handle}
-                brandHandle={brandHandle}
-                productTypeHandle={productTypeHandle}
-              />
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-2 py-6">
-          <CartNotice status={cartStatus} />
-          <MobileCartWidget
-            cart={cartState.cart}
-            isConfigured={cartState.isConfigured}
-            redirectTo={redirectTo}
-            isEnquiryOnly={storefrontMode.isEnquiryOnly}
-          />
-
-          <div className="mt-2 grid gap-10 lg:grid-cols-[1.45fr_0.75fr]">
-            <div>
-              {/* <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold tracking-tight text-neutral-950">
-                    {activeCollection.title}
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-neutral-600">
-                    {activeCollection.description ||
-                      shop?.description ||
-                      "Browse the current storefront catalog and select a product to view full details."}
-                  </p>
-                </div>
-                <p className="text-sm text-neutral-500">
-                  {isConfigured && !error
-                    ? "Live catalog"
-                    : "Preview catalog while the store connection is being finalized"}
+      <main className="shop-page-bg">
+        <section className="relative overflow-hidden border-b border-[#e8deca]">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(212,168,83,0.2),_transparent_28%),radial-gradient(circle_at_85%_20%,_rgba(255,255,255,0.65),_transparent_24%),linear-gradient(180deg,_#f8f3ea_0%,_#f3ecdf_55%,_#f8f5ef_100%)]" />
+          <div className="relative mx-auto max-w-7xl px-6 py-10 sm:py-14">
+            <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
+              <div>
+                <span className="inline-flex rounded-full border border-[#dcc79d] bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#8b6a2c] backdrop-blur">
+                  Aurum Bites Collection
+                </span>
+                <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-950 sm:text-5xl">
+                  Premium pantry sourcing with a cleaner, faster storefront.
+                </h1>
+                <p className="mt-5 max-w-2xl text-base leading-7 text-neutral-700 sm:text-lg">
+                  {introCopy}
                 </p>
-              </div> */}
-               <BrandFilters
-                brands={brands}
-                activeHandle={activeBrand}
-                collectionHandle={collectionHandle}
-                productTypeHandle={productTypeHandle}
-              />
-                {/* All type  */}
-              {/* <ProductTypeFilters
-                productTypes={productTypes}
-                activeHandle={activeProductType}
-                collectionHandle={collectionHandle}
-                brandHandle={brandHandle}
-              /> */}
 
-              <div className="mt-10 grid gap-6 md:grid-cols-2">
-                {products.length > 0 ? (
-                  products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      redirectTo={redirectTo}
-                      isEnquiryOnly={storefrontMode.isEnquiryOnly}
-                    />
-                  ))
-                ) : (
-                  <div className="rounded-[2rem] border border-dashed border-neutral-300 bg-white p-10 text-neutral-600">
-                    No products were found in this collection yet.
-                  </div>
-                )}
+                {/* <div className="mt-8 flex flex-wrap gap-3 text-sm text-neutral-700">
+                  <span className="rounded-full border border-white/70 bg-white/85 px-4 py-2 shadow-sm backdrop-blur">
+                    Collection: {activeCollection.title}
+                  </span>
+                  <span className="rounded-full border border-white/70 bg-white/85 px-4 py-2 shadow-sm backdrop-blur">
+                    {isConfigured && !error ? "Live product feed" : "Optimized preview catalog"}
+                  </span>
+                  <span className="rounded-full border border-white/70 bg-white/85 px-4 py-2 shadow-sm backdrop-blur">
+                    {storefrontMode.isEnquiryOnly ? "Manual enquiry flow" : "Direct cart enabled"}
+                  </span>
+                </div> */}
               </div>
             </div>
-
-            <CartPanel
-              cart={cartState.cart}
-              isConfigured={cartState.isConfigured}
-              redirectTo={redirectTo}
-              isEnquiryOnly={storefrontMode.isEnquiryOnly}
-              className="hidden lg:block"
-            />
           </div>
         </section>
-        <Sublistcategory />
+
+        <section className="mx-auto max-w-7xl p-3 sm:px-6">
+          <CartNotice status={cartStatus} />
+          <ShopCatalog
+            initialCatalog={{
+              isConfigured,
+              products,
+              shop,
+              error,
+              collections,
+              activeCollection,
+              brands,
+              activeBrand,
+              productTypes,
+              activeProductType,
+            }}
+            initialRedirectTo={redirectTo}
+            storefrontMode={storefrontMode}
+          />
+        </section>
+        {/* <Sublistcategory /> */}
       </main>
     </>
   );

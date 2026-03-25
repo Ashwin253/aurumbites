@@ -10,10 +10,6 @@ const brands = [
     src: "/brands/cremeitalia.jpg",
   },
   {
-    name: "Modern Dairy",
-    src: "/brands/moderndairy.jpg",
-  },
-  {
     name: "Pasta Zara",
     src: "/brands/pastazara.jpg",
   },
@@ -24,6 +20,10 @@ const brands = [
   {
     name:"dlecta",
     src:"/brands/dlecta.jpg",
+  },
+  {
+    name:"amul",
+    src:"/brands/amul.jpg",
   }
 ];
 
@@ -31,7 +31,7 @@ export default function Brands() {
   return (
     <section className="bg-white border-t border-neutral-200">
       <div className="mx-auto max-w-7xl px-6 py-20">
-        <h2 className="text-2xl font-semibold tracking-tight text-black">
+        <h2 className="text-2xl font-semibold tracking-tight text-neutral-900">
           Brands We Work With
         </h2>
 
@@ -44,14 +44,14 @@ export default function Brands() {
           {brands.map((brand) => (
             <div
               key={brand.name}
-              className="flex items-center justify-center rounded-xl px-6 py-6"
+              className="flex items-center justify-center rounded-2xl  border-neutral-200 bg-white p-2 transition-shadow hover:shadow-xl"
             >
               <Image
                 src={brand.src}
                 alt={`${brand.name} logo`}
                 width={140}
                 height={80}
-                className="object-contain   opacity-80 hover:opacity-100 transition"
+                className="object-contain opacity-80 hover:opacity-100 transition"
               />
             </div>
           ))}

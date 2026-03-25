@@ -3,24 +3,64 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --gold: #d4a853;
+  --gold-light: #f5e6c8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.shop-page-bg {
+  background:
+    radial-gradient(circle at top left, rgba(212, 168, 83, 0.12), transparent 24%),
+    linear-gradient(180deg, #fbf7f0 0%, #f6f1e7 42%, #f8f6f1 100%);
+}
+
+/* glossy card hover */
+.glossy-card {
+  position: relative;
+  overflow: hidden;
+}
+.glossy-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.12) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+.glossy-card:hover::after {
+  opacity: 1;
+}
+
+.premium-card {
+  position: relative;
+}
+
+.premium-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(212,168,83,0.28));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }

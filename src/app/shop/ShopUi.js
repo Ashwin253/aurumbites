@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useForm, ValidationError } from "@formspree/react";
+import { createPortal } from "react-dom";
 import { addToCartAction, removeFromCartAction } from "./actions";
 
 const FILTER_LOGO_MAP = {
@@ -24,6 +25,78 @@ function getFilterLogo(item) {
   const titleKey = (item.title || "").toLowerCase();
 
   return FILTER_LOGO_MAP[handleKey] || FILTER_LOGO_MAP[titleKey] || null;
+}
+
+function buildShopHref({
+  collectionHandle = "all",
+  brandHandle = "all",
+  productTypeHandle = "all",
+}) {
+  const query = new URLSearchParams();
+
+  if (collectionHandle && collectionHandle !== "all") {
+    query.set("collection", collectionHandle);
+  }
+
+  if (brandHandle && brandHandle !== "all") {
+    query.set("brand", brandHandle);
+  }
+
+  if (productTypeHandle && productTypeHandle !== "all") {
+    query.set("type", productTypeHandle);
+  }
+
+  return query.toString() ? `/shop?${query.toString()}` : "/shop";
+}
+
+function MobileBottomSheet({ isOpen, title, onClose, children }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    document.body.style.overflow = isOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, mounted]);
+
+  if (!mounted || !isOpen) {
+    return null;
+  }
+
+  return createPortal(
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-[90] bg-black/45 backdrop-blur-[2px] sm:hidden"
+        aria-label={`Close ${title}`}
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-0 bottom-0 z-[91] max-h-[72vh] overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl sm:hidden">
+        <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-neutral-300" />
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-sm font-semibold text-neutral-900">{title}</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700"
+          >
+            Close
+          </button>
+        </div>
+        <div className="space-y-1">{children}</div>
+      </div>
+    </>,
+    document.body
+  );
 }
 
 function isLargeOrder(cart) {
@@ -222,11 +295,11 @@ export function StatusPanel({ configured, error, storeDomain, isEnquiryOnly }) {
   if (configured && !error) {
     return (
       <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 text-sm text-emerald-900">
-        <p className="font-semibold">Live catalog connected</p>
+        {/* <p className="font-semibold">Live catalog connected</p>
         <p className="mt-2">
           Products on this page are loading live from{" "}
           <span className="font-medium">{storeDomain}</span>.
-        </p>
+        </p> */}
       </div>
     );
   }
@@ -297,67 +370,195 @@ export function CartNotice({ status }) {
   );
 }
 
+export function ShopCatalog({
+  initialCatalog,
+  initialRedirectTo,
+  storefrontMode,
+}) {
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const [redirectTo, setRedirectTo] = useState(initialRedirectTo);
+  const [catalogError, setCatalogError] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  const handleFilterChange = ({
+    collectionHandle = catalog.activeCollection.handle,
+    brandHandle = catalog.activeBrand,
+    productTypeHandle = catalog.activeProductType,
+  }) => {
+    const nextRedirectTo = buildShopHref({
+      collectionHandle,
+      brandHandle,
+      productTypeHandle,
+    });
+
+    setRedirectTo(nextRedirectTo);
+    window.history.replaceState({}, "", nextRedirectTo);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/shop/catalog${nextRedirectTo.replace("/shop", "")}`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to update the catalog.");
+        }
+
+        const nextCatalog = await response.json();
+        setCatalog(nextCatalog);
+        setCatalogError("");
+      } catch (error) {
+        setCatalogError(
+          error instanceof Error
+            ? error.message
+            : "Unable to update the catalog."
+        );
+      }
+    });
+  };
+
+  return (
+    <>
+      <div className="mt-4">
+        <div className="rounded-[2rem] border border-[#e9dfcf] bg-white/85 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9a7a3f]">
+                  Filter selection
+                </p>
+                {/* <h2 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
+                  {catalog.activeCollection.title}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">
+                  Switch collections and brands from one compact panel.
+                </p> */}
+              </div>
+              {/* <p className="text-sm text-neutral-500">
+                {catalog.isConfigured && !catalog.error
+                  ? "Live catalog"
+                  : "Preview catalog while the store connection is being finalized"}
+              </p> */}
+            </div>
+
+            <div>
+              {/* <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                Collections
+              </p> */}
+              <CollectionFilters
+                collections={catalog.collections}
+                activeHandle={catalog.activeCollection.handle}
+                brandHandle={catalog.activeBrand}
+                productTypeHandle={catalog.activeProductType}
+                onSelectHandle={(handle) =>
+                  handleFilterChange({
+                    collectionHandle: handle,
+                    brandHandle: "all",
+                    productTypeHandle: catalog.activeProductType,
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              {/* <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                Brands
+              </p> */}
+              <BrandFilters
+                brands={catalog.brands}
+                activeHandle={catalog.activeBrand}
+                collectionHandle={catalog.activeCollection.handle}
+                productTypeHandle={catalog.activeProductType}
+                onSelectHandle={(handle) =>
+                  handleFilterChange({
+                    collectionHandle: catalog.activeCollection.handle,
+                    brandHandle: handle,
+                    productTypeHandle: catalog.activeProductType,
+                  })
+                }
+              />
+            </div>
+          </div>
+        </div>
+
+          {catalogError ? (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {catalogError}
+            </div>
+          ) : null}
+
+          <div className="relative mt-8">
+            {isPending ? (
+              <div className="pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-[#f7f1e5]/70 backdrop-blur-[2px]" />
+            ) : null}
+
+            <div
+              className={`grid gap-6 md:grid-cols-2 ${isPending ? "opacity-60" : ""}`}
+              style={{ contentVisibility: "auto", containIntrinsicSize: "900px" }}
+            >
+              {catalog.products.length > 0 ? (
+                catalog.products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    redirectTo={redirectTo}
+                    isEnquiryOnly={storefrontMode.isEnquiryOnly}
+                  />
+                ))
+              ) : (
+                <div className="rounded-[2rem] border border-dashed border-neutral-300 bg-white/90 p-10 text-neutral-600">
+                  No products were found in this collection yet.
+                </div>
+              )}
+            </div>
+          </div>
+      </div>
+    </>
+  );
+}
+
 export function CollectionFilters({
   collections,
   activeHandle,
   brandHandle = "all",
   productTypeHandle = "all",
+  onSelectHandle,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const activeCollection = collections.find((c) => c.handle === activeHandle) || collections[0];
 
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [isOpen]);
-
   return (
-    <div className="relative mt-8">
+    <div className="relative">
       {/* Mobile Trigger */}
       <div className="sm:hidden">
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full rounded-full border border-neutral-300 bg-white px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-neutral-400 flex justify-between items-center"
+          className="flex w-full items-center justify-between rounded-full border border-[#e6dcc8] bg-[#fcf8f1] px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-[#c9b07a]"
         >
-          <span>{activeCollection.title}</span>
+          <span className="truncate pr-3">{activeCollection.title}</span>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
         </button>
 
         {isOpen && (
-          <>
-            <button
-              type="button"
-              className="fixed inset-0 z-40 bg-black/40"
-              aria-label="Close filters"
-              onClick={() => setIsOpen(false)}
-            />
-            <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70vh] overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl">
-              <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-neutral-300" />
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm font-semibold text-neutral-900">Collections</p>
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="space-y-1">
+          <MobileBottomSheet
+            isOpen={isOpen}
+            title="Collections"
+            onClose={() => setIsOpen(false)}
+          >
                 {collections.map((collection) => {
                   const isActive = collection.handle === activeHandle;
-                  const query = new URLSearchParams();
-                  if (collection.handle && collection.handle !== "all") query.set("collection", collection.handle);
-                  if (brandHandle && brandHandle !== "all") query.set("brand", brandHandle);
-                  if (productTypeHandle && productTypeHandle !== "all") query.set("type", productTypeHandle);
-                  const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
                   const logo = getFilterLogo(collection);
                   return (
-                    <Link
+                    <button
+                      type="button"
                       key={collection.id}
-                      href={href}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                      onClick={() => {
+                        if (onSelectHandle) {
+                          onSelectHandle(collection.handle);
+                        }
+                        setIsOpen(false);
+                      }}
+                      className={`flex items-center gap-2 rounded-2xl p-2 text-sm font-medium transition ${
                         isActive
                           ? "bg-neutral-950 text-white"
                           : "text-neutral-700 hover:bg-neutral-100"
@@ -380,41 +581,25 @@ export function CollectionFilters({
                       {isActive && (
                         <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                       )}
-                    </Link>
+                    </button>
                   );
                 })}
-              </div>
-            </div>
-          </>
+          </MobileBottomSheet>
         )}
       </div>
 
       {/* Desktop Grid */}
-      <div className="hidden sm:grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="hidden sm:flex sm:flex-wrap sm:gap-2 xl:flex-nowrap xl:overflow-x-auto xl:pb-1">
         {collections.map((collection) => {
           const isActive = collection.handle === activeHandle;
-          const query = new URLSearchParams();
           const logo = getFilterLogo(collection);
 
-          if (collection.handle && collection.handle !== "all") {
-            query.set("collection", collection.handle);
-          }
-
-          if (brandHandle && brandHandle !== "all") {
-            query.set("brand", brandHandle);
-          }
-
-          if (productTypeHandle && productTypeHandle !== "all") {
-            query.set("type", productTypeHandle);
-          }
-
-          const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
-
           return (
-            <Link
+            <button
+              type="button"
               key={collection.id}
-              href={href}
-              className={`flex min-h-20 items-center gap-4 rounded-[1.5rem] border px-5 py-4 text-left text-base font-semibold transition ${
+              onClick={() => onSelectHandle?.(collection.handle)}
+              className={`flex shrink-0 items-center gap-3 rounded-[1.2rem] border px-3.5 py-3 text-left text-sm font-semibold transition ${
                 isActive
                   ? "border-neutral-950 bg-neutral-950 text-white"
                   : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-500"
@@ -422,7 +607,7 @@ export function CollectionFilters({
             >
               {logo ? (
                 <span
-                  className={`relative h-11 w-11 overflow-hidden rounded-2xl border ${
+                  className={`relative h-9 w-9 overflow-hidden rounded-xl border ${
                     isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
                   }`}
                 >
@@ -430,20 +615,20 @@ export function CollectionFilters({
                     src={logo}
                     alt={`${collection.title} logo`}
                     fill
-                    className="object-contain p-1.5"
+                    className="object-contain p-1"
                   />
                 </span>
               ) : (
                 <span
-                  className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-bold ${
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold ${
                     isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
                   }`}
                 >
                   {collection.title === "All Brand" ? "All" : collection.title.slice(0, 1)}
                 </span>
               )}
-              <span className="leading-5">{collection.title}</span>
-            </Link>
+              <span className="whitespace-nowrap leading-5">{collection.title}</span>
+            </button>
           );
         })}
       </div>
@@ -550,6 +735,7 @@ export function BrandFilters({
   activeHandle,
   collectionHandle = "all",
   productTypeHandle = "all",
+  onSelectHandle,
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -561,78 +747,67 @@ export function BrandFilters({
 
   return (
     <div className="relative mt-4">
-      {/* Mobile Dropdown */}
+      {/* Mobile Bottom Sheet */}
       <div className="sm:hidden">
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full rounded-full border border-neutral-300 bg-white px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-neutral-400 flex justify-between items-center"
+          onClick={() => setIsOpen(true)}
+          className="flex w-full items-center justify-between rounded-full border border-[#e6dcc8] bg-[#fcf8f1] px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-[#c9b07a]"
         >
-          <span>{activeBrand.title}</span>
-          <svg className={`w-5 h-5 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+          <span className="truncate pr-3">{activeBrand.title}</span>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
         </button>
         {isOpen && (
-          <div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg">
-            <div className="py-1">
+          <MobileBottomSheet
+            isOpen={isOpen}
+            title="Brands"
+            onClose={() => setIsOpen(false)}
+          >
               {brands.map((brand) => {
-                const query = new URLSearchParams();
-                if (collectionHandle && collectionHandle !== "all") {
-                  query.set("collection", collectionHandle);
-                }
-                if (brand.handle && brand.handle !== "all") {
-                  query.set("brand", brand.handle);
-                }
-                if (productTypeHandle && productTypeHandle !== "all") {
-                  query.set("type", productTypeHandle);
-                }
-                const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
+                const isActive = brand.handle === activeHandle;
                 return (
-                  <Link
+                  <button
+                    type="button"
                     key={brand.handle}
-                    href={href}
-                    onClick={() => setIsOpen(false)}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => {
+                      onSelectHandle?.(brand.handle);
+                      setIsOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                      isActive
+                        ? "bg-neutral-950 text-white"
+                        : "text-neutral-700 hover:bg-neutral-100"
+                    }`}
                   >
-                    {brand.title}
-                  </Link>
+                    <span>{brand.title}</span>
+                    {isActive ? (
+                      <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : null}
+                  </button>
                 );
               })}
-            </div>
-          </div>
+          </MobileBottomSheet>
         )}
       </div>
 
       {/* Desktop Links */}
-      <div className="hidden sm:flex flex-wrap gap-3">
+      <div className="hidden sm:flex flex-wrap gap-2 lg:flex-nowrap lg:overflow-x-auto lg:pb-1">
         {brands.map((brand) => {
           const isActive = brand.handle === activeHandle;
-          const query = new URLSearchParams();
-
-          if (collectionHandle && collectionHandle !== "all") {
-            query.set("collection", collectionHandle);
-          }
-
-          if (brand.handle && brand.handle !== "all") {
-            query.set("brand", brand.handle);
-          }
-
-          if (productTypeHandle && productTypeHandle !== "all") {
-            query.set("type", productTypeHandle);
-          }
-
-          const href = query.toString() ? `/shop?${query.toString()}` : "/shop";
-
           return (
-            <Link
+            <button
+              type="button"
               key={brand.handle}
-              href={href}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+              onClick={() => onSelectHandle?.(brand.handle)}
+              className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold tracking-[0.04em] transition sm:text-sm ${
                 isActive
-                  ? "bg-neutral-950 text-white"
-                  : "border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400"
+                  ? "bg-neutral-950 text-white shadow-[0_10px_30px_rgba(23,23,23,0.12)]"
+                  : "border border-[#e6dcc8] bg-[#fcf8f1] text-neutral-700 hover:border-[#c9b07a] hover:text-[#7a5a26]"
               }`}
             >
               {brand.title}
-            </Link>
+            </button>
           );
         })}
       </div>
@@ -642,7 +817,7 @@ export function BrandFilters({
 
 export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm">
+    <article className="glossy-card overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm transition hover:shadow-xl">
       <Link href={`/shop/${product.handle}`} className="block">
         <div className="relative h-72 bg-neutral-100">
           {product.image ? (
@@ -995,9 +1170,6 @@ export function Sublistcategory() {
                     }`}
                 >
                   <div>
-                    <p className="text-xs uppercase tracking-wider opacity-70">
-                      Category
-                    </p>
                     <h3 className="text-lg font-semibold">
                       {cat.title}
                     </h3>
@@ -1027,9 +1199,12 @@ export function Sublistcategory() {
           <div className="min-h-[440px] rounded-3xl border p-8 shadow-lg
                           bg-white border-gray-200
                           dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
-            <h2 className="text-2xl font-semibold mb-6 text-[#0b1537] dark:text-[#fde4bc]">
+            <h2 className="text-3xl font-bold mb-2 text-[#0b1537] dark:text-[#fde4bc]">
               {SUB_CATEGORY_DATA[active].title}
             </h2>
+            <p className="text-md mb-8 text-gray-500 dark:text-gray-400">
+                Explore our a wide variety of {SUB_CATEGORY_DATA[active].title.toLowerCase()}
+            </p>
 
             {/* ITEMS */}
             <div className="flex flex-wrap gap-3 mb-8">
@@ -1037,10 +1212,10 @@ export function Sublistcategory() {
                 <span
                   key={item}
                   className="px-4 py-2 text-sm rounded-full
-                             bg-gray-100 text-gray-800
-                             hover:bg-[#fde4bc]
-                             dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700
-                             transition"
+                             border border-gray-200 bg-white text-gray-700
+                             hover:bg-gray-50 hover:border-gray-300
+                             dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-700
+                             transition-colors"
                 >
                   {item}
                 </span>
@@ -1057,7 +1232,7 @@ export function Sublistcategory() {
                   <img
                     src={img}
                     alt=""
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                 </div>
               ))}
@@ -1074,17 +1249,20 @@ function SubCategoryMobileDetails({ cat }) {
     <div className="rounded-2xl border p-5 shadow-sm
                     bg-white border-gray-200
                     dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
-      <h4 className="font-semibold mb-4 text-[#0b1537] dark:text-[#fde4bc]">
+      <h4 className="text-xl font-bold mb-1 text-[#0b1537] dark:text-[#fde4bc]">
         {cat.title}
       </h4>
+      <p className="text-sm mb-4 text-gray-500 dark:text-gray-400">
+        Explore our a wide variety of {cat.title.toLowerCase()}
+      </p>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {cat.items.map((item) => (
           <span
             key={item}
             className="px-3 py-1.5 text-xs rounded-full
-                       bg-gray-100 text-gray-800
-                       dark:bg-slate-800 dark:text-slate-100"
+                       border border-gray-200 bg-white text-gray-700
+                       dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
           >
             {item}
           </span>
@@ -1099,7 +1277,7 @@ function SubCategoryMobileDetails({ cat }) {
           >
             <img
               src={img}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
               alt=""
             />
           </div>

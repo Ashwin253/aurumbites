@@ -10,6 +10,7 @@ import Navbar from "./component/Navbar";
 import ProductCategories from "./component/ProductCategories";
 // import ProductCategories from "./component/ProductCategories";
 import QualityBadges from "./component/QualtiyBadges";
+import { Sublistcategory } from "./shop/ShopUi";
 // import HoverListView from "./component/Sublistcategory";
 
 export default function HomePage() {
@@ -21,8 +22,11 @@ export default function HomePage() {
         <Hero />
         {/* <HoverListView/> */}
         {/* <ProductCategories /> */}
+        <Sublistcategory />
         <Brands/>
+
         <QualityBadges />
+
       </main>
 
       {/* <Footer /> */}

@@ -97,12 +97,22 @@ export default async function ProductDetailPage({ params, searchParams }) {
                       {product.vendor || "Aurum Bites"}
                     </p>
                   </div> */}
-                  <div className="rounded-3xl border border-neutral-200 bg-white p-5">
-                    <p className="text-sm text-neutral-500">Price</p>
-                    <p className="mt-2 text-xl font-semibold text-neutral-950">
-                      {product.price}
-                    </p>
-                  </div>
+                  {product.availableForSale && (
+                    <div className="rounded-3xl border border-neutral-200 bg-white p-5">
+                      <p className="text-sm text-neutral-500">Price</p>
+                      <p className="mt-2 text-xl font-semibold text-neutral-950">
+                        {product.price}
+                      </p>
+                    </div>
+                  )}
+                  {product.weight && (
+                    <div className="rounded-3xl border border-neutral-200 bg-white p-5">
+                      <p className="text-sm text-neutral-500">Weight</p>
+                      <p className="mt-2 text-xl font-semibold text-neutral-950">
+                        {product.weight}
+                      </p>
+                    </div>
+                  )}
                   {/* <div className="rounded-3xl border border-neutral-200 bg-white p-5">
                     <p className="text-sm text-neutral-500">Status</p>
                     <p className="mt-2 text-xl font-semibold text-neutral-950">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useForm, ValidationError } from "@formspree/react";
@@ -418,10 +418,84 @@ export function ShopCatalog({
     });
   };
 
+  const filterRef = useRef(null);
+  const [filterPinned, setFilterPinned] = useState(false);
+  const [stickyExpanded, setStickyExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = filterRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setFilterPinned(!entry.isIntersecting);
+        if (entry.isIntersecting) setStickyExpanded(false);
+      },
+      { threshold: 0, rootMargin: "-1px 0px 0px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const shareAction = () => {
+    if (navigator.share) {
+      navigator.share({ title: "Aurum Bites - Shop", url: window.location.href }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
   return (
     <>
+      {/* Sticky compact filter bar — sits below the navbar */}
+      {filterPinned && !stickyExpanded && (
+        <div className="fixed inset-x-0 top-[70px] z-40 animate-[slideDown_0.25s_ease-out] border-b border-[#e9dfcf] bg-white/90 shadow-md backdrop-blur-md">
+          <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+            <button
+              onClick={() => setStickyExpanded(true)}
+              className="flex items-center gap-2 rounded-full border border-[#e6dcc8] bg-[#fcf8f1] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-[#9a7a3f] transition hover:border-[#c9b07a]"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+              Filters
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={shareAction} className="rounded-full border border-[#e9dfcf] bg-white p-2 text-neutral-600 transition hover:text-[#7a5a26]" aria-label="Share">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              </button>
+              <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="rounded-full border border-[#e9dfcf] bg-white p-2 text-neutral-600 transition hover:text-[#7a5a26]" aria-label="Back to top">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" /></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sticky expanded filter panel — below navbar */}
+      {filterPinned && stickyExpanded && (
+        <div className="fixed inset-x-0 top-[70px] z-40 max-h-[calc(80vh-70px)] overflow-y-auto border-b border-[#e9dfcf] bg-white/95 shadow-lg backdrop-blur-md animate-[slideDown_0.25s_ease-out]">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9a7a3f]">Filter selection</p>
+              <button onClick={() => setStickyExpanded(false)} className="rounded-full border border-neutral-300 px-4 py-1.5 text-xs font-medium text-neutral-700 transition hover:border-neutral-400">Close</button>
+            </div>
+            <div className="flex flex-col gap-4">
+              <CollectionFilters
+                collections={catalog.collections}
+                activeHandle={catalog.activeCollection.handle}
+                onSelectHandle={(handle) => { handleFilterChange({ collectionHandle: handle, brandHandle: "all", productTypeHandle: catalog.activeProductType }); setStickyExpanded(false); }}
+              />
+              <BrandFilters
+                brands={catalog.brands}
+                activeHandle={catalog.activeBrand}
+                onSelectHandle={(handle) => { handleFilterChange({ collectionHandle: catalog.activeCollection.handle, brandHandle: handle, productTypeHandle: catalog.activeProductType }); setStickyExpanded(false); }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4">
-        <div className="rounded-[2rem] border border-[#e9dfcf] bg-white/85 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur">
+        <div ref={filterRef} className="rounded-[2rem] border border-[#e9dfcf] bg-white/85 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur">
           <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -431,16 +505,7 @@ export function ShopCatalog({
               </div>
 
               <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: "Aurum Bites - Shop",
-                      url: window.location.href,
-                    }).catch(() => {});
-                  } else if (navigator.clipboard) {
-                    navigator.clipboard.writeText(window.location.href);
-                  }
-                }}
+                onClick={shareAction}
                 className="flex items-center gap-2 rounded-full border border-[#e9dfcf] bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-600 transition hover:bg-neutral-50 hover:text-[#7a5a26]"
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -892,10 +957,15 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
             >
               {product.title}
             </Link>
+            {product.weight ? (
+              <p className="mt-1 text-sm font-medium text-neutral-500">
+                {product.weight}
+              </p>
+            ) : null}
             {/* <p className="mt-1 text-sm text-neutral-500">{product.featured}</p> */}
           </div>
           <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
-            {product.price}
+            {product.availableForSale ? product.price : "Out of Stock"}
           </span>
         </div>
 

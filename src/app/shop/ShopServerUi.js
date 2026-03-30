@@ -105,6 +105,11 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
             >
               {product.title}
             </Link>
+            {product.weight ? (
+              <p className="mt-1 text-sm font-medium text-[#9a7a3f]/80">
+                {product.weight}
+              </p>
+            ) : null}
           </div>
         </div>
 

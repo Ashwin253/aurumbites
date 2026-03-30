@@ -156,6 +156,8 @@ const SHOP_PAGE_QUERY = `#graphql
             edges {
               node {
                 id
+                weight
+                weightUnit
               }
             }
           }
@@ -223,6 +225,8 @@ const COLLECTION_PRODUCTS_QUERY = `#graphql
               edges {
                 node {
                   id
+                  weight
+                  weightUnit
                 }
               }
             }
@@ -275,6 +279,8 @@ const PRODUCT_QUERY = `#graphql
           node {
             id
             title
+            weight
+            weightUnit
           }
         }
       }
@@ -393,6 +399,13 @@ function getShopifyConfig() {
   };
 }
 
+function formatWeight(variant) {
+  if (!variant?.weight || variant.weight === 0) return null;
+  const unit = (variant.weightUnit || "KILOGRAMS").toLowerCase();
+  const labels = { kilograms: "kg", grams: "g", pounds: "lb", ounces: "oz" };
+  return `${variant.weight} ${labels[unit] || unit}`;
+}
+
 function formatMoney(amount, currencyCode) {
   if (!amount || !currencyCode) {
     return "Request quote";
@@ -477,6 +490,7 @@ function normalizeProduct(node) {
       node.collections?.edges?.map(({ node: collection }) => collection.handle) || [],
     featured: node.tags?.slice(0, 2).join(" | ") || "Shopify storefront item",
     variantId: node.variants?.edges?.[0]?.node?.id || null,
+    weight: formatWeight(node.variants?.edges?.[0]?.node),
   };
 }
 

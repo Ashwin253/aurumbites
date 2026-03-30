@@ -72,10 +72,12 @@ export default function AddToHomeScreenButton() {
       <button
         type="button"
         onClick={handleInstall}
-        className="fixed bottom-4 left-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-neutral-200 bg-white text-xl font-semibold text-neutral-950 shadow-[0_18px_45px_rgba(23,23,23,0.18)] transition hover:scale-[1.03] sm:hidden"
+        className="fixed bottom-4 left-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-950 shadow-[0_18px_45px_rgba(23,23,23,0.18)] transition hover:scale-[1.03] sm:hidden"
         aria-label="Add to home screen"
       >
-        +
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5v14M5 12h14" />
+        </svg>
       </button>
 
       {showHelp ? (

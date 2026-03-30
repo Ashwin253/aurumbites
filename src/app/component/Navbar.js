@@ -3,9 +3,31 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
-  { href: "/", label: "Home", variant: "ghost" },
+  {
+    href: "/",
+    label: "Home",
+    variant: "solid",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-4 w-4"
+      >
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+  },
   {
     href: "/shop",
     label: "Shop",
@@ -54,6 +76,7 @@ const navLinks = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
@@ -84,11 +107,11 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={
-                link.variant === "solid"
-                  ? "flex items-center gap-2 rounded-md border border-[#0c1238] bg-[#ffe8c2] px-5 py-2.5 text-sm font-bold text-black shadow-[0_10px_24px_rgba(212,168,83,0.22)] transition hover:bg-[#f0ddb0]"
-                  : "rounded-full px-4 py-2.5 text-sm font-bold tracking-[0.08em] text-white transition hover:bg-white/8 hover:text-[#f4e5bd]"
-              }
+              className={`flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-bold transition ${
+                pathname === link.href
+                  ? "border border-[#d8c39a] text-white"
+                  : "bg-[#ffe8c2] text-black shadow-[0_10px_24px_rgba(212,168,83,0.22)] hover:bg-[#f0ddb0]"
+              }`}
             >
               {link.icon}
               {link.label}
@@ -130,11 +153,11 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={
-                  link.variant === "solid"
-                    ? "flex items-center justify-center gap-2 rounded-2xl border border-[#cfb57a] bg-[#f4e5bd] px-5 py-3 text-center text-sm font-bold text-[#1d1810] transition hover:bg-[#f0ddb0]"
-                    : "rounded-2xl border border-white/15 bg-white/4 px-5 py-3 text-center text-sm font-bold tracking-[0.08em] text-white transition hover:border-[#cfb57a]/60 hover:text-[#f4e5bd]"
-                }
+                className={`flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-center text-sm font-bold transition ${
+                  pathname === link.href
+                    ? "border border-[#d8c39a] text-white"
+                    : "bg-[#ffe8c2] text-black"
+                }`}
                 onClick={() => setIsOpen(false)}
               >
                 {link.icon}

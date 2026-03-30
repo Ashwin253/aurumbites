@@ -65,9 +65,9 @@ export default async function ShopPage({ searchParams }) {
           <div className="relative mx-auto max-w-7xl px-6 py-10 sm:py-14">
             <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
               <div>
-                <span className="inline-flex rounded-full border border-[#dcc79d] bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#8b6a2c] backdrop-blur">
+                {/* <span className="inline-flex rounded-full border border-[#dcc79d] bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#8b6a2c] backdrop-blur">
                   Aurum Bites Collection
-                </span>
+                </span> */}
                 <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-950 sm:text-5xl">
                   Premium pantry sourcing with a cleaner, faster storefront.
                 </h1>
@@ -92,7 +92,7 @@ export default async function ShopPage({ searchParams }) {
         </section>
 
         <section className="mx-auto max-w-7xl p-3 sm:px-6">
-          <CartNotice status={cartStatus} />
+          {/* <CartNotice status={cartStatus} /> */}
           <ShopCatalog
             initialCatalog={{
               isConfigured,

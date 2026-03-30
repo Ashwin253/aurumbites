@@ -379,6 +379,7 @@ export function ShopCatalog({
   const [redirectTo, setRedirectTo] = useState(initialRedirectTo);
   const [catalogError, setCatalogError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [gridCols, setGridCols] = useState(3);
 
   const handleFilterChange = ({
     collectionHandle = catalog.activeCollection.handle,
@@ -422,23 +423,31 @@ export function ShopCatalog({
       <div className="mt-4">
         <div className="rounded-[2rem] border border-[#e9dfcf] bg-white/85 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur">
           <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9a7a3f]">
                   Filter selection
                 </p>
-                {/* <h2 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-950">
-                  {catalog.activeCollection.title}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  Switch collections and brands from one compact panel.
-                </p> */}
               </div>
-              {/* <p className="text-sm text-neutral-500">
-                {catalog.isConfigured && !catalog.error
-                  ? "Live catalog"
-                  : "Preview catalog while the store connection is being finalized"}
-              </p> */}
+
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: "Aurum Bites - Shop",
+                      url: window.location.href,
+                    }).catch(() => {});
+                  } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(window.location.href);
+                  }
+                }}
+                className="flex items-center gap-2 rounded-full border border-[#e9dfcf] bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-600 transition hover:bg-neutral-50 hover:text-[#7a5a26]"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Share
+              </button>
             </div>
 
             <div>
@@ -460,24 +469,42 @@ export function ShopCatalog({
               />
             </div>
 
-            <div>
-              {/* <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                Brands
-              </p> */}
-              <BrandFilters
-                brands={catalog.brands}
-                activeHandle={catalog.activeBrand}
-                collectionHandle={catalog.activeCollection.handle}
-                productTypeHandle={catalog.activeProductType}
-                onSelectHandle={(handle) =>
-                  handleFilterChange({
-                    collectionHandle: catalog.activeCollection.handle,
-                    brandHandle: handle,
-                    productTypeHandle: catalog.activeProductType,
-                  })
-                }
-              />
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex-1 min-w-0">
+                <BrandFilters
+                  brands={catalog.brands}
+                  activeHandle={catalog.activeBrand}
+                  collectionHandle={catalog.activeCollection.handle}
+                  productTypeHandle={catalog.activeProductType}
+                  onSelectHandle={(handle) =>
+                    handleFilterChange({
+                      collectionHandle: catalog.activeCollection.handle,
+                      brandHandle: handle,
+                      productTypeHandle: catalog.activeProductType,
+                    })
+                  }
+                />
+              </div>
+              <div className="hidden lg:flex items-center gap-3 shrink-0 mt-4">
+                {/* <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Layout</span> */}
+                <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">
+                  {[2, 3, 4].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setGridCols(num)}
+                      className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                        gridCols === num 
+                          ? "bg-neutral-950 text-white shadow-sm" 
+                          : "text-neutral-500 hover:text-neutral-700"
+                      }`}
+                    >
+                      {num} COL
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
+            
           </div>
         </div>
 
@@ -493,7 +520,11 @@ export function ShopCatalog({
             ) : null}
 
             <div
-              className={`grid gap-6 md:grid-cols-2 ${isPending ? "opacity-60" : ""}`}
+              className={`grid gap-6 grid-cols-1 sm:grid-cols-2 ${
+                gridCols === 2 ? "lg:grid-cols-2" : 
+                gridCols === 3 ? "lg:grid-cols-3" : 
+                "lg:grid-cols-4"
+              } ${isPending ? "opacity-60" : ""}`}
               style={{ contentVisibility: "auto", containIntrinsicSize: "900px" }}
             >
               {catalog.products.length > 0 ? (
@@ -820,6 +851,16 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
     <article className="glossy-card overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm transition hover:shadow-xl">
       <Link href={`/shop/${product.handle}`} className="block">
         <div className="relative h-72 bg-neutral-100">
+          <div className="absolute top-4 left-4 z-10">
+            <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${
+              product.availableForSale 
+                ? "bg-emerald-500/90 text-white" 
+                : "bg-amber-500/90 text-white"
+            }`}>
+              {product.availableForSale ? "Available" : "Out of Stock"}
+            </span>
+          </div>
+
           {product.image ? (
             <Image
               src={product.image.url}
@@ -851,7 +892,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
             >
               {product.title}
             </Link>
-            <p className="mt-1 text-sm text-neutral-500">{product.featured}</p>
+            {/* <p className="mt-1 text-sm text-neutral-500">{product.featured}</p> */}
           </div>
           <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
             {product.price}
@@ -862,7 +903,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
           {product.description || "Product details will appear here."}
         </p> */}
 
-        <div className="flex items-center justify-between border-t border-neutral-200 pt-4 text-sm">
+        {/* <div className="flex items-center justify-between border-t border-neutral-200 pt-4 text-sm">
           <span
             className={
               product.availableForSale
@@ -875,7 +916,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
           <span className="text-neutral-500">
             {product.tags?.slice(0, 2).join(" | ") || "Catalog item"}
           </span>
-        </div>
+        </div> */}
 
         <div className="flex gap-3">
           <Link
@@ -884,18 +925,34 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
           >
             View details
           </Link>
-          <form action={addToCartAction} className="flex-1">
-            <input type="hidden" name="handle" value={product.handle} />
-            <input type="hidden" name="variantId" value={product.variantId || ""} />
-            <input type="hidden" name="redirectTo" value={redirectTo} />
-            <input type="hidden" name="quantity" value="1" />
-            <button
-              type="submit"
-              className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
-            >
-              {isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}
-            </button>
-          </form>
+          <div className="flex-1">
+            {product.availableForSale ? (
+              <form action={addToCartAction}>
+                <input type="hidden" name="handle" value={product.handle} />
+                <input type="hidden" name="variantId" value={product.variantId || ""} />
+                <input type="hidden" name="redirectTo" value={redirectTo} />
+                <input type="hidden" name="quantity" value="1" />
+                <button
+                  type="submit"
+                  className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
+                >
+                  {isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}
+                </button>
+              </form>
+            ) : (
+              <a
+                href={`https://wa.me/919654979085?text=${encodeURIComponent(`Hi, I'm interested in ${product.title} for bulk quick order. Please notify me when it's back in stock.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-[#20bd5c] shadow-sm"
+              >
+                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                </svg>
+                Notify for Bulk
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </article>

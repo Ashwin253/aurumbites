@@ -82,3 +82,12 @@ body {
 .brands-carousel-track:hover {
   animation-play-state: paused;
 }
+
+.businesses-carousel-track {
+  animation: brands-carousel-scroll 42s linear infinite reverse;
+  will-change: transform;
+}
+
+.businesses-carousel-track:hover {
+  animation-play-state: paused;
+}

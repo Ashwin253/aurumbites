@@ -5,6 +5,7 @@
 // import Footer from "@/components/Footer";
 
 import Brands from "./component/Brands";
+import BusinessesTrustUs from "./component/BusinessesTrustUs";
 import Footer from "./component/Footer";
 import Hero from "./component/Hero";
 import Navbar from "./component/Navbar";
@@ -18,13 +19,14 @@ export default function HomePage() {
   return (
     <>
       <Navbar />
-
+<link rel="icon" href="/favicon.ico" sizes="any" />
       <main>
         <Hero />
         {/* <HoverListView/> */}
         {/* <ProductCategories /> */}
         <Sublistcategory />
         <Brands/>
+        <BusinessesTrustUs />
 
         <QualityBadges />
 

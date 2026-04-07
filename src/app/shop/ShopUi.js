@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useForm, ValidationError } from "@formspree/react";
 import { createPortal } from "react-dom";
-import { addToCartAction, removeFromCartAction } from "./actions";
+import { addToCartAction } from "./actions";
+import { addToCart, removeFromCart, decreaseCartQuantity } from "./actions";
 
 const FILTER_LOGO_MAP = {
   president: "/brands/president.jpg",
@@ -14,10 +15,13 @@ const FILTER_LOGO_MAP = {
   moderndairy: "/brands/moderndairy.jpg",
   "pasta zara": "/brands/pastazara.jpg",
   pastazara: "/brands/pastazara.jpg",
-  "dairy craft": "/brands/dairycraft.png",
+  "dairy craft": "/brands/dairycraft.jpg",
   dlecta: "/brands/dlecta.jpg",
   amul: "/brands/amul.jpg",
   Prabhat: "/brands/prabhatdairy.png",
+  "elle & vire": "/brands/ellevire.jpg",
+  Rich: "/brands/richs.svg",
+  Fries: "/products/fries.jpg",
 };
 
 function getFilterLogo(item) {
@@ -1035,7 +1039,9 @@ export function CartPanel({
   redirectTo,
   className = "",
   isEnquiryOnly = false,
+  onCartChange,
 }) {
+  const [isPending, startTransition] = useTransition();
   const shouldUseLargeOrderForm = !isEnquiryOnly && isLargeOrder(cart);
   const infoBoxClassName = shouldUseLargeOrderForm
     ? "border-amber-200 bg-amber-50 text-amber-900"
@@ -1049,6 +1055,38 @@ export function CartPanel({
     : isConfigured
     ? "This cart is eligible for Shopify checkout. Use Continue to checkout to complete the order online."
     : "Shopify checkout is not available yet because the store connection is still using preview mode.";
+
+  const handleAdd = (line) => {
+    startTransition(async () => {
+      const result = await addToCart({
+        handle: line.productHandle,
+        variantId: line.merchandiseId || "",
+        quantity: 1,
+      });
+      if (onCartChange) onCartChange(result);
+    });
+  };
+
+  const handleDecrease = (line) => {
+    startTransition(async () => {
+      const result = await decreaseCartQuantity({
+        lineId: line.id,
+        handle: line.productHandle,
+        currentQuantity: line.quantity,
+      });
+      if (onCartChange) onCartChange(result);
+    });
+  };
+
+  const handleRemove = (line) => {
+    startTransition(async () => {
+      const result = await removeFromCart({
+        lineId: line.id,
+        handle: line.productHandle,
+      });
+      if (onCartChange) onCartChange(result);
+    });
+  };
 
   return (
     <aside
@@ -1086,7 +1124,7 @@ export function CartPanel({
         {infoMessage}
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className={`mt-6 space-y-4 ${isPending ? "opacity-60 pointer-events-none" : ""}`}>
         {cart.lines.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
             Add a product to start your enquiry.
@@ -1095,27 +1133,49 @@ export function CartPanel({
           cart.lines.map((line) => (
             <div
               key={line.id}
-              className="flex items-start justify-between gap-4 rounded-2xl border border-neutral-200 p-4"
+              className="rounded-2xl border border-neutral-200 p-4"
             >
-              <div>
-                <p className="font-medium text-neutral-950">{line.title}</p>
-                <p className="mt-1 text-sm text-neutral-500">
-                  Qty {line.quantity}
-                  {line.variantTitle ? ` | ${line.variantTitle}` : ""}
-                </p>
-                <p className="mt-1 text-sm text-neutral-700">{line.price}</p>
-              </div>
-              <form action={removeFromCartAction}>
-                <input type="hidden" name="lineId" value={line.id} />
-                <input type="hidden" name="handle" value={line.productHandle} />
-                <input type="hidden" name="redirectTo" value={redirectTo} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-neutral-950">{line.title}</p>
+                  {line.variantTitle && line.variantTitle !== "Default Title" && line.variantTitle !== "Preview item" ? (
+                    <p className="mt-0.5 text-xs text-neutral-500">{line.variantTitle}</p>
+                  ) : null}
+                  <p className="mt-1 text-sm text-neutral-700">{line.price}</p>
+                </div>
                 <button
-                  type="submit"
-                  className="text-sm font-medium text-neutral-500 transition hover:text-neutral-900"
+                  type="button"
+                  onClick={() => handleRemove(line)}
+                  disabled={isPending}
+                  className="rounded-full p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900"
+                  aria-label={`Remove ${line.title}`}
                 >
-                  Remove
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
-              </form>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDecrease(line)}
+                  disabled={isPending}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span className="min-w-[2rem] text-center text-sm font-semibold text-neutral-950">
+                  {line.quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleAdd(line)}
+                  disabled={isPending}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -1124,7 +1184,7 @@ export function CartPanel({
       <div className="mt-6">
         {shouldUseLargeOrderForm ? (
           <LargeOrderCartForm cart={cart} />
-        ) : !isEnquiryOnly && isConfigured && cart.checkoutUrl ? (
+        ) : !isEnquiryOnly && isConfigured && cart.checkoutUrl && cart.totalQuantity > 0 ? (
           <a
             href={cart.checkoutUrl}
             target="_blank"
@@ -1133,6 +1193,10 @@ export function CartPanel({
           >
             Continue to checkout
           </a>
+        ) : cart.totalQuantity === 0 ? (
+          <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
+            Add a product to get started.
+          </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
             Add more items to continue.
@@ -1261,7 +1325,7 @@ const SUB_CATEGORY_DATA = [
       "Olives",
       "Olive Oil",
     ],
-    images: ["/img/fries.jpg", "/img/penne.jpg", "/img/spaghetti.jpg"],
+    images: ["/products/fries.jpg", "/products/Farfalle.jpg", "/products/spaghetti.jpg"],
   },
 ];
 

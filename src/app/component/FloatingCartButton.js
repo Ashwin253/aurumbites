@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CartPanel } from "../shop/ShopUi";
+import { getCartState } from "../shop/actions";
 
 function buildRedirectTarget(pathname, searchParams) {
-  const query = searchParams?.toString();
+  const cleaned = new URLSearchParams(searchParams?.toString());
+  cleaned.delete("cart");
+  const query = cleaned.toString();
   return query ? `${pathname}?${query}` : pathname;
 }
 
 export default function FloatingCartButton({
-  cart,
-  isConfigured,
+  cart: initialCart,
+  isConfigured: initialIsConfigured,
   isEnquiryOnly,
 }) {
+  const [cart, setCart] = useState(initialCart);
+  const [isConfigured, setIsConfigured] = useState(initialIsConfigured);
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -22,9 +27,28 @@ export default function FloatingCartButton({
     [pathname, searchParams]
   );
 
+  // When a product card form triggers a redirect (adds ?cart= param), refresh cart
+  const cartParam = searchParams?.get("cart");
+  useEffect(() => {
+    if (!cartParam) return;
+    getCartState().then((state) => {
+      setCart(state.cart);
+      setIsConfigured(state.isConfigured);
+    });
+  }, [cartParam]);
+
+  // Callback for CartPanel's inline actions (no page refresh needed)
+  const handleCartChange = useCallback((result) => {
+    if (result?.cart) {
+      setCart(result.cart);
+    }
+    if (result?.isConfigured !== undefined) {
+      setIsConfigured(result.isConfigured);
+    }
+  }, []);
+
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
-
     return () => {
       document.body.style.overflow = "";
     };
@@ -94,6 +118,7 @@ export default function FloatingCartButton({
               isConfigured={isConfigured}
               redirectTo={redirectTo}
               isEnquiryOnly={isEnquiryOnly}
+              onCartChange={handleCartChange}
               className="border-none bg-transparent p-0 shadow-none"
             />
           </div>

@@ -146,18 +146,38 @@ const SHOP_PAGE_QUERY = `#graphql
             width
             height
           }
+          images(first: 10) {
+            edges {
+              node {
+                url
+                altText
+                width
+                height
+              }
+            }
+          }
           priceRange {
             minVariantPrice {
               amount
               currencyCode
             }
           }
-          variants(first: 1) {
+          variants(first: 20) {
             edges {
               node {
                 id
+                title
+                availableForSale
+                price {
+                  amount
+                  currencyCode
+                }
                 weight
                 weightUnit
+                selectedOptions {
+                  name
+                  value
+                }
               }
             }
           }
@@ -215,18 +235,38 @@ const COLLECTION_PRODUCTS_QUERY = `#graphql
               width
               height
             }
+            images(first: 10) {
+              edges {
+                node {
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+            }
             priceRange {
               minVariantPrice {
                 amount
                 currencyCode
               }
             }
-            variants(first: 1) {
+            variants(first: 20) {
               edges {
                 node {
                   id
+                  title
+                  availableForSale
+                  price {
+                    amount
+                    currencyCode
+                  }
                   weight
                   weightUnit
+                  selectedOptions {
+                    name
+                    value
+                  }
                 }
               }
             }
@@ -268,19 +308,38 @@ const PRODUCT_QUERY = `#graphql
         width
         height
       }
+      images(first: 10) {
+        edges {
+          node {
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
       priceRange {
         minVariantPrice {
           amount
           currencyCode
         }
       }
-      variants(first: 1) {
+      variants(first: 20) {
         edges {
           node {
             id
             title
+            availableForSale
+            price {
+              amount
+              currencyCode
+            }
             weight
             weightUnit
+            selectedOptions {
+              name
+              value
+            }
           }
         }
       }
@@ -382,6 +441,20 @@ const CART_LINES_REMOVE_MUTATION = `#graphql
   }
 `;
 
+const CART_LINES_UPDATE_MUTATION = `#graphql
+  mutation CartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+    cartLinesUpdate(cartId: $cartId, lines: $lines) {
+      cart {
+        id
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
 function getShopifyConfig() {
   const storeDomain =
     process.env.SHOPIFY_STORE_DOMAIN || process.env.PUBLIC_STORE_DOMAIN;
@@ -461,9 +534,34 @@ function normalizeCollection(collection) {
   };
 }
 
+function normalizeImage(img, fallbackAlt = "") {
+  return {
+    url: img.url,
+    altText: img.altText || fallbackAlt,
+    width: img.width || 800,
+    height: img.height || 800,
+  };
+}
+
+function normalizeVariant(v) {
+  return {
+    id: v.id,
+    title: v.title || "Default",
+    availableForSale: v.availableForSale ?? true,
+    price: formatMoney(v.price?.amount, v.price?.currencyCode),
+    amount: v.price?.amount ? Number(v.price.amount) : null,
+    currencyCode: v.price?.currencyCode || "",
+    weight: formatWeight(v),
+    selectedOptions: v.selectedOptions || [],
+  };
+}
+
 function normalizeProduct(node) {
   const amount = node.priceRange?.minVariantPrice?.amount || null;
   const currencyCode = node.priceRange?.minVariantPrice?.currencyCode || "";
+  const variants = (node.variants?.edges || []).map(({ node: v }) => normalizeVariant(v));
+  const images = (node.images?.edges || []).map(({ node: img }) => normalizeImage(img, node.title));
+  const firstVariant = variants[0] || null;
 
   return {
     id: node.id,
@@ -475,13 +573,9 @@ function normalizeProduct(node) {
     longDescription: node.descriptionHtml || node.description,
     availableForSale: node.availableForSale,
     image: node.featuredImage
-      ? {
-          url: node.featuredImage.url,
-          altText: node.featuredImage.altText || node.title,
-          width: node.featuredImage.width || 800,
-          height: node.featuredImage.height || 800,
-        }
+      ? normalizeImage(node.featuredImage, node.title)
       : null,
+    images,
     price: formatMoney(amount, currencyCode),
     amount,
     currencyCode,
@@ -489,8 +583,9 @@ function normalizeProduct(node) {
     collectionHandles:
       node.collections?.edges?.map(({ node: collection }) => collection.handle) || [],
     featured: node.tags?.slice(0, 2).join(" | ") || "Shopify storefront item",
-    variantId: node.variants?.edges?.[0]?.node?.id || null,
-    weight: formatWeight(node.variants?.edges?.[0]?.node),
+    variantId: firstVariant?.id || null,
+    variants,
+    weight: firstVariant?.weight || null,
   };
 }
 
@@ -940,6 +1035,24 @@ export async function removeLinesFromCart({ cartId, lineIds }) {
   }
 
   return removed.cartLinesRemove.cart.id;
+}
+
+export async function updateCartLines({ cartId, lines }) {
+  if (!cartId || lines.length === 0) {
+    return cartId;
+  }
+
+  const updated = await storefrontRequest(
+    CART_LINES_UPDATE_MUTATION,
+    { cartId, lines },
+    { cache: "no-store" }
+  );
+  const cartErrors = updated.cartLinesUpdate.userErrors || [];
+  if (cartErrors.length > 0) {
+    throw new Error(cartErrors[0].message);
+  }
+
+  return updated.cartLinesUpdate.cart.id;
 }
 
 export function getShopifySetup() {

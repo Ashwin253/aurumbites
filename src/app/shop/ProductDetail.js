@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { addToCartAction } from "./actions";
+import { addToCart } from "./actions";
+import { useCartChange } from "./CartContext";
 
 export function ImageCarousel({ images }) {
   const [active, setActive] = useState(0);
@@ -65,9 +66,26 @@ export function ImageCarousel({ images }) {
 
 export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const onCartChange = useCartChange();
   const selected = variants[selectedIdx];
   const hasMultiple = variants.length > 1;
   const isDefault = variants.length === 1 && variants[0].title === "Default Title";
+
+  const handleAdd = async () => {
+    setAdding(true);
+    try {
+      const result = await addToCart({
+        handle,
+        variantId: selected.id,
+        quantity: qty,
+      });
+      if (onCartChange) onCartChange(result);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -111,32 +129,32 @@ export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly })
         )}
       </div>
 
-      <form action={addToCartAction} className="flex flex-col gap-4 sm:flex-row">
-        <input type="hidden" name="handle" value={handle} />
-        <input type="hidden" name="variantId" value={selected.id} />
-        <input type="hidden" name="redirectTo" value={redirectTo} />
+      <div className="flex flex-col gap-4 sm:flex-row">
         <label className="flex items-center gap-3 rounded-full border border-neutral-300 px-4 py-3 text-sm text-neutral-700">
           <span>Qty</span>
           <input
             type="number"
-            name="quantity"
             min="1"
-            defaultValue="1"
+            value={qty}
+            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
             className="w-16 bg-transparent outline-none"
           />
         </label>
         <button
-          type="submit"
-          disabled={!selected.availableForSale}
+          type="button"
+          onClick={handleAdd}
+          disabled={!selected.availableForSale || adding}
           className="rounded-full bg-neutral-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
         >
-          {!selected.availableForSale
+          {adding
+            ? "Adding…"
+            : !selected.availableForSale
             ? "Unavailable"
             : isEnquiryOnly
             ? "Add to enquiry"
             : "Add to cart"}
         </button>
-      </form>
+      </div>
     </div>
   );
 }

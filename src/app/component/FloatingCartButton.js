@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CartPanel } from "../shop/ShopUi";
+import { CartProvider } from "../shop/CartContext";
 import { getCartState } from "../shop/actions";
 
 function buildRedirectTarget(pathname, searchParams) {
@@ -12,14 +13,29 @@ function buildRedirectTarget(pathname, searchParams) {
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function CartToast({ message, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <div className="fixed top-20 left-1/2 z-[100] -translate-x-1/2 animate-[slideDown_0.25s_ease-out] rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-medium text-emerald-900 shadow-lg">
+      {message}
+    </div>
+  );
+}
+
 export default function FloatingCartButton({
-  cart: initialCart,
-  isConfigured: initialIsConfigured,
+  cart: serverCart,
+  isConfigured: serverIsConfigured,
   isEnquiryOnly,
+  children,
 }) {
-  const [cart, setCart] = useState(initialCart);
-  const [isConfigured, setIsConfigured] = useState(initialIsConfigured);
+  const [cart, setCart] = useState(serverCart);
+  const [isConfigured, setIsConfigured] = useState(serverIsConfigured);
   const [isOpen, setIsOpen] = useState(false);
+  const [toast, setToast] = useState(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const redirectTo = useMemo(
@@ -27,35 +43,56 @@ export default function FloatingCartButton({
     [pathname, searchParams]
   );
 
-  // When a product card form triggers a redirect (adds ?cart= param), refresh cart
+  // Keep in sync with server-rendered props
+  const prevServerCart = useRef(serverCart);
+  useEffect(() => {
+    if (prevServerCart.current !== serverCart) {
+      prevServerCart.current = serverCart;
+      setCart(serverCart);
+      setIsConfigured(serverIsConfigured);
+    }
+  }, [serverCart, serverIsConfigured]);
+
+  // Refresh via server action when ?cart= param appears (legacy redirect flows)
   const cartParam = searchParams?.get("cart");
   useEffect(() => {
     if (!cartParam) return;
+    let cancelled = false;
     getCartState().then((state) => {
-      setCart(state.cart);
-      setIsConfigured(state.isConfigured);
+      if (!cancelled) {
+        setCart(state.cart);
+        setIsConfigured(state.isConfigured);
+      }
     });
-  }, [cartParam]);
+    return () => { cancelled = true; };
+  }, [cartParam, pathname]);
 
-  // Callback for CartPanel's inline actions (no page refresh needed)
+  // Shared callback — used by CartPanel and ProductCard via context
   const handleCartChange = useCallback((result) => {
-    if (result?.cart) {
-      setCart(result.cart);
-    }
-    if (result?.isConfigured !== undefined) {
-      setIsConfigured(result.isConfigured);
-    }
+    if (result?.cart) setCart(result.cart);
+    if (result?.isConfigured !== undefined) setIsConfigured(result.isConfigured);
+
+    const messages = {
+      added: "Added to cart",
+      removed: "Removed from cart",
+      updated: "Cart updated",
+      error: "Something went wrong",
+    };
+    const msg = messages[result?.status];
+    if (msg) setToast(msg);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
   return (
-    <>
+    <CartProvider onCartChange={handleCartChange}>
+      {children}
+
+      {toast ? <CartToast message={toast} onDone={() => setToast(null)} /> : null}
+
       <button
         type="button"
         onClick={() => setIsOpen(true)}
@@ -124,6 +161,6 @@ export default function FloatingCartButton({
           </div>
         </>
       ) : null}
-    </>
+    </CartProvider>
   );
 }

@@ -25,6 +25,10 @@ export const brandsData = [
   {
     name:"amul",
     src:"/brands/amul.jpg",
+  },
+  {
+    name:" Modern Dairy",
+    src:"/brands/moderndary.png",
   }
 ];
 

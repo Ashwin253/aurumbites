@@ -32,12 +32,13 @@ export default async function RootLayout({ children }) {
   return (
      <html lang="en">
       <body className="bg-neutral-50 text-neutral-900">
-        {children}
         <FloatingCartButton
           cart={cartState.cart}
           isConfigured={cartState.isConfigured}
           isEnquiryOnly={storefrontMode.isEnquiryOnly}
-        />
+        >
+          {children}
+        </FloatingCartButton>
         <AddToHomeScreenButton />
       </body>
     </html>

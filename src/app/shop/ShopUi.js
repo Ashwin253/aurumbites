@@ -5,22 +5,23 @@ import Image from "next/image";
 import Link from "next/link";
 import { useForm, ValidationError } from "@formspree/react";
 import { createPortal } from "react-dom";
-import { addToCartAction } from "./actions";
 import { addToCart, removeFromCart, decreaseCartQuantity } from "./actions";
+import { useCartChange } from "./CartContext";
 
 const FILTER_LOGO_MAP = {
   president: "/brands/president.jpg",
   cremeitalia: "/brands/cremeitalia.jpg",
-  "modern dairy": "/brands/moderndairy.jpg",
-  moderndairy: "/brands/moderndairy.jpg",
+  "modern dairies": "/brands/moderndary.png",
+  moderndairy: "/brands/moderndary.png",
   "pasta zara": "/brands/pastazara.jpg",
   pastazara: "/brands/pastazara.jpg",
   "dairy craft": "/brands/dairycraft.jpg",
   dlecta: "/brands/dlecta.jpg",
   amul: "/brands/amul.jpg",
-  Prabhat: "/brands/prabhatdairy.png",
-  "elle & vire": "/brands/ellevire.jpg",
-  Rich: "/brands/richs.svg",
+  // Prabhat: "/brands/prabhat.png",
+  prabhat:"/brands/prabhat.png",
+  "elle & vire": "/brands/elleandvire.jpeg",
+  rich: "/brands/richs.jpeg",
   Fries: "/products/fries.jpg",
 };
 
@@ -144,6 +145,7 @@ function LargeOrderCartForm({ cart }) {
   const [contactDetails, setContactDetails] = useState({
     name: "",
     phone: "",
+    pincode: "",
   });
 
   if (state.succeeded) {
@@ -222,10 +224,37 @@ function LargeOrderCartForm({ cart }) {
             />
           </div>
 
+          <div>
+            <label
+              htmlFor="cart-order-pincode"
+              className="block text-sm font-medium text-neutral-700"
+            >
+              Pincode
+            </label>
+            <input
+              id="cart-order-pincode"
+              name="pincode_preview"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              required
+              placeholder="e.g. 110001"
+              value={contactDetails.pincode}
+              onChange={(event) =>
+                setContactDetails((current) => ({
+                  ...current,
+                  pincode: event.target.value.replace(/\D/g, "").slice(0, 6),
+                }))
+              }
+              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            />
+          </div>
+
           <button
             type="button"
             onClick={() => setStep(2)}
-            disabled={!contactDetails.name.trim() || !contactDetails.phone.trim()}
+            disabled={!contactDetails.name.trim() || !contactDetails.phone.trim() || contactDetails.pincode.length !== 6}
             className="inline-flex w-full items-center justify-center rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
           >
             Next
@@ -235,6 +264,7 @@ function LargeOrderCartForm({ cart }) {
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <input type="hidden" name="name" value={contactDetails.name} />
           <input type="hidden" name="phone" value={contactDetails.phone} />
+          <input type="hidden" name="pincode" value={contactDetails.pincode} />
           <input type="hidden" name="cart_summary" value={cartSummary} />
           <input type="hidden" name="order_total" value={cart.subtotal || ""} />
           <input type="hidden" name="total_items" value={String(cart.totalQuantity)} />
@@ -242,6 +272,7 @@ function LargeOrderCartForm({ cart }) {
           <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm text-neutral-700">
             <p className="font-medium text-neutral-900">{contactDetails.name}</p>
             <p className="mt-1">{contactDetails.phone}</p>
+            <p className="mt-1 text-neutral-500">Pincode: {contactDetails.pincode}</p>
           </div>
 
           <div className="rounded-2xl border border-amber-200 bg-white p-4">
@@ -441,10 +472,27 @@ export function ShopCatalog({
   }, []);
 
   const shareAction = () => {
+    const collectionAll = !catalog.activeCollection?.handle || catalog.activeCollection.handle === "all";
+    const brandAll = !catalog.activeBrand || catalog.activeBrand === "all";
+    const collectionTitle = catalog.activeCollection?.title || "All";
+    const brandTitle = catalog.brands?.find((b) => b.handle === catalog.activeBrand)?.title;
+
+    let text;
+    if (collectionAll && brandAll) {
+      text = "Finest Gourmet few taps away";
+    } else if (!brandAll && !collectionAll) {
+      text = `Find ${collectionTitle} for ${brandTitle}`;
+    } else if (!collectionAll) {
+      text = `Find ${collectionTitle} at attractive prices`;
+    } else {
+      text = `Find products for ${brandTitle} at attractive prices`;
+    }
+
+    const url = window.location.href;
     if (navigator.share) {
-      navigator.share({ title: "Aurum Bites - Shop", url: window.location.href }).catch(() => {});
+      navigator.share({ title: "Aurum Bites - Shop", text, url }).catch(() => {});
     } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(`${text}\n${url}`);
     }
   };
 
@@ -588,29 +636,13 @@ export function ShopCatalog({
               <div className="pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-[#f7f1e5]/70 backdrop-blur-[2px]" />
             ) : null}
 
-            <div
-              className={`grid gap-6 grid-cols-1 sm:grid-cols-2 ${
-                gridCols === 2 ? "lg:grid-cols-2" : 
-                gridCols === 3 ? "lg:grid-cols-3" : 
-                "lg:grid-cols-4"
-              } ${isPending ? "opacity-60" : ""}`}
-              style={{ contentVisibility: "auto", containIntrinsicSize: "900px" }}
-            >
-              {catalog.products.length > 0 ? (
-                catalog.products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    redirectTo={redirectTo}
-                    isEnquiryOnly={storefrontMode.isEnquiryOnly}
-                  />
-                ))
-              ) : (
-                <div className="rounded-[2rem] border border-dashed border-neutral-300 bg-white/90 p-10 text-neutral-600">
-                  No products were found in this collection yet.
-                </div>
-              )}
-            </div>
+            <ProductGrid
+              products={catalog.products}
+              redirectTo={redirectTo}
+              isEnquiryOnly={storefrontMode.isEnquiryOnly}
+              gridCols={gridCols}
+              isPending={isPending}
+            />
           </div>
       </div>
     </>
@@ -915,7 +947,187 @@ export function BrandFilters({
   );
 }
 
+const BATCH_SIZE = 4;
+
+function ProductSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm animate-pulse">
+      <div className="h-72 bg-neutral-200" />
+      <div className="space-y-4 p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-20 rounded-full bg-neutral-200" />
+            <div className="h-5 w-40 rounded-full bg-neutral-200" />
+          </div>
+          <div className="h-7 w-16 rounded-full bg-neutral-200" />
+        </div>
+        <div className="flex gap-3">
+          <div className="h-12 flex-1 rounded-full bg-neutral-200" />
+          <div className="h-12 flex-1 rounded-full bg-neutral-200" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending }) {
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const sentinelRef = useRef(null);
+
+  // Reset visible count when products change (filter switch)
+  const productKey = products.map((p) => p.id).join(",");
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [productKey]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, products.length));
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [products.length, visibleCount]);
+
+  const visible = products.slice(0, visibleCount);
+  const hasMore = visibleCount < products.length;
+  const skeletonCount = Math.min(BATCH_SIZE, products.length - visibleCount);
+
+  const gridClass = `grid gap-6 grid-cols-1 sm:grid-cols-2 ${
+    gridCols === 2 ? "lg:grid-cols-2" :
+    gridCols === 3 ? "lg:grid-cols-3" :
+    "lg:grid-cols-4"
+  }`;
+
+  if (products.length === 0) {
+    return (
+      <div className="rounded-[2rem] border border-dashed border-neutral-300 bg-white/90 p-10 text-neutral-600">
+        No products were found in this collection yet.
+      </div>
+    );
+  }
+
+  if (isPending) {
+    return (
+      <div className={gridClass}>
+        {Array.from({ length: BATCH_SIZE }).map((_, i) => (
+          <ProductSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className={gridClass}>
+        {visible.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            redirectTo={redirectTo}
+            isEnquiryOnly={isEnquiryOnly}
+          />
+        ))}
+        {hasMore
+          ? Array.from({ length: skeletonCount }).map((_, i) => (
+              <ProductSkeleton key={`skel-${i}`} />
+            ))
+          : null}
+      </div>
+      {hasMore ? <div ref={sentinelRef} className="h-1" /> : null}
+    </>
+  );
+}
+
+function NotifyPopup({ productTitle, onClose }) {
+  const [name, setName] = useState("");
+  const [pincode, setPincode] = useState("");
+
+  const isValid = name.trim() && pincode.length === 6;
+
+  const handleSend = () => {
+    const msg = `Hi, I'm ${name.trim()} from pincode ${pincode}. I'm interested in ${productTitle} for bulk order. Please notify me when it's back in stock.`;
+    window.open(
+      `https://wa.me/919654979085?text=${encodeURIComponent(msg)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+    onClose();
+  };
+
+  return createPortal(
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-[95] bg-black/45 backdrop-blur-[2px]"
+        aria-label="Close notify popup"
+        onClick={onClose}
+      />
+      <div className="fixed inset-x-4 top-1/2 z-[96] max-w-sm mx-auto -translate-y-1/2 rounded-3xl border border-neutral-200 bg-white p-6 shadow-2xl animate-[slideDown_0.2s_ease-out]">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold text-neutral-900">Notify me for {productTitle}</p>
+          <button type="button" onClick={onClose} className="rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600 hover:border-neutral-400">Close</button>
+        </div>
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          />
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Pincode (e.g. 110001)"
+            maxLength={6}
+            value={pincode}
+            onChange={(e) => setPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={!isValid}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#20bd5c] disabled:opacity-50"
+        >
+          <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+          </svg>
+          Send via WhatsApp
+        </button>
+      </div>
+    </>,
+    document.body
+  );
+}
+
 export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
+  const onCartChange = useCartChange();
+  const [adding, setAdding] = useState(false);
+  const [showNotify, setShowNotify] = useState(false);
+
+  const handleAdd = async () => {
+    setAdding(true);
+    try {
+      const result = await addToCart({
+        handle: product.handle,
+        variantId: product.variantId || "",
+        quantity: 1,
+      });
+      if (onCartChange) onCartChange(result);
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <article className="glossy-card overflow-hidden rounded-[2rem] border border-neutral-200 bg-white shadow-sm transition hover:shadow-xl">
       <Link href={`/shop/${product.handle}`} className="block">
@@ -966,31 +1178,11 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
                 {product.weight}
               </p>
             ) : null}
-            {/* <p className="mt-1 text-sm text-neutral-500">{product.featured}</p> */}
           </div>
           <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
             {product.availableForSale ? product.price : "Out of Stock"}
           </span>
         </div>
-
-        {/* <p className="min-h-16 text-sm leading-6 text-neutral-600">
-          {product.description || "Product details will appear here."}
-        </p> */}
-
-        {/* <div className="flex items-center justify-between border-t border-neutral-200 pt-4 text-sm">
-          <span
-            className={
-              product.availableForSale
-                ? "font-medium text-emerald-700"
-                : "font-medium text-amber-700"
-            }
-          >
-            {product.availableForSale ? "Available" : "Unavailable"}
-          </span>
-          <span className="text-neutral-500">
-            {product.tags?.slice(0, 2).join(" | ") || "Catalog item"}
-          </span>
-        </div> */}
 
         <div className="flex gap-3">
           <Link
@@ -1001,30 +1193,37 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
           </Link>
           <div className="flex-1">
             {product.availableForSale ? (
-              <form action={addToCartAction}>
-                <input type="hidden" name="handle" value={product.handle} />
-                <input type="hidden" name="variantId" value={product.variantId || ""} />
-                <input type="hidden" name="redirectTo" value={redirectTo} />
-                <input type="hidden" name="quantity" value="1" />
-                <button
-                  type="submit"
-                  className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
-                >
-                  {isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}
-                </button>
-              </form>
-            ) : (
-              <a
-                href={`https://wa.me/919654979085?text=${encodeURIComponent(`Hi, I'm interested in ${product.title} for bulk quick order. Please notify me when it's back in stock.`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-[#20bd5c] shadow-sm"
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={adding}
+                className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-60"
               >
-                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                </svg>
-                Notify for Bulk
-              </a>
+                {adding
+                  ? "Adding…"
+                  : isEnquiryOnly
+                  ? "Proceed to enquire"
+                  : "Add to cart"}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowNotify(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-center text-sm font-medium text-white transition hover:bg-[#20bd5c] shadow-sm"
+                >
+                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                  </svg>
+                  Notify for Bulk
+                </button>
+                {showNotify ? (
+                  <NotifyPopup
+                    productTitle={product.title}
+                    onClose={() => setShowNotify(false)}
+                  />
+                ) : null}
+              </>
             )}
           </div>
         </div>

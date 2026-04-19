@@ -39,15 +39,15 @@ function buildShopHref({
 }) {
   const query = new URLSearchParams();
 
-  if (collectionHandle && collectionHandle !== "all") {
+  if (collectionHandle) {
     query.set("collection", collectionHandle);
   }
 
-  if (brandHandle && brandHandle !== "all") {
+  if (brandHandle) {
     query.set("brand", brandHandle);
   }
 
-  if (productTypeHandle && productTypeHandle !== "all") {
+  if (productTypeHandle) {
     query.set("type", productTypeHandle);
   }
 
@@ -141,6 +141,8 @@ function buildCartSummary(cart) {
 function LargeOrderCartForm({ cart }) {
   const [state, handleSubmit] = useForm("meeogqqd");
   const [step, setStep] = useState(1);
+  const CONTACT_NUMBERS = ["919654979085", "919654979085"]; // Both support numbers
+
   const cartSummary = buildCartSummary(cart);
   const [contactDetails, setContactDetails] = useState({
     name: "",
@@ -308,6 +310,37 @@ function LargeOrderCartForm({ cart }) {
               {state.submitting ? "Sending..." : "Proceed to enquire"}
             </button>
           </div>
+
+        <div className="mt-6 pt-6 border-t border-amber-200">
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-900/60 text-center">Or connect directly</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-4">
+            {CONTACT_NUMBERS.map((num, idx) => (
+              <div key={`direct-${idx}`} className="flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm">
+                <span className="text-[10px] font-bold text-amber-900/40">#{idx + 1}</span>
+                <a 
+                  href={`tel:+${num}`}
+                  className="p-1 text-neutral-600 hover:text-neutral-900 transition-colors"
+                  title="Call now"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </a>
+                <a 
+                  href={`https://wa.me/${num}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 text-[#25D366] hover:text-[#20bd5c] transition-colors"
+                  title="Chat on WhatsApp"
+                >
+                  <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                  </svg>
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
         </form>
       )}
     </div>
@@ -421,10 +454,14 @@ export function ShopCatalog({
     brandHandle = catalog.activeBrand,
     productTypeHandle = catalog.activeProductType,
   }) => {
+    const safeCollection = collectionHandle || "all";
+    const safeBrand = brandHandle || "all";
+    const safeType = productTypeHandle || "all";
+
     const nextRedirectTo = buildShopHref({
-      collectionHandle,
-      brandHandle,
-      productTypeHandle,
+      collectionHandle: safeCollection,
+      brandHandle: safeBrand,
+      productTypeHandle: safeType,
     });
 
     setRedirectTo(nextRedirectTo);
@@ -432,7 +469,8 @@ export function ShopCatalog({
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/shop/catalog${nextRedirectTo.replace("/shop", "")}`, {
+        const apiPath = `/api/shop/catalog?collection=${safeCollection}&brand=${safeBrand}&type=${safeType}`;
+        const response = await fetch(apiPath, {
           cache: "no-store",
         });
 
@@ -471,28 +509,35 @@ export function ShopCatalog({
     return () => observer.disconnect();
   }, []);
 
+  const isColAll = !catalog.activeCollection?.handle || catalog.activeCollection.handle === "all";
+  const isBrandAll = !catalog.activeBrand || catalog.activeBrand === "all";
+  
+  const colTitle = isColAll ? "" : catalog.activeCollection?.title;
+  const brandTitle = isBrandAll ? "" : (catalog.brands?.find((b) => b.handle === catalog.activeBrand)?.title || catalog.activeBrand);
+
+  let sharePhrase = "Shop finest dairy products";
+  let labelContext = "";
+
+  if (!isColAll && !isBrandAll) {
+    sharePhrase = `Shop finest ${colTitle} ${brandTitle} products`;
+    labelContext = `${colTitle} ${brandTitle}`;
+  } else if (!isColAll) {
+    sharePhrase = `Shop finest ${colTitle} products`;
+    labelContext = colTitle;
+  } else if (!isBrandAll) {
+    sharePhrase = `Shop finest ${brandTitle} products`;
+    labelContext = brandTitle;
+  }
+
+  const shareButtonLabel = (isColAll && isBrandAll) ? "Share" : `Share ${labelContext}`;
+
   const shareAction = () => {
-    const collectionAll = !catalog.activeCollection?.handle || catalog.activeCollection.handle === "all";
-    const brandAll = !catalog.activeBrand || catalog.activeBrand === "all";
-    const collectionTitle = catalog.activeCollection?.title || "All";
-    const brandTitle = catalog.brands?.find((b) => b.handle === catalog.activeBrand)?.title;
-
-    let text;
-    if (collectionAll && brandAll) {
-      text = "Finest Gourmet few taps away";
-    } else if (!brandAll && !collectionAll) {
-      text = `Find ${collectionTitle} for ${brandTitle}`;
-    } else if (!collectionAll) {
-      text = `Find ${collectionTitle} at attractive prices`;
-    } else {
-      text = `Find products for ${brandTitle} at attractive prices`;
-    }
-
+    const title = sharePhrase;
     const url = window.location.href;
     if (navigator.share) {
-      navigator.share({ title: "Aurum Bites - Shop", text, url }).catch(() => {});
+      navigator.share({ title, text: sharePhrase, url }).catch(() => {});
     } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(`${text}\n${url}`);
+      navigator.clipboard.writeText(`${sharePhrase}\n${url}`);
     }
   };
 
@@ -534,7 +579,14 @@ export function ShopCatalog({
               <CollectionFilters
                 collections={catalog.collections}
                 activeHandle={catalog.activeCollection.handle}
-                onSelectHandle={(handle) => { handleFilterChange({ collectionHandle: handle, brandHandle: "all", productTypeHandle: catalog.activeProductType }); setStickyExpanded(false); }}
+                onSelectHandle={(handle) => {
+                  handleFilterChange({
+                    collectionHandle: handle,
+                    brandHandle: catalog.activeBrand,
+                    productTypeHandle: catalog.activeProductType,
+                  });
+                  setStickyExpanded(false);
+                }}
               />
               <BrandFilters
                 brands={catalog.brands}
@@ -563,7 +615,7 @@ export function ShopCatalog({
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
-                Share
+                {shareButtonLabel}
               </button>
             </div>
 
@@ -579,7 +631,7 @@ export function ShopCatalog({
                 onSelectHandle={(handle) =>
                   handleFilterChange({
                     collectionHandle: handle,
-                    brandHandle: "all",
+                  brandHandle: catalog.activeBrand,
                     productTypeHandle: catalog.activeProductType,
                   })
                 }
@@ -1026,12 +1078,13 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
   return (
     <>
       <div className={gridClass}>
-        {visible.map((product) => (
+        {visible.map((product, index) => (
           <ProductCard
             key={product.id}
             product={product}
             redirectTo={redirectTo}
             isEnquiryOnly={isEnquiryOnly}
+            priority={index < 4}
           />
         ))}
         {hasMore
@@ -1049,16 +1102,22 @@ function NotifyPopup({ productTitle, onClose }) {
   const [name, setName] = useState("");
   const [pincode, setPincode] = useState("");
 
+  const CONTACT_NUMBERS = ["919654979085", "919654979085"]; // The "both" numbers
+
   const isValid = name.trim() && pincode.length === 6;
 
-  const handleSend = () => {
+  const handleSend = (number) => {
     const msg = `Hi, I'm ${name.trim()} from pincode ${pincode}. I'm interested in ${productTitle} for bulk order. Please notify me when it's back in stock.`;
     window.open(
-      `https://wa.me/919654979085?text=${encodeURIComponent(msg)}`,
+      `https://wa.me/${number}?text=${encodeURIComponent(msg)}`,
       "_blank",
       "noopener,noreferrer"
     );
     onClose();
+  };
+
+  const handleCall = (number) => {
+    window.location.href = `tel:+${number}`;
   };
 
   return createPortal(
@@ -1092,24 +1151,41 @@ function NotifyPopup({ productTitle, onClose }) {
             className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
           />
         </div>
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={!isValid}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#20bd5c] disabled:opacity-50"
-        >
-          <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" aria-hidden="true">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-          </svg>
-          Send via WhatsApp
-        </button>
+      <div className="mt-4 space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 px-1">Choose contact</p>
+        {CONTACT_NUMBERS.map((num, idx) => (
+          <div key={`${num}-${idx}`} className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleSend(num)}
+              disabled={!isValid}
+              className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-xs font-medium text-white transition hover:bg-[#20bd5c] disabled:opacity-50"
+            >
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+              </svg>
+              WhatsApp
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCall(num)}
+              className="rounded-full border border-neutral-300 p-2.5 text-neutral-600 transition hover:bg-neutral-50"
+              aria-label="Call now"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
       </div>
     </>,
     document.body
   );
 }
 
-export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
+export function ProductCard({ product, redirectTo, isEnquiryOnly, priority = false }) {
   const onCartChange = useCartChange();
   const [adding, setAdding] = useState(false);
   const [showNotify, setShowNotify] = useState(false);
@@ -1147,7 +1223,9 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
               src={product.image.url}
               alt={product.image.altText}
               fill
-              className="object-cover"
+              priority={priority}
+              sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-opacity duration-300"
             />
           ) : (
             <div className="flex h-full items-end bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.32),_transparent_45%),linear-gradient(135deg,_#faf5e8,_#f5efe2_55%,_#ebe1cc)] p-6">
@@ -1418,7 +1496,7 @@ export function MobileCartWidget({ cart, isConfigured, redirectTo, isEnquiryOnly
   }, [isOpen]);
 
   return (
-    <div className="lg:hidden">
+    <div>
       <button
         type="button"
         onClick={() => setIsOpen(true)}

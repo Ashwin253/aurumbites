@@ -111,7 +111,7 @@ const FALLBACK_PRODUCTS = [
 ];
 
 const SHOP_PAGE_QUERY = `#graphql
-  query ShopPageData($first: Int!) {
+  query ShopPageData($first: Int!, $query: String) {
     shop {
       name
       description
@@ -129,7 +129,7 @@ const SHOP_PAGE_QUERY = `#graphql
         }
       }
     }
-    products(first: $first, sortKey: BEST_SELLING) {
+    products(first: $first, sortKey: BEST_SELLING, query: $query) {
       edges {
         node {
           id
@@ -490,6 +490,41 @@ function formatMoney(amount, currencyCode) {
   }).format(Number(amount));
 }
 
+function coerceText(value, fallback = "") {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((item) => coerceText(item, ""))
+      .filter(Boolean)
+      .join(" / ");
+    return joined || fallback;
+  }
+
+  if (value && typeof value === "object") {
+    return (
+      coerceText(value.title, "") ||
+      coerceText(value.label, "") ||
+      coerceText(value.name, "") ||
+      coerceText(value.value, "") ||
+      fallback
+    );
+  }
+
+  return fallback;
+}
+
+function isGenericOptionLabel(value) {
+  return /^(title|option\s*\d+)$/i.test(coerceText(value, ""));
+}
+
 function calculateCartSummary(lines = []) {
   const totalQuantity = lines.reduce((sum, line) => sum + (line.quantity || 0), 0);
   const pricedLines = lines.filter(
@@ -529,8 +564,8 @@ function normalizeCollection(collection) {
   return {
     id: collection.id,
     handle: collection.handle,
-    title: collection.title,
-    description: collection.description || "",
+    title: coerceText(collection.title, "Collection"),
+    description: coerceText(collection.description, ""),
   };
 }
 
@@ -544,15 +579,30 @@ function normalizeImage(img, fallbackAlt = "") {
 }
 
 function normalizeVariant(v) {
+  const selectedOptions = (v.selectedOptions || [])
+    .map((option) => ({
+      name: coerceText(option?.name, "Variant"),
+      value: coerceText(option?.value, ""),
+    }))
+    .filter((option) => option.name || option.value);
+  const optionTitle = selectedOptions
+    .map((option) => option.value)
+    .filter(Boolean)
+    .join(" / ");
+  const title = coerceText(v.title, "");
+
   return {
     id: v.id,
-    title: v.title || "Default",
+    title:
+      !title || title === "Default Title" || isGenericOptionLabel(title)
+        ? optionTitle || "Default"
+        : title,
     availableForSale: v.availableForSale ?? true,
     price: formatMoney(v.price?.amount, v.price?.currencyCode),
     amount: v.price?.amount ? Number(v.price.amount) : null,
     currencyCode: v.price?.currencyCode || "",
     weight: formatWeight(v),
-    selectedOptions: v.selectedOptions || [],
+    selectedOptions,
   };
 }
 
@@ -566,11 +616,12 @@ function normalizeProduct(node) {
   return {
     id: node.id,
     handle: node.handle,
-    title: node.title,
-    vendor: node.vendor || "",
-    productType: node.productType || "",
-    description: node.description,
-    longDescription: node.descriptionHtml || node.description,
+    title: coerceText(node.title, "Product"),
+    vendor: coerceText(node.vendor, ""),
+    productType: coerceText(node.productType, ""),
+    description: coerceText(node.description, ""),
+    longDescription:
+      coerceText(node.descriptionHtml, "") || coerceText(node.description, ""),
     availableForSale: node.availableForSale,
     image: node.featuredImage
       ? normalizeImage(node.featuredImage, node.title)
@@ -635,13 +686,11 @@ function getFallbackProducts(collectionHandle = "all") {
 }
 
 function normalizeProductTypeLabel(productType) {
-  const trimmed = (productType || "").trim();
-  return trimmed || "Other";
+  return coerceText(productType, "Other");
 }
 
 function normalizeBrandLabel(brand) {
-  const trimmed = (brand || "").trim();
-  return trimmed || "Other";
+  return coerceText(brand, "Other");
 }
 
 function toProductTypeHandle(productType) {
@@ -671,7 +720,7 @@ function buildBrands(products = []) {
   });
 
   return [
-    { handle: "all", title: "All " },
+    { handle: "all", title: "Everything" },
     ...Array.from(seen.values()).sort((left, right) =>
       left.title.localeCompare(right.title)
     ),
@@ -775,6 +824,21 @@ export async function getShopPageData({
 } = {}) {
   const config = getShopifyConfig();
 
+  // Build native Shopify query strings for high-performance server-side filtering
+  let queryParts = [];
+  if (brandHandle !== "all") {
+    // Maps handle back to potential title for Shopify vendor search
+    queryParts.push(`vendor:${brandHandle}`);
+  }
+  if (productTypeHandle !== "all") {
+    queryParts.push(`product_type:${productTypeHandle}`);
+  }
+  const shopifyQuery = queryParts.length > 0 ? queryParts.join(" AND ") : null;
+
+  // We still fetch a slightly larger pool (50) to ensure we have enough for JS-based 
+  // secondary brand/type list building, but we no longer need 250.
+  const fetchLimit = 50;
+
   if (!config.isConfigured) {
     const collections = getFallbackCollections();
     const allProducts = getFallbackProducts(collectionHandle);
@@ -800,17 +864,17 @@ export async function getShopPageData({
       collectionHandle && collectionHandle !== "all"
         ? await storefrontRequest(
             COLLECTION_PRODUCTS_QUERY,
-            { first, handle: collectionHandle },
+            { first: fetchLimit, handle: collectionHandle },
             { next: { revalidate: 300 } }
           )
         : await storefrontRequest(
             SHOP_PAGE_QUERY,
-            { first },
+            { first: fetchLimit, query: shopifyQuery },
             { next: { revalidate: 300 } }
           );
 
     const collections = [
-      { id: "all", handle: "all", title: "All Brand", description: "" },
+      { id: "all", handle: "all", title: "All Brands", description: "" },
       ...data.collections.edges.map(({ node }) => normalizeCollection(node)),
     ];
     const selectedCollection = data.collection

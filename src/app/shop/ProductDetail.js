@@ -192,7 +192,15 @@ export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly })
             ? "Unavailable"
             : isEnquiryOnly
             ? "Add to enquiry"
-            : "Add to cart"}
+            : (
+              <div className="flex items-center justify-center" aria-label="Add to bucket">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+                </svg>
+              </div>
+            )}
         </button>
       </div>
     </div>
@@ -222,7 +230,7 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
   return (
     <article className="min-w-[260px] max-w-[260px] overflow-hidden rounded-[1.5rem] border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
       <Link href={`/shop/${product.handle}`} className="block">
-        <div className="relative h-52 bg-neutral-100">
+        <div className="relative aspect-square sm:h-52 bg-neutral-100">
           {product.image ? (
             <Image
               src={product.image.url}
@@ -267,7 +275,7 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
             <Link
               href={`/shop/${product.handle}`}
               className="rounded-full border border-neutral-300 p-2 text-neutral-700 transition hover:bg-neutral-50"
-              title="View details"
+              title="Details"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             </Link>
@@ -277,7 +285,13 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
                 disabled={adding}
                 className="rounded-full bg-neutral-950 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
               >
-                {adding ? "..." : isEnquiryOnly ? "Enquire" : "Add"}
+                {adding ? "..." : isEnquiryOnly ? "Enquire" : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+                  </svg>
+                )}
               </button>
             )}
           </div>

@@ -47,7 +47,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
   return (
     <article className="premium-card group overflow-hidden rounded-[2rem] border border-white/60 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(15,23,42,0.14)]">
       <Link href={`/shop/${product.handle}`} className="block">
-        <div className="relative h-72 overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(212,168,83,0.2),_transparent_48%),linear-gradient(135deg,_#f7f2e8,_#f1eadb_55%,_#e6dcc8)]">
+        <div className="relative aspect-square sm:h-72 overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(212,168,83,0.2),_transparent_48%),linear-gradient(135deg,_#f7f2e8,_#f1eadb_55%,_#e6dcc8)]">
           <div className="absolute top-4 left-4 z-10">
             <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${
               product.availableForSale 
@@ -118,7 +118,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
             href={`/shop/${product.handle}`}
             className="flex-1 rounded-full border border-neutral-300 px-4 py-3 text-center text-sm font-medium text-neutral-700 transition hover:border-[#9a7a3f] hover:text-[#7a5a26]"
           >
-            View details
+            Details
           </Link>
           <div className="flex-1">
             {product.availableForSale ? (
@@ -131,7 +131,15 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
                   type="submit"
                   className="w-full rounded-full bg-neutral-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-[#7a5a26]"
                 >
-                  {isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}
+                  {isEnquiryOnly ? "Proceed to enquire" : (
+                    <div className="flex items-center justify-center" aria-label="Add to bucket">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+                      </svg>
+                    </div>
+                  )}
                 </button>
               </form>
             ) : (

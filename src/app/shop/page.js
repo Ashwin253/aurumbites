@@ -60,37 +60,7 @@ export default async function ShopPage({ searchParams }) {
       <Navbar />
 
       <main className="shop-page-bg">
-        <section className="relative overflow-hidden border-b border-[#e8deca]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(212,168,83,0.2),_transparent_28%),radial-gradient(circle_at_85%_20%,_rgba(255,255,255,0.65),_transparent_24%),linear-gradient(180deg,_#f8f3ea_0%,_#f3ecdf_55%,_#f8f5ef_100%)]" />
-          <div className="relative mx-auto max-w-7xl px-6 py-10 sm:py-14">
-            <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
-              <div>
-                {/* <span className="inline-flex rounded-full border border-[#dcc79d] bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#8b6a2c] backdrop-blur">
-                  Aurum Bites Collection
-                </span> */}
-                <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-neutral-950 sm:text-5xl">
-                  Premium pantry sourcing with a cleaner, faster storefront.
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-neutral-700 sm:text-lg">
-                  {introCopy}
-                </p>
-
-                {/* <div className="mt-8 flex flex-wrap gap-3 text-sm text-neutral-700">
-                  <span className="rounded-full border border-white/70 bg-white/85 px-4 py-2 shadow-sm backdrop-blur">
-                    Collection: {activeCollection.title}
-                  </span>
-                  <span className="rounded-full border border-white/70 bg-white/85 px-4 py-2 shadow-sm backdrop-blur">
-                    {isConfigured && !error ? "Live product feed" : "Optimized preview catalog"}
-                  </span>
-                  <span className="rounded-full border border-white/70 bg-white/85 px-4 py-2 shadow-sm backdrop-blur">
-                    {storefrontMode.isEnquiryOnly ? "Manual enquiry flow" : "Direct cart enabled"}
-                  </span>
-                </div> */}
-              </div>
-            </div>
-          </div>
-        </section>
-
+        
         <section className="mx-auto max-w-7xl p-3 sm:px-6">
           {/* <CartNotice status={cartStatus} /> */}
           <ShopCatalog

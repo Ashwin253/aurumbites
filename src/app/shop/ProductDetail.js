@@ -267,8 +267,8 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
           ) : null}
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2">
+          <span className="self-start sm:self-auto rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-700">
             {product.availableForSale ? product.price : "Out of Stock"}
           </span>
           <div className="flex gap-2">

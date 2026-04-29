@@ -18,8 +18,9 @@ const FILTER_LOGO_MAP = {
   "dairy craft": "/brands/dairycraft.jpg",
   dlecta: "/brands/dlecta.jpg",
   amul: "/brands/amul.jpg",
+  mccain: "/brands/mccain.jpg",
   // Prabhat: "/brands/prabhat.png",
-  prabhat:"/brands/prabhat.png",
+  prabhat: "/brands/prabhat.png",
   "elle & vire": "/brands/elleandvire.jpeg",
   rich: "/brands/richs.jpeg",
   Fries: "/products/fries.jpg",
@@ -573,6 +574,22 @@ export function ShopCatalog({
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 group-hover:text-[#7a5a26] transition-colors">In Stock</span>
               </button>
+              
+              {(catalog.activeCollection.handle !== "all" || catalog.activeBrand !== "all" || catalog.activeProductType !== "all" || showOnlyAvailable) && (
+                <button
+                  onClick={() => {
+                    setShowOnlyAvailable(false);
+                    handleFilterChange({
+                      collectionHandle: "all",
+                      brandHandle: "all",
+                      productTypeHandle: "all",
+                    });
+                  }}
+                  className="text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 transition"
+                >
+                  Clear All
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button onClick={shareAction} className="rounded-full border border-[#e9dfcf] bg-white p-2 text-neutral-600 transition hover:text-[#7a5a26]" aria-label="Share">
@@ -610,7 +627,14 @@ export function ShopCatalog({
               <BrandFilters
                 brands={catalog.brands}
                 activeHandle={catalog.activeBrand}
-                onSelectHandle={(handle) => { handleFilterChange({ collectionHandle: catalog.activeCollection.handle, brandHandle: handle, productTypeHandle: catalog.activeProductType }); setStickyExpanded(false); }}
+                onSelectHandle={(handle) => {
+                  handleFilterChange({
+                    collectionHandle: catalog.activeCollection.handle,
+                    brandHandle: handle,
+                    productTypeHandle: catalog.activeProductType,
+                  });
+                  setStickyExpanded(false);
+                }}
               />
             </div>
           </div>
@@ -635,6 +659,22 @@ export function ShopCatalog({
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 group-hover:text-neutral-900 transition-colors">In Stock Only</span>
                 </button>
+                
+                {/* {(catalog.activeCollection.handle !== "all" || catalog.activeBrand !== "all" || catalog.activeProductType !== "all" || showOnlyAvailable) && (
+                  <button
+                    onClick={() => {
+                      setShowOnlyAvailable(false);
+                      handleFilterChange({
+                        collectionHandle: "all",
+                        brandHandle: "all",
+                        productTypeHandle: "all",
+                      });
+                    }}
+                    className="ml-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 transition"
+                  >
+                    Clear All
+                  </button>
+                )} */}
               </div>
 
               <button
@@ -650,7 +690,7 @@ export function ShopCatalog({
 
             <div>
               {/* <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                Collections
+                Brands
               </p> */}
               <CollectionFilters
                 collections={catalog.collections}
@@ -660,7 +700,7 @@ export function ShopCatalog({
                 onSelectHandle={(handle) =>
                   handleFilterChange({
                     collectionHandle: handle,
-                  brandHandle: catalog.activeBrand,
+                    brandHandle: catalog.activeBrand,
                     productTypeHandle: catalog.activeProductType,
                   })
                 }
@@ -1028,7 +1068,7 @@ export function BrandFilters({
   );
 }
 
-const BATCH_SIZE = 4;
+const BATCH_SIZE = 12;
 
 function ProductSkeleton() {
   return (
@@ -1053,13 +1093,15 @@ function ProductSkeleton() {
 
 function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending }) {
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const [prevProductKey, setPrevProductKey] = useState("");
   const sentinelRef = useRef(null);
 
-  // Reset visible count when products change (filter switch)
   const productKey = products.map((p) => p.id).join(",");
-  useEffect(() => {
+
+  if (productKey !== prevProductKey) {
+    setPrevProductKey(productKey);
     setVisibleCount(BATCH_SIZE);
-  }, [productKey]);
+  }
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -1121,7 +1163,7 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
       </div>
       {hasMore ? <div ref={sentinelRef} className="h-1" /> : (
         <div className="mt-8 text-center text-sm font-medium text-neutral-500 py-4">
-          Load more: End of the List
+           End of the List
         </div>
       )}
     </>
@@ -1272,7 +1314,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
       <div className={`flex flex-col justify-between ${isList ? 'w-3/5 p-4 sm:p-5' : (isCompact ? 'p-3 sm:p-4 space-y-4' : 'p-6 space-y-4')}`}>
         <div className={`flex items-start justify-between gap-2 ${isList ? 'mb-4' : ''}`}>
           <div className="min-w-0">
-            {product.vendor && !isCompact ? (
+            {product.vendor && !isCompact && !isList ? (
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500 truncate">
                 {product.vendor}
               </p>
@@ -1288,17 +1330,43 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                 {product.variants.length} options available
               </p>
             ) : (
-              product.weight && !isCompact ? (
-                <p className="mt-1 text-xs font-medium text-neutral-500">
-                  {product.weight}
-                </p>
-              ) : null
+              <>
+                {!isList && product.weight && !isCompact ? (
+                  <p className="mt-1 text-xs font-medium text-neutral-500">
+                    {product.weight}
+                  </p>
+                ) : null}
+                
+                {isList ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium text-neutral-500">
+                    {product.productType && <span>{product.productType}</span>}
+                    {product.productType && (product.weight || product.price) && <span className="text-neutral-300">•</span>}
+                    {product.weight && <span>{product.weight}</span>}
+                    {product.weight && product.price && <span className="text-neutral-300">•</span>}
+                    {product.price && (
+                      <div className="flex items-center gap-1.5">
+                        {product.compareAtPrice && <span className="text-neutral-400 line-through text-[10px]">{product.compareAtPrice}</span>}
+                        <span className="text-neutral-900 font-bold">{product.price}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </>
             )}
           </div>
-          {!(product.variants && product.variants.length > 1) && (
-            <span className={`shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-700 whitespace-nowrap ${isCompact ? 'text-[10px]' : 'text-sm'}`}>
-              {product.availableForSale ? product.price : "Sold"}
-            </span>
+          {!(product.variants && product.variants.length > 1) && !isList && (
+            <div className={`shrink-0 flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 font-medium whitespace-nowrap ${isCompact ? 'text-[10px]' : 'text-sm'}`}>
+              {product.availableForSale ? (
+                <>
+                  {product.compareAtPrice && (
+                    <span className="text-neutral-400 line-through">{product.compareAtPrice}</span>
+                  )}
+                  <span className="text-neutral-700">{product.price}</span>
+                </>
+              ) : (
+                <span className="text-neutral-700">Sold</span>
+              )}
+            </div>
           )}
         </div>
 

@@ -172,6 +172,10 @@ const SHOP_PAGE_QUERY = `#graphql
                   amount
                   currencyCode
                 }
+                compareAtPrice {
+                  amount
+                  currencyCode
+                }
                 weight
                 weightUnit
                 selectedOptions {
@@ -261,6 +265,10 @@ const COLLECTION_PRODUCTS_QUERY = `#graphql
                     amount
                     currencyCode
                   }
+                  compareAtPrice {
+                    amount
+                    currencyCode
+                  }
                   weight
                   weightUnit
                   selectedOptions {
@@ -331,6 +339,10 @@ const PRODUCT_QUERY = `#graphql
             title
             availableForSale
             price {
+              amount
+              currencyCode
+            }
+            compareAtPrice {
               amount
               currencyCode
             }
@@ -599,7 +611,9 @@ function normalizeVariant(v) {
         : title,
     availableForSale: v.availableForSale ?? true,
     price: formatMoney(v.price?.amount, v.price?.currencyCode),
+    compareAtPrice: v.compareAtPrice?.amount ? formatMoney(v.compareAtPrice.amount, v.compareAtPrice.currencyCode) : null,
     amount: v.price?.amount ? Number(v.price.amount) : null,
+    compareAtAmount: v.compareAtPrice?.amount ? Number(v.compareAtPrice.amount) : null,
     currencyCode: v.price?.currencyCode || "",
     weight: formatWeight(v),
     selectedOptions,
@@ -628,6 +642,7 @@ function normalizeProduct(node) {
       : null,
     images,
     price: formatMoney(amount, currencyCode),
+    compareAtPrice: firstVariant?.compareAtPrice || null,
     amount,
     currencyCode,
     tags: node.tags || [],

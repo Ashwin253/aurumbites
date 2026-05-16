@@ -29,6 +29,10 @@ export const brandsData = [
   {
     name:" Modern Dairy",
     src:"/brands/moderndary.png",
+  },
+  {
+    name:"Ybarra",
+    src:"/brands/ybarra.jpg",
   }
 ];
 

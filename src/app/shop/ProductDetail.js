@@ -6,6 +6,10 @@ import Link from "next/link";
 import { addToCart } from "./actions";
 import { CartProvider, useCartChange } from "./CartContext";
 import { MobileCartWidget, CartPanel } from "./ShopUi";
+import {
+  getSubscriptionManagementUrl,
+  getSubscriptionUrl,
+} from "../../lib/subscription";
 
 function cleanVariantLabel(value, fallback = "Variant") {
   const normalized =
@@ -104,14 +108,36 @@ export function ImageCarousel({ images }) {
   );
 }
 
-export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly }) {
+export function VariantSelector({
+  variants,
+  handle,
+  redirectTo,
+  isEnquiryOnly,
+  sellingPlanGroups = [],
+}) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [purchaseType, setPurchaseType] = useState("one-time");
+  const [selectedPlan, setSelectedPlan] = useState("");
   const onCartChange = useCartChange();
   const selected = variants[selectedIdx];
   const hasMultiple = variants.length > 1;
   const optionLabel = cleanVariantLabel(variants[0]?.selectedOptions?.[0]?.name);
+  const subscriptionUrl = getSubscriptionUrl({
+    handle,
+    variantId: selected?.id,
+    quantity: qty,
+  });
+  const subscriptionManagementUrl = getSubscriptionManagementUrl();
+  const availablePlans = sellingPlanGroups.flatMap((group) =>
+    (group.sellingPlans || []).map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      groupName: group.name,
+    }))
+  );
 
   const handleAdd = async () => {
     setAdding(true);
@@ -120,6 +146,8 @@ export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly })
         handle,
         variantId: selected.id,
         quantity: qty,
+        sellingPlanId:
+          purchaseType === "subscription" ? selectedPlan || "" : "",
       });
       if (onCartChange) onCartChange(result);
     } finally {
@@ -169,6 +197,72 @@ export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly })
         )}
       </div>
 
+      <div className="rounded-3xl border border-neutral-200 bg-white p-4">
+        <p className="text-sm font-medium text-neutral-900">Purchase option</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className={`cursor-pointer rounded-2xl border px-4 py-3 transition ${purchaseType === "one-time" ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-700"}`}>
+            <input
+              type="radio"
+              name="purchaseType"
+              value="one-time"
+              checked={purchaseType === "one-time"}
+              onChange={() => {
+                setPurchaseType("one-time");
+                setSelectedPlan("");
+              }}
+              className="sr-only"
+            />
+            <span className="block text-sm font-semibold">One-time purchase</span>
+            <span className={`mt-1 block text-xs ${purchaseType === "one-time" ? "text-white/80" : "text-neutral-500"}`}>Buy this item once</span>
+          </label>
+          <label className={`cursor-pointer rounded-2xl border px-4 py-3 transition ${purchaseType === "subscription" ? "border-amber-400 bg-amber-50 text-amber-950" : "border-neutral-200 bg-white text-neutral-700"}`}>
+            <input
+              type="radio"
+              name="purchaseType"
+              value="subscription"
+              checked={purchaseType === "subscription"}
+              onChange={() => setPurchaseType("subscription")}
+              className="sr-only"
+            />
+            <span className="block text-sm font-semibold">Subscribe</span>
+            <span className={`mt-1 block text-xs ${purchaseType === "subscription" ? "text-amber-900/80" : "text-neutral-500"}`}>Recurring delivery from Shopify</span>
+          </label>
+        </div>
+
+        {purchaseType === "subscription" ? (
+          <div className="mt-4">
+            <label htmlFor="selling-plan" className="block text-sm font-medium text-neutral-700">
+              Subscription plan
+            </label>
+            {availablePlans.length > 0 ? (
+              <>
+                <select
+                  id="selling-plan"
+                  value={selectedPlan}
+                  onChange={(e) => setSelectedPlan(e.target.value)}
+                  className="mt-2 w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                >
+                  <option value="">Select a plan</option>
+                  {availablePlans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.groupName ? `${plan.groupName} - ` : ""}
+                      {plan.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs leading-5 text-neutral-500">
+                  Choose the Shopify selling plan that will be attached to the cart item.
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 px-4 py-3 text-xs leading-5 text-neutral-600">
+                Subscription plans are not available for this product yet. Add selling plans in Shopify admin to enable recurring purchase options here.
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div className="flex flex-col gap-4 sm:flex-row">
         <label className="flex items-center gap-3 rounded-full border border-neutral-300 px-4 py-3 text-sm text-neutral-700">
           <span>Qty</span>
@@ -200,8 +294,28 @@ export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly })
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
                 </svg>
               </div>
-            )}
+          )}
         </button>
+        {subscriptionUrl ? (
+          <a
+            href={subscriptionUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-6 py-3 text-sm font-medium text-amber-950 transition hover:border-amber-400 hover:bg-amber-100"
+          >
+            Subscribe on Shopify
+          </a>
+        ) : null}
+        {subscriptionManagementUrl ? (
+          <a
+            href={subscriptionManagementUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50"
+          >
+            Manage subscription
+          </a>
+        ) : null}
       </div>
     </div>
   );
@@ -210,6 +324,11 @@ export function VariantSelector({ variants, handle, redirectTo, isEnquiryOnly })
 export function DetailRelatedCard({ product, isEnquiryOnly }) {
   const onCartChange = useCartChange();
   const [adding, setAdding] = useState(false);
+  const subscriptionUrl = getSubscriptionUrl({
+    handle: product.handle,
+    variantId: product.variantId || "",
+    quantity: 1,
+  });
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -294,6 +413,17 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
                 )}
               </button>
             )}
+            {subscriptionUrl ? (
+              <a
+                href={subscriptionUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-950 transition hover:border-amber-400 hover:bg-amber-100"
+                title="Subscribe on Shopify"
+              >
+                Subscribe
+              </a>
+            ) : null}
           </div>
         </div>
       </div>

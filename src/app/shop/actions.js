@@ -112,7 +112,7 @@ export async function addToCartAction(formData) {
 
 // ─── Return-based actions (used by CartPanel for instant UI updates) ───
 
-export async function addToCart({ handle, variantId, quantity = 1 }) {
+export async function addToCart({ handle, variantId, quantity = 1, sellingPlanId = "" }) {
   const store = await cookies();
   const setup = getShopifySetup();
   const storefrontMode = getStorefrontMode();
@@ -149,7 +149,7 @@ export async function addToCart({ handle, variantId, quantity = 1 }) {
     const cartId = store.get(SHOPIFY_CART_COOKIE)?.value || null;
     const nextCartId = await addLinesToCart({
       cartId,
-      lines: [{ merchandiseId: variantId, quantity }],
+      lines: [{ merchandiseId: variantId, quantity, sellingPlanId: sellingPlanId || undefined }],
     });
     store.set(SHOPIFY_CART_COOKIE, nextCartId, cookieOpts(60 * 60 * 24 * 30));
     return { status: "added", isConfigured: true, cart: await getCart(nextCartId) };

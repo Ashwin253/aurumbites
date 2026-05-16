@@ -1,4 +1,5 @@
 const DEFAULT_API_VERSION = "2026-01";
+const DEFAULT_SUBSCRIPTION_URL = process.env.SHOPIFY_SUBSCRIPTION_URL || "";
 
 const FALLBACK_COLLECTIONS = [
   {
@@ -355,6 +356,28 @@ const PRODUCT_QUERY = `#graphql
           }
         }
       }
+      sellingPlanGroups(first: 10) {
+        edges {
+          node {
+            id
+            name
+            options {
+              name
+              values
+            }
+            sellingPlans(first: 10) {
+              edges {
+                node {
+                  id
+                  name
+                  description
+                  options
+                }
+              }
+            }
+          }
+        }
+      }
       collections(first: 10) {
         edges {
           node {
@@ -626,6 +649,20 @@ function normalizeProduct(node) {
   const variants = (node.variants?.edges || []).map(({ node: v }) => normalizeVariant(v));
   const images = (node.images?.edges || []).map(({ node: img }) => normalizeImage(img, node.title));
   const firstVariant = variants[0] || null;
+  const sellingPlanGroups = (node.sellingPlanGroups?.edges || []).map(({ node: group }) => ({
+    id: group.id,
+    name: coerceText(group.name, "Subscription"),
+    options: (group.options || []).map((option) => ({
+      name: coerceText(option?.name, "Option"),
+      values: option?.values || [],
+    })),
+    sellingPlans: (group.sellingPlans?.edges || []).map(({ node: plan }) => ({
+      id: plan.id,
+      name: coerceText(plan.name, "Subscription plan"),
+      description: coerceText(plan.description, ""),
+      options: coerceText(plan.options, ""),
+    })),
+  }));
 
   return {
     id: node.id,
@@ -652,6 +689,7 @@ function normalizeProduct(node) {
     variantId: firstVariant?.id || null,
     variants,
     weight: firstVariant?.weight || null,
+    sellingPlanGroups,
   };
 }
 
@@ -971,7 +1009,11 @@ export async function getProductByHandle(handle) {
       product: data.product ? normalizeProduct(data.product) : null,
     };
   } catch (error) {
-    const product = FALLBACK_PRODUCTS.find((item) => item.handle === handle);
+    const product =
+      FALLBACK_PRODUCTS.find((item) => item.handle === handle) ||
+      (await getShopPageData({ first: 50 })).products.find(
+        (item) => item.handle === handle
+      );
     return {
       isConfigured: true,
       shop: null,
@@ -1136,4 +1178,27 @@ export async function updateCartLines({ cartId, lines }) {
 
 export function getShopifySetup() {
   return getShopifyConfig();
+}
+
+export function getSubscriptionUrl({
+  handle,
+  variantId = "",
+  quantity = 1,
+} = {}) {
+  const template = process.env.SHOPIFY_SUBSCRIPTION_URL_TEMPLATE || DEFAULT_SUBSCRIPTION_URL;
+
+  if (!template) {
+    return null;
+  }
+
+  const url = template
+    .replaceAll("{handle}", encodeURIComponent(handle || ""))
+    .replaceAll("{variantId}", encodeURIComponent(variantId || ""))
+    .replaceAll("{quantity}", encodeURIComponent(String(quantity || 1)));
+
+  try {
+    return new URL(url).toString();
+  } catch {
+    return url;
+  }
 }

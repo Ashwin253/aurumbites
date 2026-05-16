@@ -28,6 +28,12 @@ SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
 SHOPIFY_STOREFRONT_ACCESS_TOKEN=your-storefront-token
 # Optional, defaults to 2026-01
 SHOPIFY_STOREFRONT_API_VERSION=2026-01
+# Optional subscription button target
+SHOPIFY_SUBSCRIPTION_URL=https://your-shopify-subscription-link
+# Optional template values: {handle}, {variantId}, {quantity}
+SHOPIFY_SUBSCRIPTION_URL_TEMPLATE=https://your-link.example/subscriptions?product={handle}&variant={variantId}&qty={quantity}
+# Optional subscription management page
+SHOPIFY_SUBSCRIPTION_MANAGEMENT_URL=https://account.aurumbites.co.in/pages/your-management-page
 ```
 
 The page shows fallback catalog cards until those values are configured.

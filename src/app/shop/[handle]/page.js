@@ -131,12 +131,13 @@ export default async function ProductDetailPage({ params, searchParams }) {
                     <SocialShareButtons title={product.title} />
                   </div>
 
-                  <VariantSelector
-                    variants={variants}
-                    handle={product.handle}
-                    redirectTo={`/shop/${product.handle}`}
-                    isEnquiryOnly={storefrontMode.isEnquiryOnly}
-                  />
+                <VariantSelector
+                  variants={variants}
+                  handle={product.handle}
+                  redirectTo={`/shop/${product.handle}`}
+                  isEnquiryOnly={storefrontMode.isEnquiryOnly}
+                  sellingPlanGroups={product.sellingPlanGroups || []}
+                />
 
                   {/* <div className="rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm">
                     <div

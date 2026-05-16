@@ -7,6 +7,10 @@ import { useForm, ValidationError } from "@formspree/react";
 import { createPortal } from "react-dom";
 import { addToCart, removeFromCart, decreaseCartQuantity } from "./actions";
 import { useCartChange } from "./CartContext";
+import {
+  getSubscriptionManagementUrl,
+  getSubscriptionUrl,
+} from "../../lib/subscription";
 
 const FILTER_LOGO_MAP = {
   president: "/brands/president.jpg",
@@ -1263,6 +1267,12 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
   const [showNotify, setShowNotify] = useState(false);
   const isCompact = gridCols >= 3;
   const isList = gridCols === 1;
+  const subscriptionUrl = getSubscriptionUrl({
+    handle: product.handle,
+    variantId: product.variantId || "",
+    quantity: 1,
+  });
+  const subscriptionManagementUrl = getSubscriptionManagementUrl();
 
   const handleAdd = async () => {
     setAdding(true);
@@ -1425,15 +1435,37 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                     {!isCompact && "Notify"}
                   </button>
                   {showNotify ? (
-                    <NotifyPopup
-                      productTitle={product.title}
-                      onClose={() => setShowNotify(false)}
+                    <NotifyPopup 
+                      productTitle={product.title} 
+                      onClose={() => setShowNotify(false)} 
                     />
                   ) : null}
                 </>
               )}
             </div>
           )}
+          {subscriptionUrl ? (
+            <a
+              href={subscriptionUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={`rounded-full border border-amber-300 bg-amber-50 text-amber-950 transition hover:border-amber-400 hover:bg-amber-100 ${isCompact ? 'p-2 w-10 h-10' : 'px-4 py-3 text-sm font-medium'}`}
+              title="Subscribe on Shopify"
+            >
+              {isCompact ? "Sub" : "Subscribe"}
+            </a>
+          ) : null}
+          {subscriptionManagementUrl ? (
+            <a
+              href={subscriptionManagementUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={`rounded-full border border-neutral-300 text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50 ${isCompact ? 'p-2 w-10 h-10' : 'px-4 py-3 text-sm font-medium'}`}
+              title="Manage subscription"
+            >
+              {isCompact ? "Mng" : "Manage"}
+            </a>
+          ) : null}
         </div>
       </div>
     </article>

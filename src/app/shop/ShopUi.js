@@ -28,7 +28,7 @@ const FILTER_LOGO_MAP = {
   "elle & vire": "/brands/elleandvire.jpeg",
   rich: "/brands/richs.jpeg",
   Fries: "/products/fries.jpg",
-  ybarra: "/products/ybarra.jpg",
+  ybarra: "/brands/ybarra.jpg",
 };
 
 function getFilterLogo(item) {

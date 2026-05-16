@@ -654,7 +654,7 @@ export function ShopCatalog({
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9a7a3f]">
                   Filter selection
                 </p>
-                <button
+                {/* <button
                   onClick={() => setShowOnlyAvailable(!showOnlyAvailable)}
                   className="flex items-center gap-3 group"
                   aria-pressed={showOnlyAvailable}
@@ -663,7 +663,7 @@ export function ShopCatalog({
                     <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showOnlyAvailable ? 'translate-x-5' : 'translate-x-0'}`} />
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 group-hover:text-neutral-900 transition-colors">In Stock Only</span>
-                </button>
+                </button> */}
                 
                 {/* {(catalog.activeCollection.handle !== "all" || catalog.activeBrand !== "all" || catalog.activeProductType !== "all" || showOnlyAvailable) && (
                   <button
@@ -1294,13 +1294,13 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
       <Link href={`/shop/${product.handle}`} className={`block ${isList ? 'w-2/5 shrink-0' : ''}`}>
         <div className={`relative bg-neutral-100 h-full ${!isList && (isCompact ? 'aspect-square sm:aspect-auto sm:h-48' : 'aspect-square sm:aspect-auto sm:h-72')}`}>
           <div className="absolute top-4 left-4 z-10">
-            <span className={`rounded-full px-2 py-0.5 font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${isCompact ? 'text-[8px]' : 'text-[10px]'} ${
+            {/* <span className={`rounded-full px-2 py-0.5 font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${isCompact ? 'text-[8px]' : 'text-[10px]'} ${
               product.availableForSale 
                 ? "bg-emerald-500/90 text-white" 
                 : "bg-amber-500/90 text-white"
             }`}>
               {product.availableForSale ? (isCompact ? "Live" : "Available") : "Sold"}
-            </span>
+            </span> */}
           </div>
 
           {product.image ? (
@@ -1367,7 +1367,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
           </div>
           {!(product.variants && product.variants.length > 1) && !isList && (
             <div className={`shrink-0 flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 font-medium whitespace-nowrap ${isCompact ? 'text-[10px]' : 'text-sm'}`}>
-              {product.availableForSale ? (
+              {/* {product.availableForSale ? (
                 <>
                   {product.compareAtPrice && (
                     <span className="text-neutral-400 line-through">{product.compareAtPrice}</span>
@@ -1376,7 +1376,13 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                 </>
               ) : (
                 <span className="text-neutral-700">Sold</span>
-              )}
+              )} */}
+             <>
+                  {product.compareAtPrice && (
+                    <span className="text-neutral-400 line-through">{product.compareAtPrice}</span>
+                  )}
+                  <span className="text-neutral-700">{product.price}</span>
+                </>
             </div>
           )}
         </div>

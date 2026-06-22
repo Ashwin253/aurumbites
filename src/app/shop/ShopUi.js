@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useForm, ValidationError } from "@formspree/react";
 import { createPortal } from "react-dom";
 import { addToCart, removeFromCart, decreaseCartQuantity } from "./actions";
 import { useCartChange } from "./CartContext";
@@ -11,32 +10,6 @@ import {
   getSubscriptionManagementUrl,
   getSubscriptionUrl,
 } from "../../lib/subscription";
-
-const FILTER_LOGO_MAP = {
-  president: "/brands/president.jpg",
-  cremeitalia: "/brands/cremeitalia.jpg",
-  "modern dairies": "/brands/moderndary.png",
-  moderndairy: "/brands/moderndary.png",
-  "pasta zara": "/brands/pastazara.jpg",
-  pastazara: "/brands/pastazara.jpg",
-  "dairy craft": "/brands/dairycraft.jpg",
-  dlecta: "/brands/dlecta.jpg",
-  amul: "/brands/amul.jpg",
-  mccain: "/brands/mccain.jpg",
-  // Prabhat: "/brands/prabhat.png",
-  prabhat: "/brands/prabhat.png",
-  "elle & vire": "/brands/elleandvire.jpeg",
-  rich: "/brands/richs.jpeg",
-  Fries: "/products/fries.jpg",
-  ybarra: "/brands/ybarra.jpg",
-};
-
-function getFilterLogo(item) {
-  const handleKey = (item.handle || "").toLowerCase();
-  const titleKey = (item.title || "").toLowerCase();
-
-  return FILTER_LOGO_MAP[handleKey] || FILTER_LOGO_MAP[titleKey] || null;
-}
 
 function buildShopHref({
   collectionHandle = "all",
@@ -93,263 +66,32 @@ function MobileBottomSheet({ isOpen, title, onClose, children }) {
       />
       <div className="fixed inset-x-0 bottom-0 z-[91] max-h-[72vh] overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl sm:hidden">
         <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-neutral-300" />
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm font-semibold text-neutral-900">{title}</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700"
-          >
-            Close
-          </button>
-        </div>
+        {title ? (
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm font-semibold text-neutral-900">{title}</p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
+          <div className="mb-4 flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-neutral-300 px-4 py-1.5 text-sm font-medium text-neutral-700"
+            >
+              Close
+            </button>
+          </div>
+        )}
         <div className="space-y-1">{children}</div>
       </div>
     </>,
     document.body
-  );
-}
-
-function isLargeOrder(cart) {
-  return (
-    cart.totalQuantity > 5 ||
-    (cart.subtotalAmount !== null && cart.subtotalAmount > 2000)
-  );
-}
-
-function buildCartSummary(cart) {
-  if (!cart?.lines?.length) {
-    return "";
-  }
-
-  const itemLines = cart.lines.map((line) => {
-    const variantSuffix =
-      line.variantTitle &&
-      line.variantTitle !== "Default Title" &&
-      line.variantTitle !== "Preview item"
-        ? ` (${line.variantTitle})`
-        : "";
-
-    return `- ${line.title}${variantSuffix} x ${line.quantity}${line.price ? ` - ${line.price}` : ""}`;
-  });
-
-  return [
-    "Large order request from cart",
-    `Total items: ${cart.totalQuantity}`,
-    cart.subtotal ? `Cart value: ${cart.subtotal}` : null,
-    "Requested products:",
-    ...itemLines,
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
-function LargeOrderCartForm({ cart }) {
-  const [state, handleSubmit] = useForm("meeogqqd");
-  const [step, setStep] = useState(1);
-  const CONTACT_NUMBERS = ["919654979085", "919654979085"]; // Both support numbers
-
-  const cartSummary = buildCartSummary(cart);
-  const [contactDetails, setContactDetails] = useState({
-    name: "",
-    phone: "",
-    pincode: "",
-  });
-
-  if (state.succeeded) {
-    return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-        <p className="font-semibold">Request sent</p>
-        <p className="mt-2">
-          We received your cart details and will contact you shortly.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-amber-950">
-            Large order support
-          </p>
-          <p className="mt-1 text-sm leading-6 text-amber-900">
-            Orders above Rs 2000 or more than 5 items are handled manually so
-            we can confirm availability and delivery with you.
-          </p>
-        </div>
-        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">
-          Step {step} of 2
-        </span>
-      </div>
-
-      {step === 1 ? (
-        <div className="mt-4 space-y-4">
-          <div>
-            <label
-              htmlFor="cart-order-name"
-              className="block text-sm font-medium text-neutral-700"
-            >
-              Name
-            </label>
-            <input
-              id="cart-order-name"
-              name="name_preview"
-              type="text"
-              required
-              value={contactDetails.name}
-              onChange={(event) =>
-                setContactDetails((current) => ({
-                  ...current,
-                  name: event.target.value,
-                }))
-              }
-              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="cart-order-phone"
-              className="block text-sm font-medium text-neutral-700"
-            >
-              Phone number
-            </label>
-            <input
-              id="cart-order-phone"
-              name="phone_preview"
-              type="tel"
-              required
-              value={contactDetails.phone}
-              onChange={(event) =>
-                setContactDetails((current) => ({
-                  ...current,
-                  phone: event.target.value,
-                }))
-              }
-              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="cart-order-pincode"
-              className="block text-sm font-medium text-neutral-700"
-            >
-              Pincode
-            </label>
-            <input
-              id="cart-order-pincode"
-              name="pincode_preview"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              required
-              placeholder="e.g. 110001"
-              value={contactDetails.pincode}
-              onChange={(event) =>
-                setContactDetails((current) => ({
-                  ...current,
-                  pincode: event.target.value.replace(/\D/g, "").slice(0, 6),
-                }))
-              }
-              className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setStep(2)}
-            disabled={!contactDetails.name.trim() || !contactDetails.phone.trim() || contactDetails.pincode.length !== 6}
-            className="inline-flex w-full items-center justify-center rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <input type="hidden" name="name" value={contactDetails.name} />
-          <input type="hidden" name="phone" value={contactDetails.phone} />
-          <input type="hidden" name="pincode" value={contactDetails.pincode} />
-          <input type="hidden" name="cart_summary" value={cartSummary} />
-          <input type="hidden" name="order_total" value={cart.subtotal || ""} />
-          <input type="hidden" name="total_items" value={String(cart.totalQuantity)} />
-
-          <div className="rounded-2xl border border-amber-200 bg-white p-4 text-sm text-neutral-700">
-            <p className="font-medium text-neutral-900">{contactDetails.name}</p>
-            <p className="mt-1">{contactDetails.phone}</p>
-            <p className="mt-1 text-neutral-500">Pincode: {contactDetails.pincode}</p>
-          </div>
-
-          <div className="rounded-2xl border border-amber-200 bg-white p-4">
-            <p className="text-sm font-medium text-neutral-900">Cart summary</p>
-            <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-6 text-neutral-700">
-              {cartSummary}
-            </pre>
-          </div>
-
-          <ValidationError
-            prefix="Phone"
-            field="phone"
-            errors={state.errors}
-          />
-
-          <div className="rounded-2xl border border-dashed border-amber-300 px-4 py-3 text-sm text-amber-950">
-            Your cart will be submitted along with your contact details.
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-300 px-5 py-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
-            >
-              Edit details
-            </button>
-            <button
-              type="submit"
-              disabled={state.submitting}
-              className="inline-flex flex-1 items-center justify-center rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
-            >
-              {state.submitting ? "Sending..." : "Proceed to enquire"}
-            </button>
-          </div>
-
-        <div className="mt-6 pt-6 border-t border-amber-200">
-          <p className="text-xs font-semibold uppercase tracking-widest text-amber-900/60 text-center">Or connect directly</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-4">
-            {CONTACT_NUMBERS.map((num, idx) => (
-              <div key={`direct-${idx}`} className="flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5 shadow-sm">
-                <span className="text-[10px] font-bold text-amber-900/40">#{idx + 1}</span>
-                <a 
-                  href={`tel:+${num}`}
-                  className="p-1 text-neutral-600 hover:text-neutral-900 transition-colors"
-                  title="Call now"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </a>
-                <a 
-                  href={`https://wa.me/${num}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1 text-[#25D366] hover:text-[#20bd5c] transition-colors"
-                  title="Chat on WhatsApp"
-                >
-                  <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                  </svg>
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-        </form>
-      )}
-    </div>
   );
 }
 
@@ -783,7 +525,8 @@ export function CollectionFilters({
   onSelectHandle,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const activeCollection = collections.find((c) => c.handle === activeHandle) || collections[0];
+  const activeHandles = (activeHandle || "all").split(",").map(h => h.trim());
+  const activeCollection = collections.find((c) => activeHandles.includes(c.handle)) || collections[0];
 
   return (
     <div className="relative">
@@ -800,12 +543,11 @@ export function CollectionFilters({
         {isOpen && (
           <MobileBottomSheet
             isOpen={isOpen}
-            title="Collections"
+            title=""
             onClose={() => setIsOpen(false)}
           >
                 {collections.map((collection) => {
-                  const isActive = collection.handle === activeHandle;
-                  const logo = getFilterLogo(collection);
+                  const isActive = activeHandles.includes(collection.handle) || (collection.handle === "all" && activeHandles.includes("all"));
                   return (
                     <button
                       type="button"
@@ -816,25 +558,12 @@ export function CollectionFilters({
                         }
                         setIsOpen(false);
                       }}
-                      className={`flex items-center gap-2 rounded-2xl p-2 text-sm font-medium transition ${
+                      className={`flex w-full items-center rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${
                         isActive
                           ? "bg-neutral-950 text-white"
                           : "text-neutral-700 hover:bg-neutral-100"
                       }`}
                     >
-                      {logo ? (
-                        <span className={`relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border ${
-                          isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
-                        }`}>
-                          <Image src={logo} alt="" fill className="object-contain p-1" />
-                        </span>
-                      ) : (
-                        <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
-                          isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
-                        }`}>
-                          {collection.title === "All Brand" ? "All" : collection.title.slice(0, 1)}
-                        </span>
-                      )}
                       <span className="flex-1">{collection.title}</span>
                       {isActive && (
                         <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
@@ -849,42 +578,19 @@ export function CollectionFilters({
       {/* Desktop Grid */}
       <div className="hidden sm:flex sm:flex-wrap sm:gap-2 xl:flex-nowrap xl:overflow-x-auto xl:pb-1">
         {collections.map((collection) => {
-          const isActive = collection.handle === activeHandle;
-          const logo = getFilterLogo(collection);
+          const isActive = activeHandles.includes(collection.handle) || (collection.handle === "all" && activeHandles.includes("all"));
 
           return (
             <button
               type="button"
               key={collection.id}
               onClick={() => onSelectHandle?.(collection.handle)}
-              className={`flex shrink-0 items-center gap-3 rounded-[1.2rem] border px-3.5 py-3 text-left text-sm font-semibold transition ${
+              className={`flex shrink-0 items-center rounded-[1.2rem] border px-4 py-3 text-left text-sm font-semibold transition ${
                 isActive
                   ? "border-neutral-950 bg-neutral-950 text-white"
                   : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-500"
               }`}
             >
-              {logo ? (
-                <span
-                  className={`relative h-9 w-9 overflow-hidden rounded-xl border ${
-                    isActive ? "border-white/20 bg-white" : "border-neutral-200 bg-neutral-50"
-                  }`}
-                >
-                  <Image
-                    src={logo}
-                    alt={`${collection.title} logo`}
-                    fill
-                    className="object-contain p-1"
-                  />
-                </span>
-              ) : (
-                <span
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold ${
-                    isActive ? "bg-white/10 text-white" : "bg-neutral-100 text-neutral-500"
-                  }`}
-                >
-                  {collection.title === "All Brand" ? "All" : collection.title.slice(0, 1)}
-                </span>
-              )}
               <span className="whitespace-nowrap leading-5">{collection.title}</span>
             </button>
           );
@@ -1036,7 +742,14 @@ export function BrandFilters({
                         : "text-neutral-700 hover:bg-neutral-100"
                     }`}
                   >
-                    <span>{brand.title}</span>
+                    <div className="flex items-center gap-3">
+                      {brand.image && (
+                        <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                          <Image src={brand.image} alt="" fill className="object-contain p-1" />
+                        </div>
+                      )}
+                      <span>{brand.title}</span>
+                    </div>
                     {isActive ? (
                       <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -1058,12 +771,21 @@ export function BrandFilters({
               type="button"
               key={brand.handle}
               onClick={() => onSelectHandle?.(brand.handle)}
-              className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold tracking-[0.04em] transition sm:text-sm ${
+              className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full pl-1.5 pr-4 py-1.5 text-xs font-semibold tracking-[0.04em] transition sm:text-sm ${
                 isActive
                   ? "bg-neutral-950 text-white shadow-[0_10px_30px_rgba(23,23,23,0.12)]"
                   : "border border-[#e6dcc8] bg-[#fcf8f1] text-neutral-700 hover:border-[#c9b07a] hover:text-[#7a5a26]"
               }`}
             >
+              {brand.image ? (
+                <span className="relative h-6 w-6 overflow-hidden rounded-full border border-neutral-200 bg-white">
+                  <Image src={brand.image} alt="" fill className="object-contain p-0.5" />
+                </span>
+              ) : (
+                <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] ${isActive ? 'bg-white/20' : 'bg-neutral-200'}`}>
+                  {brand.title === "All" ? "*" : brand.title.slice(0,1)}
+                </span>
+              )}
               {brand.title}
             </button>
           );
@@ -1342,22 +1064,27 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
               </p>
             ) : (
               <>
-                {!isList && product.weight && !isCompact ? (
+                {!isList && product.packSize && !isCompact ? (
                   <p className="mt-1 text-xs font-medium text-neutral-500">
-                    {product.weight}
+                    {product.packSize} {product.unitPrice ? `• ₹${product.unitPrice}/kg` : ''}
                   </p>
                 ) : null}
                 
                 {isList ? (
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-medium text-neutral-500">
                     {product.productType && <span>{product.productType}</span>}
-                    {product.productType && (product.weight || product.price) && <span className="text-neutral-300">•</span>}
-                    {product.weight && <span>{product.weight}</span>}
-                    {product.weight && product.price && <span className="text-neutral-300">•</span>}
+                    {product.productType && (product.packSize || product.price) && <span className="text-neutral-300">•</span>}
+                    {product.packSize && <span>{product.packSize} {product.unitPrice ? `• ₹${product.unitPrice}/kg` : ''}</span>}
+                    {product.packSize && product.price && <span className="text-neutral-300">•</span>}
                     {product.price && (
                       <div className="flex items-center gap-1.5">
-                        {product.compareAtPrice && <span className="text-neutral-400 line-through text-[10px]">{product.compareAtPrice}</span>}
-                        <span className="text-neutral-900 font-bold">{product.price}</span>
+                        {product.showDiscount && <span className="text-neutral-400 line-through text-[10px]">₹{product.originalPrice}</span>}
+                        <span className="text-neutral-900 font-bold">₹{product.sellingPrice}</span>
+                        {product.showDiscount && (
+                           <span className="text-[10px] font-bold text-emerald-600 ml-1">
+                             {product.discountPercent}% OFF
+                           </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1366,23 +1093,18 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
             )}
           </div>
           {!(product.variants && product.variants.length > 1) && !isList && (
-            <div className={`shrink-0 flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 font-medium whitespace-nowrap ${isCompact ? 'text-[10px]' : 'text-sm'}`}>
-              {/* {product.availableForSale ? (
-                <>
-                  {product.compareAtPrice && (
-                    <span className="text-neutral-400 line-through">{product.compareAtPrice}</span>
-                  )}
-                  <span className="text-neutral-700">{product.price}</span>
-                </>
-              ) : (
-                <span className="text-neutral-700">Sold</span>
-              )} */}
-             <>
-                  {product.compareAtPrice && (
-                    <span className="text-neutral-400 line-through">{product.compareAtPrice}</span>
-                  )}
-                  <span className="text-neutral-700">{product.price}</span>
-                </>
+            <div className={`shrink-0 flex flex-col items-end gap-0.5`}>
+              <div className={`flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 font-medium whitespace-nowrap ${isCompact ? 'text-[10px]' : 'text-sm'}`}>
+                {product.showDiscount && (
+                  <span className="text-neutral-400 line-through">₹{product.originalPrice}</span>
+                )}
+                <span className="text-neutral-700">₹{product.sellingPrice}</span>
+              </div>
+              {product.showDiscount && !isCompact && (
+                 <div className="text-[10px] font-bold text-emerald-600 px-2 uppercase tracking-wide">
+                   {product.discountPercent}% OFF (Save ₹{product.savedAmount})
+                 </div>
+              )}
             </div>
           )}
         </div>
@@ -1417,16 +1139,25 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                 >
                   {adding
                     ? (isCompact ? "..." : "Adding…")
-                    : isEnquiryOnly
-                    ? "Proceed to enquire"
                     : (
-                      <div className="flex items-center justify-center" aria-label="Add to bucket">
-                        <svg className={isCompact ? "h-4 w-4" : "h-5 w-5"} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
-                        </svg>
-                      </div>
+                      isCompact ? (
+                        <div className="flex items-center justify-center" aria-label="Add to bucket">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2" aria-label="Add to bucket">
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+                          </svg>
+                          <span>{isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}</span>
+                        </div>
+                      )
                     )}
                 </button>
               ) : (
@@ -1488,19 +1219,8 @@ export function CartPanel({
   onCartChange,
 }) {
   const [isPending, startTransition] = useTransition();
-  const shouldUseLargeOrderForm = !isEnquiryOnly && isLargeOrder(cart);
-  const infoBoxClassName = shouldUseLargeOrderForm
-    ? "border-amber-200 bg-amber-50 text-amber-900"
-    : !isEnquiryOnly && isConfigured
-    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-    : "border-neutral-200 bg-neutral-50 text-neutral-700";
-  const infoMessage = isEnquiryOnly
-    ? "Online checkout is currently disabled, so all orders are being collected as enquiries."
-    : shouldUseLargeOrderForm
-    ? "This cart is above the fast-checkout limit. Please share your name and phone number, then proceed to enquire."
-    : isConfigured
-    ? "This cart is eligible for Shopify checkout. Use Continue to checkout to complete the order online."
-    : "Shopify checkout is not available yet because the store connection is still using preview mode.";
+  const infoBoxClassName = "border-neutral-200 bg-neutral-50 text-neutral-700";
+  const infoMessage = "Review your items and place your order directly via WhatsApp.";
 
   const handleAdd = (line) => {
     startTransition(async () => {
@@ -1557,13 +1277,7 @@ export function CartPanel({
       </div>
 
       <p className="mt-4 text-sm leading-6 text-neutral-600">
-        {isEnquiryOnly
-          ? "These selected items will be shared through the enquiry form instead of online checkout."
-          : shouldUseLargeOrderForm
-          ? "This cart qualifies for manual confirmation, so checkout is replaced with a quick request form."
-          : isConfigured
-          ? "Cart lines are synced with your store, and checkout will continue there."
-          : "Preview mode stores cart items locally until the store connection is complete."}
+        All orders are processed through WhatsApp for the fastest support and delivery estimates.
       </p>
 
       <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${infoBoxClassName}`}>
@@ -1628,24 +1342,27 @@ export function CartPanel({
       </div>
 
       <div className="mt-6">
-        {shouldUseLargeOrderForm ? (
-          <LargeOrderCartForm cart={cart} />
-        ) : !isEnquiryOnly && isConfigured && cart.checkoutUrl && cart.totalQuantity > 0 ? (
-          <a
-            href={cart.checkoutUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex w-full items-center justify-center rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
-          >
-            Continue to checkout
-          </a>
-        ) : cart.totalQuantity === 0 ? (
-          <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
-            Add a product to get started.
+        {cart.totalQuantity > 0 ? (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">Share Order to WhatsApp</p>
+            <button
+              type="button"
+              onClick={() => {
+                const items = cart.lines.map(line => `- ${line.title} x ${line.quantity} (${line.price || ''})`).join('%0A');
+                const msg = `Hi! I would like to order the following items:%0A%0A${items}%0A%0ATotal items: ${cart.totalQuantity}`;
+                window.open(`https://wa.me/919654979085?text=${msg}`, '_blank', 'noopener,noreferrer');
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#20bd5c]"
+            >
+              <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+              </svg>
+              Send to WhatsApp
+            </button>
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
-            Add more items to continue.
+            Add a product to get started.
           </div>
         )}
       </div>
@@ -1725,7 +1442,7 @@ export function MobileCartWidget({ cart, isConfigured, redirectTo, isEnquiryOnly
 const SUB_CATEGORY_DATA = [
   {
     title: "Dairy Spreads & Cream",
-    brand: "cream",
+    collection: "cream,butter",
     items: [
       "Salted Butter",
       "Unsalted Butter",
@@ -1738,7 +1455,7 @@ const SUB_CATEGORY_DATA = [
   },
   {
     title: "Cheese",
-    brand: "cheese",
+    collection: "cheese--slice",
     items: [
       "Mozzarella",
       "Burrata",
@@ -1751,7 +1468,7 @@ const SUB_CATEGORY_DATA = [
   },
   {
      title: "Imported Cheese",
-    brand: "cheese",
+    collection: "cheese--slice",
     items: [
       "Blue Cheese",
       "Parmesan",
@@ -1767,7 +1484,7 @@ const SUB_CATEGORY_DATA = [
     images: ["/categories/CREAMCHEESE.png", "/categories/dlectacheese.webp", "/categories/BriePresident.png"],
   },
   {title: "Dry",
-    brand: "dry",
+    collection: "dry",
     items: [
       "Fries",
       "Penne",
@@ -1848,7 +1565,7 @@ export function Sublistcategory() {
                 {SUB_CATEGORY_DATA[active].title}
               </h2>
               <Link 
-                href={`/shop?collection=all&brand=${SUB_CATEGORY_DATA[active].brand}&type=all`}
+                href={`/shop?collection=${SUB_CATEGORY_DATA[active].collection}&brand=all&type=all`}
                 className="group flex items-center gap-1.5 text-sm font-semibold text-amber-600 hover:text-amber-700 transition-colors"
               >
                 View All
@@ -1909,7 +1626,7 @@ function SubCategoryMobileDetails({ cat }) {
           {cat.title}
         </h4>
         <Link 
-          href={`/shop?collection=all&brand=${cat.brand}&type=all`}
+          href={`/shop?collection=${cat.collection}&brand=all&type=all`}
           className="text-xs font-bold text-amber-600 uppercase tracking-wider"
         >
           View All

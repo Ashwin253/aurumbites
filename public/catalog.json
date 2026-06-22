@@ -1,0 +1,2162 @@
+[
+  {
+    "sno": 1,
+    "category": "Butter",
+    "productName": "BUTTER UNSALTED",
+    "brand": "Prabhat",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 560,
+      "perPcs": 280
+    },
+    "MRP": {
+      "perKg": 870,
+      "perPcs": 285
+    }
+  },
+  {
+    "sno": 2,
+    "category": "Butter",
+    "productName": "BUTTER UNSALTED",
+    "brand": "President",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 650,
+      "perPcs": 325
+    },
+    "MRP": {
+      "perKg": 606,
+      "perPcs": 303
+    }
+  },
+  {
+    "sno": 3,
+    "category": "Butter",
+    "productName": "BUTTER SALTED",
+    "brand": "Amul",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 570,
+      "perPcs": 258
+    },
+    "MRP": {
+      "perKg": 560,
+      "perPcs": 280
+    }
+  },
+  {
+    "sno": 4,
+    "category": "Mozzarella",
+    "productName": "Mozzarella diced",
+    "brand": "Modern Dairy",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 475,
+      "perPcs": 475
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": 450
+    }
+  },
+  {
+    "sno": 5,
+    "category": "Mozzarella",
+    "productName": "Mozzarella diced",
+    "brand": "Modern Dairy",
+    "packSize": "2 K.G.",
+    "Price": {
+      "perKg": 480,
+      "perPcs": 960
+    },
+    "MRP": {
+      "perKg": 460,
+      "perPcs": 920
+    }
+  },
+  {
+    "sno": 6,
+    "category": "Mozzarella",
+    "productName": "Mozzarella Cheddar Mix",
+    "brand": "Modern Dairy",
+    "packSize": "2 K.G.",
+    "Price": {
+      "perKg": 500,
+      "perPcs": 1000
+    },
+    "MRP": {
+      "perKg": 480,
+      "perPcs": 960
+    }
+  },
+  {
+    "sno": 7,
+    "category": "Mozzarella",
+    "productName": "John 1",
+    "brand": "Dairy Craft",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 576,
+      "perPcs": 576
+    },
+    "MRP": {
+      "perKg": 525,
+      "perPcs": 525
+    }
+  },
+  {
+    "sno": 8,
+    "category": "Mozzarella",
+    "productName": "John 2",
+    "brand": "Dairy Craft",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 586,
+      "perPcs": 586
+    },
+    "MRP": {
+      "perKg": 540,
+      "perPcs": 540
+    }
+  },
+  {
+    "sno": 9,
+    "category": "Mozzarella",
+    "productName": "John 3",
+    "brand": "Dairy Craft",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 600,
+      "perPcs": 600
+    },
+    "MRP": {
+      "perKg": 560,
+      "perPcs": 560
+    }
+  },
+  {
+    "sno": 10,
+    "category": "Cheese & Slice",
+    "productName": "Cheese Slice",
+    "brand": "Modern Dairy",
+    "packSize": "780 Grm",
+    "Price": {
+      "perKg": 525,
+      "perPcs": 410
+    },
+    "MRP": {
+      "perKg": 488,
+      "perPcs": 380
+    }
+  },
+  {
+    "sno": 11,
+    "category": "Cheese & Slice",
+    "productName": "Cheese Slice",
+    "brand": "Amul",
+    "packSize": "750 Grm",
+    "Price": {
+      "perKg": 567,
+      "perPcs": 425
+    },
+    "MRP": {
+      "perKg": 567,
+      "perPcs": 425
+    }
+  },
+  {
+    "sno": 12,
+    "category": "Cheese & Slice",
+    "productName": "Cheese Slice",
+    "brand": "Dairy Craft",
+    "packSize": "765 Grm",
+    "Price": {
+      "perKg": 630,
+      "perPcs": 485
+    },
+    "MRP": {
+      "perKg": 562,
+      "perPcs": 430
+    }
+  },
+  {
+    "sno": 13,
+    "category": "Cheese & Slice",
+    "productName": "Processed Chaddar",
+    "brand": "Dairy Craft",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 548,
+      "perPcs": 548
+    },
+    "MRP": {
+      "perKg": 530,
+      "perPcs": 530
+    }
+  },
+  {
+    "sno": 14,
+    "category": "Cheese & Slice",
+    "productName": "Processed Cheese",
+    "brand": "Amul",
+    "packSize": "400",
+    "Price": {
+      "perKg": 635,
+      "perPcs": 254
+    },
+    "MRP": {
+      "perKg": 625,
+      "perPcs": 250
+    }
+  },
+  {
+    "sno": 15,
+    "category": "Cream",
+    "productName": "Whip Cream 35.1% Fat",
+    "brand": "Elle Vire",
+    "packSize": "1 LTR",
+    "Price": {
+      "perKg": 1000,
+      "perPcs": 1000
+    },
+    "MRP": {
+      "perKg": 890,
+      "perPcs": 890
+    }
+  },
+  {
+    "sno": 16,
+    "category": "Cream",
+    "productName": "Cooking Cream",
+    "brand": "Rich",
+    "packSize": "1 LTR",
+    "Price": {
+      "perKg": 275,
+      "perPcs": 275
+    },
+    "MRP": {
+      "perKg": 195,
+      "perPcs": 195
+    }
+  },
+  {
+    "sno": 17,
+    "category": "Cream",
+    "productName": "Whip Topping Cream",
+    "brand": "Rich",
+    "packSize": "2 LTR",
+    "Price": {
+      "perKg": 289,
+      "perPcs": 578
+    },
+    "MRP": {
+      "perKg": 195,
+      "perPcs": 390
+    }
+  },
+  {
+    "sno": 18,
+    "category": "Cream",
+    "productName": "Fresh Cream",
+    "brand": "Amul",
+    "packSize": "1LT",
+    "Price": {
+      "perKg": 230,
+      "perPcs": 230
+    },
+    "MRP": {
+      "perKg": 228,
+      "perPcs": 228
+    }
+  },
+  {
+    "sno": 19,
+    "category": "Cream",
+    "productName": "Cream Cheese",
+    "brand": "D'lecta",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 850,
+      "perPcs": 850
+    },
+    "MRP": {
+      "perKg": 800,
+      "perPcs": 800
+    }
+  },
+  {
+    "sno": 20,
+    "category": "Cream",
+    "productName": "Cheese Sauce",
+    "brand": "D'lecta",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 580,
+      "perPcs": 580
+    },
+    "MRP": {
+      "perKg": 520,
+      "perPcs": 520
+    }
+  },
+  {
+    "sno": 21,
+    "category": "Cream",
+    "productName": "Cream Cheese",
+    "brand": "Crème Italia",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 840,
+      "perPcs": 840
+    }
+  },
+  {
+    "sno": 22,
+    "category": "Cream",
+    "productName": "Cheese Sauce",
+    "brand": "Crème Italia",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 620,
+      "perPcs": 620
+    }
+  },
+  {
+    "sno": 23,
+    "category": "Fresh Cheese",
+    "productName": "Bocconchini",
+    "brand": "Crème Italia",
+    "packSize": "250 Grm",
+    "Price": {
+      "perKg": 1000,
+      "perPcs": 250
+    },
+    "MRP": {
+      "perKg": 900,
+      "perPcs": 225
+    }
+  },
+  {
+    "sno": 24,
+    "category": "Fresh Cheese",
+    "productName": "Buffalo Mozzarella",
+    "brand": "Crème Italia",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 1000,
+      "perPcs": 500
+    },
+    "MRP": {
+      "perKg": 900,
+      "perPcs": 450
+    }
+  },
+  {
+    "sno": 25,
+    "category": "Fresh Cheese",
+    "productName": "Ricotta",
+    "brand": "Crème Italia",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 800,
+      "perPcs": 400
+    },
+    "MRP": {
+      "perKg": 600,
+      "perPcs": 300
+    }
+  },
+  {
+    "sno": 26,
+    "category": "Fresh Cheese",
+    "productName": "Sour Cream",
+    "brand": "Crème Italia",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 800,
+      "perPcs": 400
+    },
+    "MRP": {
+      "perKg": 600,
+      "perPcs": 300
+    }
+  },
+  {
+    "sno": 27,
+    "category": "Fresh Cheese",
+    "productName": "Mascarpone",
+    "brand": "Crème Italia",
+    "packSize": "500 Grm",
+    "Price": {
+      "perKg": 820,
+      "perPcs": 410
+    },
+    "MRP": {
+      "perKg": 740,
+      "perPcs": 370
+    }
+  },
+  {
+    "sno": 28,
+    "category": "Fresh Cheese",
+    "productName": "Buratta",
+    "brand": "Crème Italia",
+    "packSize": "250 Grm",
+    "Price": {
+      "perKg": 1500,
+      "perPcs": 375
+    },
+    "MRP": {
+      "perKg": 1200,
+      "perPcs": 300
+    }
+  },
+  {
+    "sno": 29,
+    "category": "Fresh Cheese",
+    "productName": "Baby Buratta",
+    "brand": "Crème Italia",
+    "packSize": "250 Grm",
+    "Price": {
+      "perKg": 1500,
+      "perPcs": 375
+    },
+    "MRP": {
+      "perKg": 1200,
+      "perPcs": 300
+    }
+  },
+  {
+    "sno": 30,
+    "category": "Fresh Cheese",
+    "productName": "Fiordilate",
+    "brand": "Crème Italia",
+    "packSize": "1 K.G.",
+    "Price": {
+      "perKg": 1050,
+      "perPcs": 720
+    },
+    "MRP": {
+      "perKg": 750,
+      "perPcs": 750
+    }
+  },
+  {
+    "sno": 31,
+    "category": "Fresh Cheese",
+    "productName": "Smoke Scarmoza",
+    "brand": "Crème Italia",
+    "packSize": "150 Grm",
+    "Price": {
+      "perKg": 1000,
+      "perPcs": 150
+    },
+    "MRP": {
+      "perKg": 932,
+      "perPcs": 140
+    }
+  },
+  {
+    "sno": 32,
+    "category": "Fresh Cheese",
+    "productName": "Feta Cheese",
+    "brand": "Arla",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 800,
+      "perPcs": 400
+    },
+    "MRP": {
+      "perKg": 540,
+      "perPcs": 270
+    }
+  },
+  {
+    "sno": 33,
+    "category": "Fresh Cheese",
+    "productName": "Parmesan Cheese",
+    "brand": "Grand Mantovano",
+    "packSize": "1.5 K.G. (Approx.)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1530,
+      "perPcs": 2295
+    }
+  },
+  {
+    "sno": 34,
+    "category": "Fresh Cheese",
+    "productName": "Parmesan Cheese",
+    "brand": "Fiorella",
+    "packSize": "1.5 K.G. (Approx.)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1270,
+      "perPcs": 1800
+    }
+  },
+  {
+    "sno": 35,
+    "category": "Fresh Cheese",
+    "productName": "blue Cheese",
+    "brand": "Danish",
+    "packSize": "100 Grm",
+    "Price": {
+      "perKg": 3999,
+      "perPcs": 399
+    },
+    "MRP": {
+      "perKg": 2860,
+      "perPcs": 290
+    }
+  },
+  {
+    "sno": 36,
+    "category": "Fresh Cheese",
+    "productName": "Brie",
+    "brand": "Prestige",
+    "packSize": "125 Grm (FW)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 2520,
+      "perPcs": 315
+    }
+  },
+  {
+    "sno": 37,
+    "category": "Fresh Cheese",
+    "productName": "Cheddar MILD White",
+    "brand": "Antoio's",
+    "packSize": "2.5 K.G. (Approx.)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 650,
+      "perPcs": 650
+    }
+  },
+  {
+    "sno": 38,
+    "category": "Fresh Cheese",
+    "productName": "Cheddar MILD Coloured",
+    "brand": "Antoio's",
+    "packSize": "2.5 K.G. (Approx.)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 670,
+      "perPcs": 670
+    }
+  },
+  {
+    "sno": 39,
+    "category": "Fresh Cheese",
+    "productName": "Soft Goat Cheese",
+    "brand": "Chevre",
+    "packSize": "1 K.G. (approx)",
+    "Price": {
+      "perKg": 6600,
+      "perPcs": 6600
+    },
+    "MRP": {
+      "perKg": 2190,
+      "perPcs": 2190
+    }
+  },
+  {
+    "sno": 40,
+    "category": "Fresh Cheese",
+    "productName": "Edam MILD Ball",
+    "brand": "Jack",
+    "packSize": "1.9 K.G. (approx)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1365,
+      "perPcs": 2600
+    }
+  },
+  {
+    "sno": 41,
+    "category": "Fresh Cheese",
+    "productName": "Gouda MILD Wheel",
+    "brand": "Jack",
+    "packSize": "4.5 K.G. (approx)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1350,
+      "perPcs": 6075
+    }
+  },
+  {
+    "sno": 42,
+    "category": "Fresh Cheese",
+    "productName": "EMMENTAL",
+    "brand": "Jack",
+    "packSize": "5  (approx)",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1360,
+      "perPcs": 6800
+    }
+  },
+  {
+    "sno": 43,
+    "category": "Fresh Cheese",
+    "productName": "Fries 9MM Regular",
+    "brand": "McCain",
+    "packSize": "2.5 K.G",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 145,
+      "perPcs": 362
+    }
+  },
+  {
+    "sno": 44,
+    "category": "Fresh Cheese",
+    "productName": "Fries Sure Crispy",
+    "brand": "McCain",
+    "packSize": "2.5 K.G",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 205,
+      "perPcs": 512
+    }
+  },
+  {
+    "sno": 45,
+    "category": "Fresh Cheese",
+    "productName": "Fries 11MM (With Skin)",
+    "brand": "McCain",
+    "packSize": "3 K.G",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 175,
+      "perPcs": 525
+    }
+  },
+  {
+    "sno": 46,
+    "category": "Fresh Cheese",
+    "productName": "potatoes Wedges",
+    "brand": "McCains",
+    "packSize": "2.5 K.G.",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 210,
+      "perPcs": 525
+    }
+  },
+  {
+    "sno": 47,
+    "category": "Fresh Cheese",
+    "productName": "Fries 9MM",
+    "brand": "Hungrito",
+    "packSize": "2.5 K.G",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 125,
+      "perPcs": 312
+    }
+  },
+  {
+    "sno": 48,
+    "category": "Fresh Cheese",
+    "productName": "Bherb Potato Tikki",
+    "brand": "Hungrito",
+    "packSize": "1.5 K.G",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 150,
+      "perPcs": 225
+    }
+  },
+  {
+    "sno": 49,
+    "category": "Fresh Cheese",
+    "productName": "Spring Roll Sheet",
+    "brand": "TYJ",
+    "packSize": "550 Grm",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 490,
+      "perPcs": 270
+    }
+  },
+  {
+    "sno": 50,
+    "category": "Fresh Cheese",
+    "productName": "Pomance Oilve Oil",
+    "brand": "Ybarra",
+    "packSize": "5 LTR",
+    "Price": {
+      "perKg": 1399,
+      "perPcs": 6999
+    },
+    "MRP": {
+      "perKg": 600,
+      "perPcs": 3000
+    }
+  },
+  {
+    "sno": 51,
+    "category": "Fresh Cheese",
+    "productName": "Extra Virgin Oilve Oil",
+    "brand": "Ybarra",
+    "packSize": "500 ML",
+    "Price": {
+      "perKg": 2499,
+      "perPcs": 2499
+    },
+    "MRP": {
+      "perKg": 1370,
+      "perPcs": 1370
+    }
+  },
+  {
+    "sno": 52,
+    "category": "Fresh Cheese",
+    "productName": "Pelati",
+    "brand": "Pasta Zara",
+    "packSize": "2.5 K.G.",
+    "Price": {
+      "perKg": 360,
+      "perPcs": 899
+    },
+    "MRP": {
+      "perKg": 220,
+      "perPcs": 550
+    }
+  },
+  {
+    "sno": 53,
+    "category": "Fresh Cheese",
+    "productName": "Green Pitted Olives",
+    "brand": "Pasta Zara",
+    "packSize": "450 Grm",
+    "Price": {
+      "perKg": 835,
+      "perPcs": 375
+    },
+    "MRP": {
+      "perKg": 545,
+      "perPcs": 240
+    }
+  },
+  {
+    "sno": 54,
+    "category": "Fresh Cheese",
+    "productName": "Black Pitted olives",
+    "brand": "Pasta Zara",
+    "packSize": "450 Grm",
+    "Price": {
+      "perKg": 835,
+      "perPcs": 375
+    },
+    "MRP": {
+      "perKg": 545,
+      "perPcs": 240
+    }
+  },
+  {
+    "sno": 55,
+    "category": "Fresh Cheese",
+    "productName": "Spaghetti",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 650,
+      "perPcs": 325
+    },
+    "MRP": {
+      "perKg": 240,
+      "perPcs": 120
+    }
+  },
+  {
+    "sno": 56,
+    "category": "Fresh Cheese",
+    "productName": "Penne",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 650,
+      "perPcs": 325
+    },
+    "MRP": {
+      "perKg": 240,
+      "perPcs": 120
+    }
+  },
+  {
+    "sno": 57,
+    "category": "Fresh Cheese",
+    "productName": "Fusilli",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 650,
+      "perPcs": 325
+    },
+    "MRP": {
+      "perKg": 240,
+      "perPcs": 120
+    }
+  },
+  {
+    "sno": 58,
+    "category": "Fresh Cheese",
+    "productName": "Farfalle",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 600,
+      "perPcs": 300
+    },
+    "MRP": {
+      "perKg": 240,
+      "perPcs": 120
+    }
+  },
+  {
+    "sno": 59,
+    "category": "Fresh Cheese",
+    "productName": "Lasagne Gialle",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 1100,
+      "perPcs": 550
+    },
+    "MRP": {
+      "perKg": 600,
+      "perPcs": 300
+    }
+  },
+  {
+    "sno": 60,
+    "category": "Fresh Cheese",
+    "productName": "Linguine",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 700,
+      "perPcs": 350
+    },
+    "MRP": {
+      "perKg": 300,
+      "perPcs": 150
+    }
+  },
+  {
+    "sno": 61,
+    "category": "Fresh Cheese",
+    "productName": "Rigatoni",
+    "brand": "Pasta Zara",
+    "packSize": "500 GRM",
+    "Price": {
+      "perKg": 700,
+      "perPcs": 350
+    },
+    "MRP": {
+      "perKg": 300,
+      "perPcs": 150
+    }
+  },
+  {
+    "sno": 62,
+    "category": "Fresh Cheese",
+    "productName": "Gyoza Skin",
+    "brand": "Golden Wraps",
+    "packSize": "300 g",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 460,
+      "perPcs": 138
+    }
+  },
+  {
+    "sno": 63,
+    "category": "Fresh Cheese",
+    "productName": "Katafi",
+    "brand": "Kanaki",
+    "packSize": "5 K.G.",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 790,
+      "perPcs": 3950
+    }
+  },
+  {
+    "sno": 64,
+    "category": "Fresh Cheese",
+    "productName": "Fillo Pastry",
+    "brand": "Kanaki",
+    "packSize": "2 K.G.",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 820,
+      "perPcs": 1640
+    }
+  },
+  {
+    "sno": 65,
+    "category": "Fresh Cheese",
+    "productName": "Puff Pastry",
+    "brand": "Kanaki",
+    "packSize": "800 GRM",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 750,
+      "perPcs": 600
+    }
+  },
+  {
+    "sno": 66,
+    "category": "Frozen",
+    "productName": "CHICKEN SEEKH KEBAB",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 240,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 370,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 67,
+    "category": "Frozen",
+    "productName": "CHICKEN SEEKH KEBAB-ANGARA (SPICY)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 270,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 350,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 68,
+    "category": "Frozen",
+    "productName": "CHICKEN SEEKH KEBAB-MALAI",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 300,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 390,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 69,
+    "category": "Frozen",
+    "productName": "CHICKEN SEEKH KEBAB-ONION",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 300,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 390,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 70,
+    "category": "Frozen",
+    "productName": "CHICKEN SEEKH KEBAB-TURKISH",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 300,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 390,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 71,
+    "category": "Frozen",
+    "productName": "CHICKEN SAUSAGE",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 200,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 260,
+      "perPcs": 273
+    }
+  },
+  {
+    "sno": 72,
+    "category": "Frozen",
+    "productName": "CHICKEN SALAMI-PLAIN",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 240,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 315,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 73,
+    "category": "Frozen",
+    "productName": "CHICKEN SALAMI-MASALA (SPICY)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 260,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 340,
+      "perPcs": 357
+    }
+  },
+  {
+    "sno": 74,
+    "category": "Frozen",
+    "productName": "CHICKEN FRANKFURTER",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 265,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 345,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 75,
+    "category": "Frozen",
+    "productName": "CHICKEN NUGGETS",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 270,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 355,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 76,
+    "category": "Frozen",
+    "productName": "CHICKEN BURGER PATTY",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 265,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 345,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 77,
+    "category": "Frozen",
+    "productName": "CHICKEN POP-CORN",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 260,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 345,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 78,
+    "category": "Frozen",
+    "productName": "CHICKEN TIKKA MASALA (CHEST)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 310,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 405,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 79,
+    "category": "Frozen",
+    "productName": "CHICKEN TIKKA MASALA (THAIS)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 390,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 510,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 80,
+    "category": "Frozen",
+    "productName": "CHICKEN BBQ WINGS",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 290,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 380,
+      "perPcs": 399
+    }
+  },
+  {
+    "sno": 81,
+    "category": "Frozen",
+    "productName": "CHICKEN HOT WINGS",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 290,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 380,
+      "perPcs": 399
+    }
+  },
+  {
+    "sno": 82,
+    "category": "Frozen",
+    "productName": "CHICKEN PEPPERONI",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 280,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 370,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 83,
+    "category": "Frozen",
+    "productName": "HERB CHICKEN BREAST",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 0,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 0,
+      "perPcs": 0
+    }
+  },
+  {
+    "sno": 84,
+    "category": "Frozen",
+    "productName": "CHICKEN MEAT BALL",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 295,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 365,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 85,
+    "category": "Frozen",
+    "productName": "CHICKEN COCKTAIL SAUSAGES",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 270,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 330,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 86,
+    "category": "Frozen",
+    "productName": "CHICKEN JUMBO FRANKFURTERS",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 300,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 370,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 87,
+    "category": "Frozen",
+    "productName": "CHICKEN CHEESY FRANKFURTERS",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 88,
+    "category": "Frozen",
+    "productName": "CHICKEN CHEESE & JALAPENO SAUSAGES",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 89,
+    "category": "Frozen",
+    "productName": "CHICKEN MORTADELLA SLICED (PLAIN)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 90,
+    "category": "Frozen",
+    "productName": "CHICKEN MORTADELLA SLICED (Pistachio, Black Pepper, Paprika)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 91,
+    "category": "Frozen",
+    "productName": "CHICKEN MORTADELLA ROLL (Plain),",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 92,
+    "category": "Frozen",
+    "productName": "CHICKEN MORTADELLA ROLL (Pistachio, Black Pepper, Paprika)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 93,
+    "category": "Frozen",
+    "productName": "PORK BREAKFAST SAUSAGE",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 500,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 600,
+      "perPcs": 630
+    }
+  },
+  {
+    "sno": 94,
+    "category": "Frozen",
+    "productName": "PORK PLAIN SALAMI",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 480,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 580,
+      "perPcs": 609
+    }
+  },
+  {
+    "sno": 95,
+    "category": "Frozen",
+    "productName": "CHICKEN SALAMI PLAIN",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 240,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 315,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 96,
+    "category": "Frozen",
+    "productName": "CHICKEN HAM (4 X 4)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 260,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 340,
+      "perPcs": 357
+    }
+  },
+  {
+    "sno": 97,
+    "category": "Frozen",
+    "productName": "CHICKEN KEEMA",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 490,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 98,
+    "category": "Frozen",
+    "productName": "SMOKED CHICKEN BREAST(WHOLE)",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 330,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 435,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 99,
+    "category": "Frozen",
+    "productName": "MUTTON SEEKH KEBAB",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 510,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 612,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 100,
+    "category": "Frozen",
+    "productName": "MUTTON KEEMA",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 650,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 800,
+      "perPcs": 840
+    }
+  },
+  {
+    "sno": 101,
+    "category": "Frozen",
+    "productName": "PORK PEPPERONI",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 520,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 685,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 102,
+    "category": "Frozen",
+    "productName": "PORK BECON",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 660,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 858,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 103,
+    "category": "Frozen",
+    "productName": "PORK SAUSAGE",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 320,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 416,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 104,
+    "category": "Frozen",
+    "productName": "PORK HAM SLICED",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 400,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 520,
+      "perPcs": 546
+    }
+  },
+  {
+    "sno": 105,
+    "category": "Frozen",
+    "productName": "PORK SALAMI",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 380,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 494,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 106,
+    "category": "Frozen",
+    "productName": "PORK CHOP WITH SKIN",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 475,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 625,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 107,
+    "category": "Frozen",
+    "productName": "PORK CHOP SKIIN OFF",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 550,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 720,
+      "perPcs": 756
+    }
+  },
+  {
+    "sno": 108,
+    "category": "Frozen",
+    "productName": "PORK BELLY SKIN ON",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 600,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 785,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 109,
+    "category": "Frozen",
+    "productName": "PORK BELLY SKIN OFF",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 550,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 720,
+      "perPcs": 756
+    }
+  },
+  {
+    "sno": 110,
+    "category": "Frozen",
+    "productName": "PORK RIBS SKIN OFF",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 650,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 850,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 111,
+    "category": "Frozen",
+    "productName": "PORK RIBS SKIN ON",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 550,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 720,
+      "perPcs": 756
+    }
+  },
+  {
+    "sno": 112,
+    "category": "Frozen",
+    "productName": "PORK CLASSIC HAM",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 500,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 605,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 113,
+    "category": "Frozen",
+    "productName": "PORK LOIN 1KG",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 375,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 455,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 114,
+    "category": "Frozen",
+    "productName": "PORK CHOPS BONELESS 1kg",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 875,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1070,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 115,
+    "category": "Frozen",
+    "productName": "PORK CHOPS BONE-IN 1KG",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": 800,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 970,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 116,
+    "category": "Frozen",
+    "productName": "PORK BONELESS 1KG",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 0,
+      "perPcs": 0
+    }
+  },
+  {
+    "sno": 117,
+    "category": "Frozen",
+    "productName": "PORK MINCE 1KG",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 0,
+      "perPcs": 0
+    }
+  },
+  {
+    "sno": 118,
+    "category": "Frozen",
+    "productName": "PORK CURRY CUTS 1KG",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 0,
+      "perPcs": 0
+    }
+  },
+  {
+    "sno": 119,
+    "category": "Frozen",
+    "productName": "PORK TENDERLOIN 1KG",
+    "brand": "Arys",
+    "packSize": "1KG",
+    "Price": {
+      "perKg": null,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 0,
+      "perPcs": 0
+    }
+  },
+  {
+    "sno": 120,
+    "category": "Frozen",
+    "productName": "SQUID TUBE U10",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 490,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 588,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 121,
+    "category": "Frozen",
+    "productName": "SQUID TUBE 10/20",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 427,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 520,
+      "perPcs": 546
+    }
+  },
+  {
+    "sno": 122,
+    "category": "Frozen",
+    "productName": "SQUID TUBE 20/40",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 380,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 460,
+      "perPcs": 483
+    }
+  },
+  {
+    "sno": 123,
+    "category": "Frozen",
+    "productName": "SQUID TUBE 40/60",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 325,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 400,
+      "perPcs": 420
+    }
+  },
+  {
+    "sno": 124,
+    "category": "Frozen",
+    "productName": "SQUID WHOLE CLEAN U10",
+    "brand": "Non-Branded",
+    "packSize": "",
+    "Price": {
+      "perKg": 450,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 550,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 125,
+    "category": "Frozen",
+    "productName": "SQUID WHOLE CLEAN 10/20",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 400,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 480,
+      "perPcs": 504
+    }
+  },
+  {
+    "sno": 126,
+    "category": "Frozen",
+    "productName": "SQUID WHOLE CLEAN 20/40",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 360,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 440,
+      "perPcs": 462
+    }
+  },
+  {
+    "sno": 127,
+    "category": "Frozen",
+    "productName": "SQUID RING IQF",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 430,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 516,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 128,
+    "category": "Frozen",
+    "productName": "MIX SEA FOOD",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 480,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 580,
+      "perPcs": 609
+    }
+  },
+  {
+    "sno": 129,
+    "category": "Frozen",
+    "productName": "MAHI FISH FILLET",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 400,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 490,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 130,
+    "category": "Frozen",
+    "productName": "WHITE SNNAPER FILLET",
+    "brand": "Non-Branded",
+    "packSize": "10*1.5KG",
+    "Price": {
+      "perKg": 680,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 820,
+      "perPcs": 861
+    }
+  },
+  {
+    "sno": 131,
+    "category": "Frozen",
+    "productName": "RED SNAPPER FILLET",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 750,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 900,
+      "perPcs": 945
+    }
+  },
+  {
+    "sno": 132,
+    "category": "Frozen",
+    "productName": "OCTOPUS W/C IQF",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 400,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 480,
+      "perPcs": 504
+    }
+  },
+  {
+    "sno": 133,
+    "category": "Frozen",
+    "productName": "CUTTLE FIDH FROZEN IQF",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 510,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 615,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 134,
+    "category": "Frozen",
+    "productName": "KING FISH WHOLE (SURMAI)",
+    "brand": "Non-Branded",
+    "packSize": "1*5KG",
+    "Price": {
+      "perKg": 600,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 730,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 135,
+    "category": "Frozen",
+    "productName": "PRAWNS6/8",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 880,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1060,
+      "perPcs": 1113
+    }
+  },
+  {
+    "sno": 136,
+    "category": "Frozen",
+    "productName": "PRAWNS8/12",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 740,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 900,
+      "perPcs": 945
+    }
+  },
+  {
+    "sno": 137,
+    "category": "Frozen",
+    "productName": "PRAWNS13/15",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 700,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 850,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 138,
+    "category": "Frozen",
+    "productName": "PRAWNS 16/20",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 530,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 650,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 139,
+    "category": "Frozen",
+    "productName": "PRAWNS 21/25",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 530,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 650,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 140,
+    "category": "Frozen",
+    "productName": "PRAWNS 31/40",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 490,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 600,
+      "perPcs": 630
+    }
+  },
+  {
+    "sno": 141,
+    "category": "Frozen",
+    "productName": "LOBESTER",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 1800,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 2160,
+      "perPcs": 2268
+    }
+  },
+  {
+    "sno": 142,
+    "category": "Frozen",
+    "productName": "SOFT CELL CRAB",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 1200,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 1450,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 143,
+    "category": "Frozen",
+    "productName": "CRAB WHOLE",
+    "brand": "Non-Branded",
+    "packSize": "10*2KG",
+    "Price": {
+      "perKg": 480,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 590,
+      "perPcs": null
+    }
+  },
+  {
+    "sno": 144,
+    "category": "Frozen",
+    "productName": "RIBBON FISH(400GM-700 GM )",
+    "brand": "Non-Branded",
+    "packSize": "10*1KG",
+    "Price": {
+      "perKg": 380,
+      "perPcs": null
+    },
+    "MRP": {
+      "perKg": 460,
+      "perPcs": 483
+    }
+  }
+]

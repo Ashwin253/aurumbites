@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "../../component/Navbar";
 import { CartNotice } from "../ShopServerUi";
-import { getProductByHandle, getShopPageData, getCart } from "../../../lib/shopify";
+import { getProductByHandle, getShopPageData } from "../../../lib/catalog";
+import { getCartState } from "../actions";
 import { getStorefrontMode } from "../../../lib/storefront";
 import SocialShareButtons from "../../component/SocialShareButtons";
 import { cookies } from "next/headers";
@@ -53,13 +54,10 @@ export default async function ProductDetailPage({ params, searchParams }) {
   const { handle } = await params;
   const query = await searchParams;
   const cartStatus = query?.cart || "";
-  
-  const cookieStore = await cookies();
-  const cartId = cookieStore.get("aurum_shopify_cart_id")?.value;
 
-  const [{ product }, cart] = await Promise.all([
+  const [{ product }, { cart }] = await Promise.all([
     getProductByHandle(handle),
-    getCart(cartId)
+    getCartState()
   ]);
 
   if (!product) {

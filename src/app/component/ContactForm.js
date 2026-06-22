@@ -1,11 +1,29 @@
 "use client";
 
-import { useForm, ValidationError } from "@formspree/react";
+import { useState } from "react";
+import { submitContactMessage } from "../contact/actions";
 
 export default function ContactForm({ initialMessage = "" }) {
-  const [state, handleSubmit] = useForm("meeogqqd");
+  const [status, setStatus] = useState("idle"); // idle, submitting, success, error
+  const [errorMessage, setErrorMessage] = useState("");
 
-  if (state.succeeded) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("submitting");
+    setErrorMessage("");
+
+    const formData = new FormData(e.target);
+    const result = await submitContactMessage(formData);
+
+    if (result?.error) {
+      setErrorMessage(result.error);
+      setStatus("error");
+    } else {
+      setStatus("success");
+    }
+  };
+
+  if (status === "success") {
     return (
       <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center">
         <h2 className="text-lg font-semibold">Thank you</h2>
@@ -18,6 +36,12 @@ export default function ContactForm({ initialMessage = "" }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200">
+      {status === "error" && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+          {errorMessage}
+        </div>
+      )}
+      
       {/* Name */}
       <div>
         <label
@@ -50,11 +74,6 @@ export default function ContactForm({ initialMessage = "" }) {
           required
           className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
         />
-        <ValidationError
-          prefix="Email"
-          field="email"
-          errors={state.errors}
-        />
       </div>
 
       {/* Message */}
@@ -73,20 +92,15 @@ export default function ContactForm({ initialMessage = "" }) {
           defaultValue={initialMessage}
           className="mt-2 w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
         />
-        <ValidationError
-          prefix="Message"
-          field="message"
-          errors={state.errors}
-        />
       </div>
 
       {/* Submit */}
       <button
         type="submit"
-        disabled={state.submitting}
+        disabled={status === "submitting"}
         className="w-full rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 transition"
       >
-        {state.submitting ? "Sending..." : "Send Enquiry"}
+        {status === "submitting" ? "Sending..." : "Send Enquiry"}
       </button>
     </form>
   );

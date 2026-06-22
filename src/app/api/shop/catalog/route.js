@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getShopPageData } from "../../../../lib/shopify";
+import { getShopPageData } from "../../../../lib/catalog";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);

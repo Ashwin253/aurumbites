@@ -278,44 +278,21 @@ export function VariantSelector({
           type="button"
           onClick={handleAdd}
           disabled={!selected.availableForSale || adding}
-          className="rounded-full bg-neutral-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:opacity-50"
+          className="rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {adding
-            ? "Adding…"
-            : !selected.availableForSale
-            ? "Unavailable"
-            : isEnquiryOnly
-            ? "Add to enquiry"
-            : (
-              <div className="flex items-center justify-center" aria-label="Add to bucket">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
-                </svg>
-              </div>
-          )}
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+          </svg>
+          <span>
+            {adding
+              ? "Adding…"
+              : !selected.availableForSale
+              ? "Unavailable"
+              : "Add to cart"}
+          </span>
         </button>
-        {subscriptionUrl ? (
-          <a
-            href={subscriptionUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-amber-50 px-6 py-3 text-sm font-medium text-amber-950 transition hover:border-amber-400 hover:bg-amber-100"
-          >
-            Subscribe on Shopify
-          </a>
-        ) : null}
-        {subscriptionManagementUrl ? (
-          <a
-            href={subscriptionManagementUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-700 transition hover:border-neutral-400 hover:bg-neutral-50"
-          >
-            Manage subscription
-          </a>
-        ) : null}
       </div>
     </div>
   );
@@ -413,17 +390,6 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
                 )}
               </button>
             )}
-            {subscriptionUrl ? (
-              <a
-                href={subscriptionUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-950 transition hover:border-amber-400 hover:bg-amber-100"
-                title="Subscribe on Shopify"
-              >
-                Subscribe
-              </a>
-            ) : null}
           </div>
         </div>
       </div>

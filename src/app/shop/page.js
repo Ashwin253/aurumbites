@@ -1,7 +1,7 @@
 import Navbar from "../component/Navbar";
 import { CartNotice } from "./ShopServerUi";
 import { ShopCatalog } from "./ShopUi";
-import { getShopPageData } from "../../lib/shopify";
+import { getShopPageData } from "../../lib/catalog";
 import { getStorefrontMode } from "../../lib/storefront";
 
 export const metadata = {

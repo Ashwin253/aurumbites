@@ -1,9 +1,8 @@
-export const ENABLE_ONLINE_ORDERS =
-  process.env.ENABLE_ONLINE_ORDERS?.toLowerCase() === "true";
+export const ENABLE_ONLINE_ORDERS = false;
 
 export function getStorefrontMode() {
   return {
     enableOnlineOrders: ENABLE_ONLINE_ORDERS,
-    isEnquiryOnly: !ENABLE_ONLINE_ORDERS,
+    isEnquiryOnly: true,
   };
 }

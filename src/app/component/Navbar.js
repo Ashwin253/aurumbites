@@ -89,13 +89,20 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#d8c39a] bg-[#0f0d09]/96 shadow-[0_18px_48px_rgba(15,13,9,0.38)] backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-3">
-          <div className="overflow-hidden rounded-2xl border border-white/15 shadow-[0_12px_30px_rgba(0,0,0,0.24)]">
-            <Image src="/logo.jpg" alt="logo" width={52} height={52} />
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="shrink-0 overflow-hidden rounded-2xl border border-white/15 shadow-[0_12px_30px_rgba(0,0,0,0.24)]">
+            <Image
+              src="/logo.jpg"
+              alt="Aurum Bites logo"
+              width={52}
+              height={52}
+              priority
+              className="block h-11 w-11 object-cover sm:h-[52px] sm:w-[52px]"
+            />
           </div>
           <Link
             href="/"
-            className="text-base font-extrabold leading-tight tracking-[0.18em] text-white"
+            className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-[0.12em] text-white sm:text-base sm:tracking-[0.18em]"
             onClick={() => setIsOpen(false)}
           >
             AURUM <br /> BITES

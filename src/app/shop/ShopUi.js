@@ -195,13 +195,20 @@ export function ShopCatalog({
   const [redirectTo, setRedirectTo] = useState(initialRedirectTo);
   const [catalogError, setCatalogError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [gridCols, setGridCols] = useState(4);
+  const [gridCols, setGridCols] = useState(1);
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
   useEffect(() => {
-    if (window.innerWidth < 1024) {
-      setGridCols(1);
-    }
+    const syncGridCols = () => {
+      setGridCols(window.innerWidth < 1024 ? 1 : 4);
+    };
+
+    syncGridCols();
+    window.addEventListener("resize", syncGridCols);
+
+    return () => {
+      window.removeEventListener("resize", syncGridCols);
+    };
   }, []);
 
   const handleFilterChange = ({
@@ -470,7 +477,7 @@ export function ShopCatalog({
                   }
                 />
               </div>
-              <div className="flex items-center gap-3 shrink-0 mt-4 lg:mt-0 justify-end">
+              <div className="hidden items-center gap-3 shrink-0 mt-4 justify-end lg:flex lg:mt-0">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Layout</span>
                 <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">
                   {[1, 2, 3, 4].map((num) => (

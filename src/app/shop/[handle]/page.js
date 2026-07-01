@@ -10,16 +10,20 @@ import { cookies } from "next/headers";
 import {
   ImageCarousel,
   ProductDetailUi,
+  ProductInfoTabs,
   RelatedProductsTabs,
   VariantSelector,
 } from "../ProductDetail";
 
+// Matches the slugify in catalog.js exactly
 function toBrandHandle(brand) {
-  return (brand || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  if (!brand) return "";
+  return brand.toString().toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
 }
 
 function dedupeProducts(products = [], currentHandle, excludedHandles = new Set()) {
@@ -65,15 +69,25 @@ export default async function ProductDetailPage({ params, searchParams }) {
   }
 
   const relatedLabel = product.collectionHandles?.[0] || "all";
-  const brandHandle = toBrandHandle(product.vendor);
   const images = product.images?.length ? product.images : product.image ? [product.image] : [];
   const variants = product.variants?.length ? product.variants : [];
+
+  // Resolve brand handle from the catalog's brands list — avoids slugify mismatches
+  const fullCatalog = await getShopPageData();
+  const resolvedBrand = product.vendor
+    ? fullCatalog.brands.find(
+        (b) => b.handle !== "all" &&
+          (b.title === product.vendor || toBrandHandle(b.title) === toBrandHandle(product.vendor))
+      )
+    : null;
+  const brandHandle = resolvedBrand?.handle || toBrandHandle(product.vendor);
+
   const [collectionCatalog, brandCatalog] = await Promise.all([
     relatedLabel !== "all"
-      ? getShopPageData({ first: 8, collectionHandle: relatedLabel })
+      ? getShopPageData({ collectionHandle: relatedLabel })
       : Promise.resolve({ products: [] }),
     brandHandle
-      ? getShopPageData({ first: 8, brandHandle })
+      ? getShopPageData({ brandHandle })
       : Promise.resolve({ products: [] }),
   ]);
   const sameCollectionProducts = dedupeProducts(
@@ -98,6 +112,17 @@ export default async function ProductDetailPage({ params, searchParams }) {
                 Shop
               </Link>
               <span>/</span>
+              {product.vendor ? (
+                <>
+                  <Link
+                    href={`/shop?brand=${toBrandHandle(product.vendor)}`}
+                    className="hover:text-neutral-900"
+                  >
+                    {product.vendor}
+                  </Link>
+                  <span>/</span>
+                </>
+              ) : null}
               <span className="text-neutral-900">{product.title}</span>
             </div>
 
@@ -119,9 +144,12 @@ export default async function ProductDetailPage({ params, searchParams }) {
                       Product detail
                     </p> */}
                     {product.vendor ? (
-                      <p className="mt-3 text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                      <Link
+                        href={`/shop?brand=${toBrandHandle(product.vendor)}`}
+                        className="mt-3 inline-block text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500 transition hover:text-neutral-900"
+                      >
                         {product.vendor}
-                      </p>
+                      </Link>
                     ) : null}
                     <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-950">
                       {product.title}
@@ -136,6 +164,11 @@ export default async function ProductDetailPage({ params, searchParams }) {
                   isEnquiryOnly={storefrontMode.isEnquiryOnly}
                   sellingPlanGroups={product.sellingPlanGroups || []}
                 />
+
+                  <ProductInfoTabs
+                    description={product.description}
+                    nutrition={product.nutrition}
+                  />
 
                   {/* <div className="rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm">
                     <div
@@ -152,7 +185,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
                 <RelatedProductsTabs
                   collectionProducts={sameCollectionProducts}
                   brandProducts={sameBrandProducts}
-                  collectionTitle={relatedLabel === "all" ? "Related picks" : "From this Brand"}
+                  collectionTitle={relatedLabel === "all" ? "Related picks" : "MORE LIKE THIS"}
                   brandTitle={product.vendor || "Related brand"}
                   isEnquiryOnly={storefrontMode.isEnquiryOnly}
                 />

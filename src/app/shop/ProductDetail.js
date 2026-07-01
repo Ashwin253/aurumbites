@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { addToCart } from "./actions";
@@ -130,6 +130,20 @@ export function VariantSelector({
     quantity: qty,
   });
   const subscriptionManagementUrl = getSubscriptionManagementUrl();
+
+  // Adjust quantity if it exceeds the selected variant's stock
+  useEffect(() => {
+    if (selected?.stock !== undefined && selected?.stock !== null && selected?.stock !== "") {
+      const maxVal = parseInt(selected.stock, 10);
+      if (qty > maxVal) {
+        setQty(Math.max(1, maxVal));
+      }
+    }
+  }, [selectedIdx, selected, qty]);
+
+  const isCallForInventory = !!selected?.callForInventory;
+  const isOutOfStock = !isCallForInventory && (!selected?.availableForSale || (selected?.stock !== undefined && selected?.stock !== null && selected?.stock !== "" && parseInt(selected.stock) === 0));
+  const isLowStock = !isCallForInventory && selected?.stock !== undefined && selected?.stock !== null && selected?.stock !== "" && parseInt(selected.stock) > 0 && parseInt(selected.stock) <= 5;
   const availablePlans = sellingPlanGroups.flatMap((group) =>
     (group.sellingPlans || []).map((plan) => ({
       id: plan.id,
@@ -186,8 +200,26 @@ export function VariantSelector({
 
       <div className="flex flex-wrap gap-4 text-sm">
         <div className="rounded-3xl border border-neutral-200 bg-white px-5 py-3">
-          <span className="text-neutral-500">Price </span>
-          <span className="font-semibold text-neutral-950">{selected.price}</span>
+          {selected.askPrice ? (
+            <span className="font-semibold text-neutral-950">Ask Price</span>
+          ) : (
+            <div className="flex items-center gap-2">
+              {selected.compareAtAmount && selected.compareAtAmount > selected.amount ? (
+                <span className="text-neutral-400 line-through text-sm">₹{selected.compareAtAmount}</span>
+              ) : null}
+              <span className="font-semibold text-neutral-950 text-lg">₹{selected.amount}</span>
+              {selected.compareAtAmount && selected.compareAtAmount > selected.amount ? (
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                  {Math.round(((selected.compareAtAmount - selected.amount) / selected.compareAtAmount) * 100)}% OFF
+                </span>
+              ) : null}
+            </div>
+          )}
+          {!selected.askPrice && selected.compareAtAmount && selected.compareAtAmount > selected.amount ? (
+            <p className="mt-0.5 text-xs text-emerald-600 font-medium">
+              You save ₹{(selected.compareAtAmount - selected.amount).toFixed(0)}
+            </p>
+          ) : null}
         </div>
         {selected.weight && (
           <div className="rounded-3xl border border-neutral-200 bg-white px-5 py-3">
@@ -195,73 +227,26 @@ export function VariantSelector({
             <span className="font-semibold text-neutral-950">{selected.weight}</span>
           </div>
         )}
+        {!isCallForInventory && (
+          selected?.stock !== undefined && selected?.stock !== null && selected?.stock !== "" ? (
+            <div className={`rounded-3xl border px-5 py-3 font-semibold ${
+              isOutOfStock 
+                ? "border-red-200 bg-red-50/70 text-red-700" 
+                : isLowStock 
+                ? "border-amber-200 bg-amber-50/70 text-amber-700" 
+                : "border-emerald-200 bg-emerald-50/70 text-emerald-700"
+            }`}>
+              {isOutOfStock ? "Out of Stock" : isLowStock ? `Only ${selected.stock} left!` : `In Stock (${selected.stock} available)`}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 px-5 py-3 font-semibold text-emerald-700">
+              {isOutOfStock ? "Out of Stock" : "In Stock"}
+            </div>
+          )
+        )}
       </div>
 
-      <div className="rounded-3xl border border-neutral-200 bg-white p-4">
-        <p className="text-sm font-medium text-neutral-900">Purchase option</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className={`cursor-pointer rounded-2xl border px-4 py-3 transition ${purchaseType === "one-time" ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-700"}`}>
-            <input
-              type="radio"
-              name="purchaseType"
-              value="one-time"
-              checked={purchaseType === "one-time"}
-              onChange={() => {
-                setPurchaseType("one-time");
-                setSelectedPlan("");
-              }}
-              className="sr-only"
-            />
-            <span className="block text-sm font-semibold">One-time purchase</span>
-            <span className={`mt-1 block text-xs ${purchaseType === "one-time" ? "text-white/80" : "text-neutral-500"}`}>Buy this item once</span>
-          </label>
-          <label className={`cursor-pointer rounded-2xl border px-4 py-3 transition ${purchaseType === "subscription" ? "border-amber-400 bg-amber-50 text-amber-950" : "border-neutral-200 bg-white text-neutral-700"}`}>
-            <input
-              type="radio"
-              name="purchaseType"
-              value="subscription"
-              checked={purchaseType === "subscription"}
-              onChange={() => setPurchaseType("subscription")}
-              className="sr-only"
-            />
-            <span className="block text-sm font-semibold">Subscribe</span>
-            <span className={`mt-1 block text-xs ${purchaseType === "subscription" ? "text-amber-900/80" : "text-neutral-500"}`}>Recurring delivery from Shopify</span>
-          </label>
-        </div>
 
-        {purchaseType === "subscription" ? (
-          <div className="mt-4">
-            <label htmlFor="selling-plan" className="block text-sm font-medium text-neutral-700">
-              Subscription plan
-            </label>
-            {availablePlans.length > 0 ? (
-              <>
-                <select
-                  id="selling-plan"
-                  value={selectedPlan}
-                  onChange={(e) => setSelectedPlan(e.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-900 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
-                >
-                  <option value="">Select a plan</option>
-                  {availablePlans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.groupName ? `${plan.groupName} - ` : ""}
-                      {plan.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs leading-5 text-neutral-500">
-                  Choose the Shopify selling plan that will be attached to the cart item.
-                </p>
-              </>
-            ) : (
-              <p className="mt-2 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 px-4 py-3 text-xs leading-5 text-neutral-600">
-                Subscription plans are not available for this product yet. Add selling plans in Shopify admin to enable recurring purchase options here.
-              </p>
-            )}
-          </div>
-        ) : null}
-      </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
         <label className="flex items-center gap-3 rounded-full border border-neutral-300 px-4 py-3 text-sm text-neutral-700">
@@ -269,15 +254,19 @@ export function VariantSelector({
           <input
             type="number"
             min="1"
+            max={selected?.stock !== null && selected?.stock !== undefined && selected?.stock !== "" ? parseInt(selected.stock, 10) : undefined}
             value={qty}
-            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) => {
+              const maxVal = selected?.stock !== null && selected?.stock !== undefined && selected?.stock !== "" ? parseInt(selected.stock, 10) : 9999;
+              setQty(Math.max(1, Math.min(maxVal, Number(e.target.value) || 1)));
+            }}
             className="w-16 bg-transparent outline-none"
           />
         </label>
         <button
           type="button"
           onClick={handleAdd}
-          disabled={!selected.availableForSale || adding}
+          disabled={isOutOfStock || adding}
           className="rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -288,8 +277,10 @@ export function VariantSelector({
           <span>
             {adding
               ? "Adding…"
-              : !selected.availableForSale
-              ? "Unavailable"
+              : isOutOfStock
+              ? "Out of Stock"
+              : isCallForInventory
+              ? "Enquire Availability"
               : "Add to cart"}
           </span>
         </button>
@@ -397,8 +388,93 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
   );
 }
 
-export function RelatedProductsTabs({ 
-  collectionProducts, 
+export function ProductInfoTabs({ description, nutrition }) {
+  const hasDescription = !!(description && description.replace(/<[^>]*>/g, "").trim());
+  const hasNutrition = !!(nutrition?.rows?.length > 0);
+  const [activeTab, setActiveTab] = useState(hasDescription ? "description" : "nutrition");
+
+  if (!hasDescription && !hasNutrition) return null;
+
+  const showTabs = hasDescription && hasNutrition;
+
+  return (
+    <div className="mt-6 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+      {showTabs && (
+        <div className="flex gap-6 border-b border-neutral-100 mb-5">
+          <button
+            onClick={() => setActiveTab("description")}
+            className={`pb-3 text-sm font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
+              activeTab === "description" ? "border-neutral-950 text-neutral-950" : "border-transparent text-neutral-400 hover:text-neutral-600"
+            }`}
+          >
+            Description
+          </button>
+          <button
+            onClick={() => setActiveTab("nutrition")}
+            className={`pb-3 text-sm font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
+              activeTab === "nutrition" ? "border-neutral-950 text-neutral-950" : "border-transparent text-neutral-400 hover:text-neutral-600"
+            }`}
+          >
+            {nutrition?.title || "Nutrition"}
+          </button>
+        </div>
+      )}
+
+      {(!showTabs && hasDescription) || (showTabs && activeTab === "description") ? (
+        <div>
+          {!showTabs && <p className="mb-4 text-xs font-bold uppercase tracking-widest text-neutral-500">Description</p>}
+          <div
+            className="prose prose-sm max-w-none text-neutral-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+        </div>
+      ) : null}
+
+      {(!showTabs && hasNutrition) || (showTabs && activeTab === "nutrition") ? (
+        <div>
+          {!showTabs && (
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-neutral-500">
+              {nutrition?.title || "Nutrition"}
+            </p>
+          )}
+          {nutrition?.servingSize && (
+            <p className="mb-3 text-sm text-neutral-500">Serving size: {nutrition.servingSize}</p>
+          )}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-neutral-50 border-b border-neutral-200">
+                  {nutrition.columns?.map((col, i) => (
+                    <th
+                      key={i}
+                      className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {nutrition.rows?.map((row, i) => (
+                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-neutral-50/50"}>
+                    {row.map((cell, j) => (
+                      <td key={j} className={`px-4 py-2.5 text-neutral-700 ${j === 0 ? "font-medium" : ""}`}>
+                        {cell.value}{cell.unit ? ` ${cell.unit}` : ""}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function RelatedProductsTabs({
+  collectionProducts,
   brandProducts, 
   collectionTitle, 
   brandTitle,

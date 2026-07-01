@@ -9,15 +9,28 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
   const [products, setProducts] = useState(initialProducts || []);
   const [categories, setCategories] = useState(initialCategories || []);
   const [brands, setBrands] = useState(initialBrands || []);
+  const [brandFilter, setBrandFilter] = useState("");
   
   const [isAdding, setIsAdding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [variants, setVariants] = useState([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "" }]);
+  const [variants, setVariants] = useState([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", stock: "", callForInventory: false }]);
   const [selectedImages, setSelectedImages] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingBrand, setEditingBrand] = useState(null);
   const [existingImages, setExistingImages] = useState([]);
+
+  // Nutrition table state
+  const UNIT_OPTIONS = ["", "g", "mg", "kg", "ml", "l", "kcal","mcg", "%", "IU"];
+  const STANDARD_NUTRIENTS = ["Energy", "Total Fat", "Sodium", "Protein", "Carbohydrate"];
+  const defaultNutrition = () => ({
+    title: "Nutrition Facts",
+    servingSize: "",
+    columns: ["Nutrient", "Per Serving"],
+    rows: [],
+  });
+  const [nutrition, setNutrition] = useState(defaultNutrition());
+  const [showNutrition, setShowNutrition] = useState(false);
 
   const resetFormState = () => {
     setIsAdding(false);
@@ -25,35 +38,82 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
     setEditingBrand(null);
     setExistingImages([]);
     setSelectedImages([]);
-    setVariants([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "" }]);
+    setVariants([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
+    setNutrition(defaultNutrition());
+    setShowNutrition(false);
     setImportQueue([]);
     setIsPastingData(false);
+    setBrandFilter("");
   };
 
   const handleEditClick = (p) => {
     setEditingProduct(p);
     
     // Map variants back
-    const loadedVariants = p.variants && p.variants.length > 0 ? p.variants.map(v => {
-      const title = v.title || "";
-      const isStandard = ["250gm", "500gm", "1kg", "2kg", "5kg"].includes(title.toLowerCase().replace(" ", ""));
-      return {
-        id: v.id,
-        weight: isStandard ? title.toLowerCase().replace(" ", "") : "Custom",
-        customWeight: isStandard ? "" : title,
-        sellingPrice: v.price?.amount ?? v.price ?? "",
-        originalPrice: v.compareAtPrice?.amount ?? v.compareAtPrice ?? "",
-        sellingUnitPrice: v.unitPrice?.amount ?? v.unitPrice ?? "",
-        originalUnitPrice: v.originalUnitPrice?.amount ?? v.originalUnitPrice ?? ""
-      };
-    }) : [{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "" }];
+    let loadedVariants = [{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }];
+    
+    try {
+      let rawVariants = p.variants;
+      if (typeof rawVariants === "string") {
+        try {
+          rawVariants = JSON.parse(rawVariants);
+        } catch (e) {
+          rawVariants = [];
+        }
+      }
+      
+      if (Array.isArray(rawVariants) && rawVariants.length > 0) {
+        loadedVariants = rawVariants.filter(Boolean).map(v => {
+          const title = String(v.title || v.weight || "");
+          const isStandard = ["250gm", "500gm", "1kg", "2kg", "5kg"].includes(title.toLowerCase().replace(" ", ""));
+          return {
+            id: v.id,
+            weight: isStandard ? title.toLowerCase().replace(" ", "") : "Custom",
+            customWeight: isStandard ? "" : title,
+            sellingPrice: v.price?.amount ?? v.price ?? "",
+            originalPrice: v.compareAtPrice?.amount ?? v.compareAtPrice ?? "",
+            sellingUnitPrice: v.unitPrice?.amount ?? v.unitPrice ?? "",
+            originalUnitPrice: v.originalUnitPrice?.amount ?? v.originalUnitPrice ?? "",
+            askPrice: !!v.askPrice,
+            stock: v.stock !== undefined && v.stock !== null ? v.stock : "",
+            callForInventory: !!v.callForInventory
+          };
+        });
+      }
+    } catch (err) {
+      console.error("Error mapping variants in handleEditClick:", err);
+    }
     
     setVariants(loadedVariants);
     
     // Map existing images
-    const imgs = p.images || (p.image_url ? [p.image_url] : []);
+    let imgs = [];
+    try {
+      let rawImages = p.images;
+      if (typeof rawImages === "string") {
+        try {
+          rawImages = JSON.parse(rawImages);
+        } catch (e) {
+          rawImages = [];
+        }
+      }
+      imgs = Array.isArray(rawImages) ? rawImages : (p.image_url ? [p.image_url] : []);
+    } catch (err) {
+      console.error("Error mapping images in handleEditClick:", err);
+      imgs = p.image_url ? [p.image_url] : [];
+    }
+    
     setExistingImages(imgs);
     setSelectedImages([]); // Clear newly selected images when loading edit mode
+    
+    // Load existing nutrition
+    if (p.nutrition && p.nutrition.rows) {
+      setNutrition(p.nutrition);
+      setShowNutrition(true);
+    } else {
+      setNutrition(defaultNutrition());
+      setShowNutrition(false);
+    }
     
     setIsAdding(true); // Open the form
     setIsPastingData(false);
@@ -142,7 +202,8 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
               sellingPrice: sellingPriceVal,
               originalPrice: originalPriceVal,
               sellingUnitPrice: sellingUnitPriceVal,
-              originalUnitPrice: originalUnitPriceVal
+              originalUnitPrice: originalUnitPriceVal,
+              askPrice: false
             }
           ]
         };
@@ -213,7 +274,8 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
               sellingPrice: itemMrp,
               originalPrice: itemPrice,
               sellingUnitPrice: "",
-              originalUnitPrice: ""
+              originalUnitPrice: "",
+              askPrice: false
             }
           ]
         };
@@ -258,6 +320,9 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
     
     if (activeSubTab === "products") {
       formData.append("variantsData", JSON.stringify(variants));
+      if (showNutrition && nutrition.rows.length > 0) {
+        formData.append("nutritionData", JSON.stringify(nutrition));
+      }
       if (editingProduct) {
         formData.append("existingImages", JSON.stringify(existingImages));
       }
@@ -321,7 +386,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
          } else {
            alert("Added successfully!");
            setIsAdding(false);
-           setVariants([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "" }]);
+            setVariants([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
            setSelectedImages([]);
          }
        }
@@ -350,6 +415,523 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
   };
 
   const currentImportItem = importQueue[currentImportIndex];
+
+  const renderEditorForm = ({ inline = false } = {}) => (
+    <form
+      key={`form-${editingProduct ? `edit-${editingProduct.id}` : editingBrand ? `edit-brand-${editingBrand.id}` : currentImportIndex}-${activeSubTab}`}
+      onSubmit={handleAddSubmit}
+      className={`rounded-2xl border border-neutral-200 bg-white p-6 space-y-5 ${inline ? "m-4 shadow-sm" : ""}`}
+    >
+      {importQueue.length > 0 && (
+         <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-50 p-4 border border-amber-200">
+           <p className="text-sm font-medium text-amber-900">
+             Importing product {currentImportIndex + 1} of {importQueue.length}
+           </p>
+           <button type="button" onClick={handleSkipImport} className="text-sm font-medium text-amber-700 hover:text-amber-900 underline">
+             Skip This Product
+           </button>
+         </div>
+      )}
+    
+      <h3 className="text-lg font-medium text-neutral-900 mb-2">
+        {editingProduct ? `Edit Product: ${editingProduct.title}` : editingBrand ? `Edit Brand: ${editingBrand.title}` : `New ${activeSubTab === "products" ? "Product" : activeSubTab === "categories" ? "Category" : "Brand"}`}
+      </h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label className="block text-sm font-medium text-neutral-700">Title</label>
+          <input name="title" defaultValue={editingProduct ? editingProduct.title : editingBrand ? editingBrand.title : (currentImportItem?.title || "")} required className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-neutral-700">Handle (Slug)</label>
+          <input name="handle" defaultValue={editingProduct ? editingProduct.handle : editingBrand ? editingBrand.handle : (currentImportItem?.handle || "")} required className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="e.g. fresh-milk" />
+        </div>
+        
+        {activeSubTab === "products" && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700">Brand / Vendor</label>
+              <input list="brand-options" name="vendor" defaultValue={editingProduct ? editingProduct.vendor : (currentImportItem?.vendor || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type brand" />
+              <datalist id="brand-options">
+                {brands.map((b) => <option key={b.id} value={b.title} />)}
+              </datalist>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-700">Category / Type</label>
+              <input list="category-options" name="productType" defaultValue={editingProduct ? editingProduct.productType : (currentImportItem?.productType || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type category" />
+              <datalist id="category-options">
+                {categories.map((c) => <option key={c.id} value={c.title} />)}
+              </datalist>
+            </div>
+          </>
+        )}
+        
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-neutral-700 mb-2">
+            {activeSubTab === "products" ? "Product Images" : activeSubTab === "categories" ? "Category Image" : "Brand Image"}
+          </label>
+          
+          {(existingImages.length > 0 || selectedImages.length > 0) && (
+             <div className="flex gap-3 mb-3 overflow-x-auto pb-2">
+                {existingImages.map((url, idx) => (
+                   <div key={`existing-${idx}`} className="relative group shrink-0">
+                      <img 
+                         src={url} 
+                         alt={`Existing ${idx + 1}`} 
+                         className="w-24 h-24 object-cover rounded-xl border border-neutral-200" 
+                      />
+                      <button 
+                         type="button" 
+                         onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== idx))}
+                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md"
+                         title="Remove image"
+                      >
+                         âœ•
+                      </button>
+                   </div>
+                ))}
+                {selectedImages.map((file, idx) => (
+                   <div key={`selected-${idx}`} className="relative group shrink-0">
+                      <img 
+                         src={URL.createObjectURL(file)} 
+                         alt={`Preview ${idx + 1}`} 
+                         className="w-24 h-24 object-cover rounded-xl border border-neutral-200" 
+                      />
+                      <button 
+                         type="button" 
+                         onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
+                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md"
+                         title="Remove image"
+                      >
+                         âœ•
+                      </button>
+                   </div>
+                ))}
+             </div>
+          )}
+
+          <div>
+             <input 
+                type="file" 
+                id="multi-image-upload"
+                accept="image/*" 
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                   if (e.target.files && e.target.files.length > 0) {
+                      const files = Array.from(e.target.files);
+                      
+                      // Prevent exceeding Server Action body limits (10mb configured)
+                      const MAX_FILES = 6;
+                      const MAX_SINGLE_SIZE = 2 * 1024 * 1024; // 2MB per image
+                      const tooMany = files.length > MAX_FILES;
+                      const tooLarge = files.some((f) => f.size > MAX_SINGLE_SIZE);
+                      
+                      if (tooMany || tooLarge) {
+                        alert(`Max ${MAX_FILES} images. Each image should be under 2MB.`);
+                        e.target.value = '';
+                        return;
+                      }
+                      
+                      setSelectedImages(prev => [...prev, ...files]);
+                      
+                      // Reset input value async so it doesn't destroy the File objects before React state updates
+                      setTimeout(() => {
+                         e.target.value = '';
+                      }, 100);
+                   }
+                }}
+             />
+             <label 
+                htmlFor="multi-image-upload" 
+                className="inline-flex items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 px-6 py-4 text-sm font-semibold text-emerald-600 hover:bg-neutral-100 hover:border-emerald-300 transition cursor-pointer w-full sm:w-auto"
+             >
+                + Add Image
+             </label>
+          </div>
+        </div>
+      </div>
+      
+      {activeSubTab === "products" && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700">Description</label>
+            <textarea name="description" defaultValue={editingProduct ? (editingProduct.descriptionHtml?.replace(/^<p>|<\/p>$/g, '') || "") : (currentImportItem?.description || "")} rows={3} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+          </div>
+
+          {/* ── Nutrition Info Table ── */}
+          <div className="pt-4 border-t border-neutral-100">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-neutral-900">Nutrition Info Table</h4>
+              <button
+                type="button"
+                onClick={() => {
+                  const newShow = !showNutrition;
+                  if (newShow && (!nutrition.rows || nutrition.rows.length === 0)) {
+                    // Pre-populate with common nutrients when first enabling
+                    const initialRows = STANDARD_NUTRIENTS.map(nutrient => 
+                      nutrition.columns.map((_, idx) => ({ 
+                        value: idx === 0 ? nutrient : "", 
+                        unit: "" 
+                      }))
+                    );
+                    setNutrition(n => ({
+                      ...n,
+                      rows: initialRows
+                    }));
+                  }
+                  setShowNutrition(newShow);
+                }}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${showNutrition ? "bg-neutral-200 text-neutral-700" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"}`}
+              >
+                {showNutrition ? "Remove Nutrition" : "+ Add Nutrition"}
+              </button>
+            </div>
+
+            {showNutrition && (
+              <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 space-y-4">
+                {/* Title & Serving Size */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Table Title</label>
+                    <input
+                      type="text"
+                      value={nutrition.title}
+                      onChange={e => setNutrition(n => ({ ...n, title: e.target.value }))}
+                      placeholder="Nutrition Facts"
+                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Serving Size</label>
+                    <input
+                      type="text"
+                      value={nutrition.servingSize}
+                      onChange={e => setNutrition(n => ({ ...n, servingSize: e.target.value }))}
+                      placeholder="e.g. 100g"
+                      className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Column headers */}
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Column Headers</label>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {nutrition.columns.map((col, ci) => (
+                      <div key={ci} className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={col}
+                          onChange={e => {
+                            const cols = [...nutrition.columns];
+                            cols[ci] = e.target.value;
+                            setNutrition(n => ({ ...n, columns: cols }));
+                          }}
+                          className="w-28 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs focus:ring-2 focus:ring-neutral-900 bg-white"
+                        />
+                        {nutrition.columns.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cols = nutrition.columns.filter((_, i) => i !== ci);
+                              const rows = nutrition.rows.map(row => row.filter((_, i) => i !== ci));
+                              setNutrition(n => ({ ...n, columns: cols, rows }));
+                            }}
+                            className="text-red-400 hover:text-red-600 text-xs"
+                          >✕</button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNutrition(n => ({
+                          ...n,
+                          columns: [...n.columns, `Col ${n.columns.length + 1}`],
+                          rows: n.rows.map(row => [...row, { value: "", unit: "" }]),
+                        }));
+                      }}
+                      className="rounded-full bg-white border border-dashed border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:border-neutral-400"
+                    >
+                      + Column
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rows */}
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Rows</label>
+                  <div className="space-y-2">
+                    {nutrition.rows.map((row, ri) => (
+                      <div key={ri} className="flex items-center gap-2 flex-wrap">
+                        {row.map((cell, ci) => (
+                          <div key={ci} className="flex items-center gap-1">
+                            {ci === 0 ? (
+                              <>
+                                <select
+                                  value={STANDARD_NUTRIENTS.includes(cell.value) ? cell.value : (cell.value ? "__custom__" : "")}
+                                  onChange={e => {
+                                    const newVal = e.target.value;
+                                    const updatedValue = newVal === "__custom__" 
+                                      ? (cell.value && !STANDARD_NUTRIENTS.includes(cell.value) ? cell.value : "") 
+                                      : newVal;
+                                    const rows = nutrition.rows.map((r, rIdx) =>
+                                      rIdx === ri ? r.map((c, cIdx) => cIdx === ci ? { ...c, value: updatedValue } : c) : r
+                                    );
+                                    setNutrition(n => ({ ...n, rows }));
+                                  }}
+                                  className="w-24 rounded-lg border border-neutral-300 px-1 py-1 text-xs focus:ring-2 focus:ring-neutral-900 bg-white"
+                                >
+                                  <option value="">--</option>
+                                  {STANDARD_NUTRIENTS.map(n => (
+                                    <option key={n} value={n}>{n}</option>
+                                  ))}
+                                  <option value="__custom__">Custom...</option>
+                                </select>
+                                {!STANDARD_NUTRIENTS.includes(cell.value) && (
+                                  <input
+                                    type="text"
+                                    value={cell.value}
+                                    onChange={e => {
+                                      const rows = nutrition.rows.map((r, rIdx) =>
+                                        rIdx === ri ? r.map((c, cIdx) => cIdx === ci ? { ...c, value: e.target.value } : c) : r
+                                      );
+                                      setNutrition(n => ({ ...n, rows }));
+                                    }}
+                                    placeholder="Nutrient name"
+                                    className="w-28 rounded-lg border border-neutral-300 px-2 py-1 text-xs focus:ring-2 focus:ring-neutral-900 bg-white"
+                                  />
+                                )}
+                              </>
+                            ) : (
+                              <input
+                                type="text"
+                                value={cell.value}
+                                onChange={e => {
+                                  const rows = nutrition.rows.map((r, rIdx) =>
+                                    rIdx === ri ? r.map((c, cIdx) => cIdx === ci ? { ...c, value: e.target.value } : c) : r
+                                  );
+                                  setNutrition(n => ({ ...n, rows }));
+                                }}
+                                placeholder={nutrition.columns[ci] || "Value"}
+                                className="w-24 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs focus:ring-2 focus:ring-neutral-900 bg-white"
+                              />
+                            )}
+                            {ci > 0 && (
+                              <>
+                                <select
+                                  value={UNIT_OPTIONS.includes(cell.unit) ? cell.unit : ""}
+                                  onChange={e => {
+                                    const newUnit = e.target.value;
+                                    const rows = nutrition.rows.map((r, rIdx) =>
+                                      rIdx === ri ? r.map((c, cIdx) => cIdx === ci ? { ...c, unit: newUnit } : c) : r
+                                    );
+                                    setNutrition(n => ({ ...n, rows }));
+                                  }}
+                                  className="rounded-lg border border-neutral-300 px-1 py-1.5 text-xs focus:ring-2 focus:ring-neutral-900 bg-white"
+                                >
+                                  {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u || "—"}</option>)}
+                                </select>
+                                {!UNIT_OPTIONS.includes(cell.unit) && (
+                                  <input
+                                    type="text"
+                                    value={cell.unit}
+                                    onChange={e => {
+                                      const rows = nutrition.rows.map((r, rIdx) =>
+                                        rIdx === ri ? r.map((c, cIdx) => cIdx === ci ? { ...c, unit: e.target.value } : c) : r
+                                      );
+                                      setNutrition(n => ({ ...n, rows }));
+                                    }}
+                                    placeholder="Custom unit"
+                                    className="w-20 rounded-lg border border-neutral-300 px-1.5 py-1 text-xs focus:ring-2 focus:ring-neutral-900 bg-white"
+                                  />
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setNutrition(n => ({ ...n, rows: n.rows.filter((_, i) => i !== ri) }))}
+                          className="text-red-400 hover:text-red-600 text-xs ml-1"
+                        >✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNutrition(n => ({
+                      ...n,
+                      rows: [...n.rows, n.columns.map(() => ({ value: "", unit: "" }))],
+                    }))}
+                    className="mt-2 rounded-full bg-white border border-dashed border-neutral-300 px-4 py-1.5 text-xs font-medium text-neutral-600 hover:border-neutral-400"
+                  >
+                    + Add Row
+                  </button>
+                </div>
+
+                {/* SQL helper */}
+                {/* <details className="rounded-xl border border-neutral-200 bg-white">
+                  <summary className="px-4 py-2.5 text-xs font-semibold text-neutral-600 cursor-pointer hover:text-neutral-900 select-none">
+                    View Supabase SQL (add nutrition column)
+                  </summary>
+                  <pre className="p-4 text-[11px] leading-5 text-emerald-800 bg-emerald-50 rounded-b-xl overflow-x-auto whitespace-pre-wrap select-all">{`-- Run this once in your Supabase SQL editor:
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS nutrition jsonb DEFAULT NULL;
+
+-- nutrition column stores:
+-- {
+--   "title": "Nutrition Facts",
+--   "servingSize": "100g",
+--   "columns": ["Nutrient", "Per Serving"],
+--   "rows": [
+--     [{"value":"Energy","unit":""},{"value":"52","unit":"kcal"}],
+--     [{"value":"Protein","unit":""},{"value":"0.3","unit":"g"}]
+--   ]
+-- }`}</pre>
+                </details> */}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-neutral-100">
+            <div className="flex items-center justify-between">
+               <h4 className="font-medium text-neutral-900">Variants & Pricing</h4>
+                <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
+            </div>
+            {variants.map((v, i) => (
+              <div key={i} className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
+                 <div className="w-full sm:w-[20%]">
+                    <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">Pack Size</label>
+                    <select 
+                       value={v.weight}
+                       onChange={(e) => { const newV = [...variants]; newV[i].weight = e.target.value; setVariants(newV); }}
+                       className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                    >
+                       <option value="250gm">250gm</option>
+                       <option value="500gm">500gm</option>
+                       <option value="1kg">1kg</option>
+                       <option value="2kg">2kg</option>
+                       <option value="5kg">5kg</option>
+                       <option value="Custom">Custom</option>
+                    </select>
+                    {v.weight === "Custom" && (
+                       <input placeholder="e.g. 1 Dozen" value={v.customWeight || ""} onChange={(e) => { const newV = [...variants]; newV[i].customWeight = e.target.value; setVariants(newV); }} className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                    )}
+                 </div>
+                 
+                 <div className="w-full sm:w-[18%]">
+                    <div className="flex justify-between items-center mb-1">
+                       <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Stock Qty</label>
+                       <label className="flex items-center gap-1 text-[10px] text-neutral-500 font-medium cursor-pointer">
+                          <input 
+                             type="checkbox" 
+                             checked={v.callForInventory || false} 
+                             onChange={(e) => { 
+                                const newV = [...variants]; 
+                                newV[i].callForInventory = e.target.checked; 
+                                if(e.target.checked) { 
+                                   newV[i].stock = ""; 
+                                } 
+                                setVariants(newV); 
+                             }} 
+                             className="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-900 h-3 w-3" 
+                          />
+                          Call
+                       </label>
+                    </div>
+                    <input 
+                       type="number" 
+                       min="0"
+                       placeholder={v.callForInventory ? "Call for Stock" : "∞ (Unlimited)"} 
+                       value={v.stock !== undefined && v.stock !== null ? v.stock : ""} 
+                       disabled={v.callForInventory}
+                       onChange={(e) => { const newV = [...variants]; newV[i].stock = e.target.value; setVariants(newV); }} 
+                       className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" 
+                    />
+                 </div>
+
+                 <div className="flex-1 w-full flex items-center gap-3">
+                     <div className="flex-1 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
+                         <div className="flex justify-between items-center mb-2">
+                            <label className="block text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Selling Price</label>
+                            <label className="flex items-center gap-1.5 text-[10px] text-emerald-800 font-medium cursor-pointer">
+                               <input type="checkbox" checked={v.askPrice || false} onChange={(e) => { const newV = [...variants]; newV[i].askPrice = e.target.checked; if(e.target.checked) { newV[i].sellingPrice = ""; newV[i].sellingUnitPrice = ""; } setVariants(newV); }} className="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-600" />
+                               Ask Price
+                            </label>
+                         </div>
+                         <div className="flex flex-col xl:flex-row gap-2">
+                            <div className="flex-1">
+                               <label className="block text-[10px] text-emerald-600 mb-1">Per Pack</label>
+                               <input type="number" placeholder="â‚¹" value={v.sellingPrice} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" required={!v.askPrice} />
+                            </div>
+                            <div className="flex-1">
+                               <label className="block text-[10px] text-emerald-600 mb-1">Rs / Kg</label>
+                               <input type="number" placeholder="â‚¹" value={v.sellingUnitPrice || ""} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" />
+                            </div>
+                         </div>
+                     </div>
+                     
+                     <button type="button" onClick={() => {
+                         const newV = [...variants];
+                         const tempSp = newV[i].sellingPrice;
+                         const tempSup = newV[i].sellingUnitPrice;
+                         newV[i].sellingPrice = newV[i].originalPrice;
+                         newV[i].sellingUnitPrice = newV[i].originalUnitPrice;
+                         newV[i].originalPrice = tempSp;
+                         newV[i].originalUnitPrice = tempSup;
+                         setVariants(newV);
+                     }} className="p-2 shrink-0 rounded-full bg-white border border-neutral-300 shadow-sm hover:bg-neutral-100 transition text-neutral-600" title="Swap Prices">
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                           <path d="m16 3 4 4-4 4"/>
+                           <path d="M20 7H4"/>
+                           <path d="m8 21-4-4 4-4"/>
+                           <path d="M4 17h16"/>
+                         </svg>
+                     </button>
+
+                     <div className="flex-1 rounded-xl border border-neutral-200 bg-white p-3">
+                         <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-2">Original Price (MRP)</label>
+                         <div className="flex flex-col xl:flex-row gap-2">
+                            <div className="flex-1">
+                               <label className="block text-[10px] text-neutral-500 mb-1">Per Pack</label>
+                               <input type="number" placeholder="â‚¹" value={v.originalPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].originalPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-neutral-50" />
+                            </div>
+                            <div className="flex-1">
+                               <label className="block text-[10px] text-neutral-500 mb-1">Rs / Kg</label>
+                               <input type="number" placeholder="â‚¹" value={v.originalUnitPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].originalUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-neutral-50" />
+                            </div>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 {variants.length > 1 && (
+                    <div className="sm:w-auto flex items-start pt-5">
+                      <button type="button" onClick={() => setVariants(variants.filter((_, idx) => idx !== i))} className="p-2 text-red-500 hover:text-red-700">âœ•</button>
+                    </div>
+                 )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="pt-2">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="rounded-full bg-emerald-600 px-8 py-3 text-base font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition w-full sm:w-auto shadow-md"
+        >
+          {isSubmitting ? "Saving..." : (editingProduct || editingBrand) ? "Save Changes" : "Save Entry"}
+        </button>
+      </div>
+    </form>
+  );
+
+  const displayedProducts = brandFilter
+    ? products.filter((p) => (p.vendor || "") === brandFilter)
+    : products;
 
   return (
     <div className="space-y-6">
@@ -393,6 +975,31 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
         </div>
       </div>
 
+      {activeSubTab === "products" && brands.length > 0 && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-medium text-neutral-600">Filter by Brand:</span>
+          <select
+            value={brandFilter}
+            onChange={(e) => setBrandFilter(e.target.value)}
+            className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-600"
+          >
+            <option value="">All Brands</option>
+            {brands.map((b) => (
+              <option key={b.id} value={b.title}>{b.title}</option>
+            ))}
+          </select>
+          {brandFilter && (
+            <button
+              type="button"
+              onClick={() => setBrandFilter("")}
+              className="text-xs font-medium text-emerald-600 hover:text-emerald-800 underline"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
       {isPastingData && (
         <div className="rounded-2xl border border-neutral-200 bg-white p-6 space-y-4">
           <h3 className="text-lg font-medium text-neutral-900">Paste Product Data</h3>
@@ -421,8 +1028,13 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
         </div>
       )}
 
-      {isAdding && (
-        <form key={`form-${editingProduct ? `edit-${editingProduct.id}` : editingBrand ? `edit-brand-${editingBrand.id}` : currentImportIndex}-${activeSubTab}`} onSubmit={handleAddSubmit} className="rounded-2xl border border-neutral-200 bg-white p-6 space-y-5">
+      {false && (
+        <form
+          ref={formRef}
+          key={`form-${editingProduct ? `edit-${editingProduct.id}` : editingBrand ? `edit-brand-${editingBrand.id}` : currentImportIndex}-${activeSubTab}`}
+          onSubmit={handleAddSubmit}
+          className="rounded-2xl border border-neutral-200 bg-white p-6 space-y-5"
+        >
           {importQueue.length > 0 && (
              <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-50 p-4 border border-amber-200">
                <p className="text-sm font-medium text-amber-900">
@@ -452,11 +1064,17 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
               <>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700">Brand / Vendor</label>
-                  <input name="vendor" defaultValue={editingProduct ? editingProduct.vendor : (currentImportItem?.vendor || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                  <input list="brand-options" name="vendor" defaultValue={editingProduct ? editingProduct.vendor : (currentImportItem?.vendor || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type brand" />
+                  <datalist id="brand-options">
+                    {brands.map((b) => <option key={b.id} value={b.title} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700">Category / Type</label>
-                  <input name="productType" defaultValue={editingProduct ? editingProduct.productType : (currentImportItem?.productType || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                  <input list="category-options" name="productType" defaultValue={editingProduct ? editingProduct.productType : (currentImportItem?.productType || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type category" />
+                  <datalist id="category-options">
+                    {categories.map((c) => <option key={c.id} value={c.title} />)}
+                  </datalist>
                 </div>
               </>
             )}
@@ -515,6 +1133,19 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                     onChange={(e) => {
                        if (e.target.files && e.target.files.length > 0) {
                           const files = Array.from(e.target.files);
+                          
+                          // Prevent exceeding Server Action body limits (10mb configured)
+                          const MAX_FILES = 6;
+                          const MAX_SINGLE_SIZE = 2 * 1024 * 1024; // 2MB per image
+                          const tooMany = files.length > MAX_FILES;
+                          const tooLarge = files.some((f) => f.size > MAX_SINGLE_SIZE);
+                          
+                          if (tooMany || tooLarge) {
+                            alert(`Max ${MAX_FILES} images. Each image should be under 2MB.`);
+                            e.target.value = '';
+                            return;
+                          }
+                          
                           setSelectedImages(prev => [...prev, ...files]);
                           
                           // Reset input value async so it doesn't destroy the File objects before React state updates
@@ -540,11 +1171,11 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                 <label className="block text-sm font-medium text-neutral-700">Description</label>
                 <textarea name="description" defaultValue={editingProduct ? (editingProduct.descriptionHtml?.replace(/^<p>|<\/p>$/g, '') || "") : (currentImportItem?.description || "")} rows={3} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
               </div>
-              
+
               <div className="space-y-3 pt-4 border-t border-neutral-100">
                 <div className="flex items-center justify-between">
                    <h4 className="font-medium text-neutral-900">Variants & Pricing</h4>
-                   <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "" }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
+                    <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
                 </div>
                 {variants.map((v, i) => (
                   <div key={i} className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
@@ -567,17 +1198,54 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                         )}
                      </div>
                      
+                     <div className="w-full sm:w-[18%]">
+                        <div className="flex justify-between items-center mb-1">
+                           <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Stock Qty</label>
+                           <label className="flex items-center gap-1 text-[10px] text-neutral-500 font-medium cursor-pointer">
+                              <input 
+                                 type="checkbox" 
+                                 checked={v.callForInventory || false} 
+                                 onChange={(e) => { 
+                                    const newV = [...variants]; 
+                                    newV[i].callForInventory = e.target.checked; 
+                                    if(e.target.checked) { 
+                                       newV[i].stock = ""; 
+                                    } 
+                                    setVariants(newV); 
+                                 }} 
+                                 className="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-900 h-3 w-3" 
+                              />
+                              Call
+                           </label>
+                        </div>
+                        <input 
+                           type="number" 
+                           min="0"
+                           placeholder={v.callForInventory ? "Call for Stock" : "∞ (Unlimited)"} 
+                           value={v.stock !== undefined && v.stock !== null ? v.stock : ""} 
+                           disabled={v.callForInventory}
+                           onChange={(e) => { const newV = [...variants]; newV[i].stock = e.target.value; setVariants(newV); }} 
+                           className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" 
+                        />
+                     </div>
+
                      <div className="flex-1 w-full flex items-center gap-3">
                          <div className="flex-1 rounded-xl border border-emerald-200 bg-emerald-50/50 p-3">
-                             <label className="block text-[11px] font-semibold text-emerald-800 uppercase tracking-wider mb-2">Selling Price</label>
+                             <div className="flex justify-between items-center mb-2">
+                                <label className="block text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Selling Price</label>
+                                <label className="flex items-center gap-1.5 text-[10px] text-emerald-800 font-medium cursor-pointer">
+                                   <input type="checkbox" checked={v.askPrice || false} onChange={(e) => { const newV = [...variants]; newV[i].askPrice = e.target.checked; if(e.target.checked) { newV[i].sellingPrice = ""; newV[i].sellingUnitPrice = ""; } setVariants(newV); }} className="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-600" />
+                                   Ask Price
+                                </label>
+                             </div>
                              <div className="flex flex-col xl:flex-row gap-2">
                                 <div className="flex-1">
                                    <label className="block text-[10px] text-emerald-600 mb-1">Per Pack</label>
-                                   <input type="number" placeholder="₹" value={v.sellingPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white" required />
+                                   <input type="number" placeholder="₹" value={v.sellingPrice} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" required={!v.askPrice} />
                                 </div>
                                 <div className="flex-1">
                                    <label className="block text-[10px] text-emerald-600 mb-1">Rs / Kg</label>
-                                   <input type="number" placeholder="₹" value={v.sellingUnitPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].sellingUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white" />
+                                   <input type="number" placeholder="₹" value={v.sellingUnitPrice || ""} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" />
                                 </div>
                              </div>
                          </div>
@@ -638,6 +1306,8 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
         </form>
       )}
 
+      {isAdding && renderEditorForm()}
+
       {/* Render Tables based on active sub-tab */}
       <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white">
         <table className="w-full text-left text-sm">
@@ -660,10 +1330,16 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
           </thead>
           <tbody className="divide-y divide-neutral-200">
             {activeSubTab === "products" && (
-              products.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-neutral-500">No products found. Add some above.</td></tr>
+              displayedProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-neutral-500">
+                    {brandFilter 
+                      ? `No products found for brand "${brandFilter}".` 
+                      : "No products found. Add some above."}
+                  </td>
+                </tr>
               ) : (
-                products.map((p) => {
+                displayedProducts.map((p) => {
                   const firstVar = p.variants?.[0] || {};
                   const rawSellingPrice = firstVar?.price?.amount || p.Price?.perPcs || p.price || 0;
                   const rawOriginalPrice = firstVar?.compareAtPrice?.amount || p.MRP?.perPcs || p.compare_at_price || 0;
@@ -676,8 +1352,10 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                   const unitPrice = firstVar?.unitPrice?.amount || p.Price?.perKg || null;
                   const packSize = p.variants?.length === 1 ? firstVar.title : (p.weight || p.packSize || "");
 
+                  const isEditingThisProduct = editingProduct?.id === p.id;
+
                   return (
-                    <tr key={p.id} className="hover:bg-neutral-50">
+                    <tr key={p.id} className={`${isEditingThisProduct ? "bg-emerald-50/60 ring-1 ring-inset ring-emerald-200" : "hover:bg-neutral-50"}`}>
                       <td className="px-4 py-3 font-medium text-neutral-900 flex items-center gap-3">
                         <button 
                           onClick={() => handleDelete(p.id)} 
@@ -709,9 +1387,39 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                              {unitPrice && <span>(₹{unitPrice}/kg)</span>}
                           </div>
                         )}
+                        {p.variants && p.variants.length > 0 && p.variants.some(v => (v.stock !== undefined && v.stock !== null && v.stock !== "") || v.callForInventory) ? (
+                          <div className="text-[10px] mt-1 text-neutral-500 font-normal flex flex-wrap gap-x-2 gap-y-0.5">
+                            <span className="font-semibold text-neutral-700">Stock:</span>
+                            {p.variants.map((v, idx) => {
+                              const s = v.callForInventory ? "Call" : (v.stock === "" || v.stock === null ? "∞" : v.stock);
+                              const isOut = s !== "∞" && s !== "Call" && parseInt(s) === 0;
+                              const isCall = s === "Call";
+                              return (
+                                <span key={v.id || idx} className={isOut ? "text-red-500 font-semibold" : isCall ? "text-amber-600 font-semibold" : "text-neutral-600"}>
+                                  {v.title || v.weight || "Default"}: {s}
+                                </span>
+                              );
+                            }).reduce((prev, curr) => [prev, <span key={Math.random()} className="text-neutral-300">|</span>, curr])}
+                          </div>
+                        ) : (
+                          <div className="text-[10px] mt-1 text-emerald-600 font-normal">
+                            Stock: Unlimited (∞)
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button onClick={() => handleEditClick(p)} className="text-emerald-600 hover:text-emerald-800 font-medium">Edit</button>
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(p)}
+                          className={`font-medium transition ${
+                            isEditingThisProduct
+                              ? "rounded-full bg-emerald-600 px-3 py-1 text-white hover:bg-emerald-700"
+                              : "text-emerald-600 hover:text-emerald-800"
+                          }`}
+                          aria-pressed={isEditingThisProduct}
+                        >
+                          {isEditingThisProduct ? "Editing" : "Edit"}
+                        </button>
                       </td>
                     </tr>
                   )
@@ -767,7 +1475,18 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => handleEditBrandClick(b)} className="text-emerald-600 hover:text-emerald-800 font-medium">Edit</button>
+                      <button
+                        type="button"
+                        onClick={() => handleEditBrandClick(b)}
+                        className={`font-medium transition ${
+                          editingBrand?.id === b.id
+                            ? "rounded-full bg-emerald-600 px-3 py-1 text-white hover:bg-emerald-700"
+                            : "text-emerald-600 hover:text-emerald-800"
+                        }`}
+                        aria-pressed={editingBrand?.id === b.id}
+                      >
+                        {editingBrand?.id === b.id ? "Editing" : "Edit"}
+                      </button>
                     </td>
                   </tr>
                 ))

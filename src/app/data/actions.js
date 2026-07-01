@@ -87,6 +87,7 @@ export async function addProduct(formData) {
   const productType = formData.get("productType");
   const description = formData.get("description");
   const variantsData = formData.get("variantsData");
+  const nutritionData = formData.get("nutritionData");
   const imageFiles = formData.getAll("imageFile");
 
   let images = [];
@@ -108,20 +109,30 @@ export async function addProduct(formData) {
   let parsedVariants = [];
   try {
      const rawVars = JSON.parse(variantsData || "[]");
-     parsedVariants = rawVars.map((v, i) => ({
-        id: `var-${Date.now()}-${i}`,
-        title: v.weight === "Custom" ? v.customWeight : v.weight,
-        price: { amount: parseFloat(v.sellingPrice || v.mrp) || 0, currencyCode: "INR" },
-        compareAtPrice: (v.originalPrice || v.price) ? { amount: parseFloat(v.originalPrice || v.price), currencyCode: "INR" } : null,
-        unitPrice: (v.sellingUnitPrice || v.unitPrice) ? { amount: parseFloat(v.sellingUnitPrice || v.unitPrice), currencyCode: "INR" } : null,
-        originalUnitPrice: v.originalUnitPrice ? { amount: parseFloat(v.originalUnitPrice), currencyCode: "INR" } : null,
-        availableForSale: true
-     }));
+      parsedVariants = rawVars.map((v, i) => {
+        const stockRaw = v.stock;
+        const stock = (stockRaw === "" || stockRaw === null || stockRaw === undefined) ? null : parseInt(stockRaw, 10);
+        const callForInventory = !!v.callForInventory;
+        const availableForSale = callForInventory || stock === null || isNaN(stock) || stock > 0;
+        return {
+           id: `var-${Date.now()}-${i}`,
+           title: v.weight === "Custom" ? v.customWeight : v.weight,
+           price: { amount: parseFloat(v.sellingPrice || v.mrp) || 0, currencyCode: "INR" },
+           compareAtPrice: (v.originalPrice || v.price) ? { amount: parseFloat(v.originalPrice || v.price), currencyCode: "INR" } : null,
+           unitPrice: (v.sellingUnitPrice || v.unitPrice) ? { amount: parseFloat(v.sellingUnitPrice || v.unitPrice), currencyCode: "INR" } : null,
+           originalUnitPrice: v.originalUnitPrice ? { amount: parseFloat(v.originalUnitPrice), currencyCode: "INR" } : null,
+           availableForSale,
+           askPrice: v.askPrice || false,
+           stock: stock,
+           callForInventory
+        };
+      });
   } catch (e) {
      console.error("Failed to parse variants", e);
   }
 
   const price = parsedVariants.length > 0 ? parsedVariants[0].price.amount : 0;
+  const productAvailableForSale = parsedVariants.length === 0 || parsedVariants.some(v => v.availableForSale);
 
   // Auto-create category if it doesn't exist
   if (productType && productType.trim() !== "") {
@@ -149,6 +160,12 @@ export async function addProduct(formData) {
     }
   }
 
+  let parsedNutrition = null;
+  try {
+    const raw = formData.get("nutritionData");
+    if (raw) parsedNutrition = JSON.parse(raw);
+  } catch {}
+
   const { error } = await supabase.from("products").insert([
     {
       handle,
@@ -159,8 +176,9 @@ export async function addProduct(formData) {
       image_url: imageUrl,
       images,
       descriptionHtml: description ? `<p>${description}</p>` : "",
-      availableForSale: true,
+      availableForSale: productAvailableForSale,
       variants: parsedVariants,
+      nutrition: parsedNutrition,
     },
   ]);
 
@@ -196,6 +214,7 @@ export async function updateProduct(id, formData) {
   const productType = formData.get("productType");
   const description = formData.get("description");
   const variantsData = formData.get("variantsData");
+  const nutritionData = formData.get("nutritionData");
   const existingImagesData = formData.get("existingImages");
   const imageFiles = formData.getAll("imageFile");
 
@@ -222,20 +241,30 @@ export async function updateProduct(id, formData) {
   let parsedVariants = [];
   try {
      const rawVars = JSON.parse(variantsData || "[]");
-     parsedVariants = rawVars.map((v, i) => ({
-        id: v.id || `var-${Date.now()}-${i}`,
-        title: v.weight === "Custom" ? v.customWeight : v.weight,
-        price: { amount: parseFloat(v.sellingPrice || v.mrp) || 0, currencyCode: "INR" },
-        compareAtPrice: (v.originalPrice || v.price) ? { amount: parseFloat(v.originalPrice || v.price), currencyCode: "INR" } : null,
-        unitPrice: (v.sellingUnitPrice || v.unitPrice) ? { amount: parseFloat(v.sellingUnitPrice || v.unitPrice), currencyCode: "INR" } : null,
-        originalUnitPrice: v.originalUnitPrice ? { amount: parseFloat(v.originalUnitPrice), currencyCode: "INR" } : null,
-        availableForSale: true
-     }));
+      parsedVariants = rawVars.map((v, i) => {
+        const stockRaw = v.stock;
+        const stock = (stockRaw === "" || stockRaw === null || stockRaw === undefined) ? null : parseInt(stockRaw, 10);
+        const callForInventory = !!v.callForInventory;
+        const availableForSale = callForInventory || stock === null || isNaN(stock) || stock > 0;
+        return {
+           id: v.id || `var-${Date.now()}-${i}`,
+           title: v.weight === "Custom" ? v.customWeight : v.weight,
+           price: { amount: parseFloat(v.sellingPrice || v.mrp) || 0, currencyCode: "INR" },
+           compareAtPrice: (v.originalPrice || v.price) ? { amount: parseFloat(v.originalPrice || v.price), currencyCode: "INR" } : null,
+           unitPrice: (v.sellingUnitPrice || v.unitPrice) ? { amount: parseFloat(v.sellingUnitPrice || v.unitPrice), currencyCode: "INR" } : null,
+           originalUnitPrice: v.originalUnitPrice ? { amount: parseFloat(v.originalUnitPrice), currencyCode: "INR" } : null,
+           availableForSale,
+           askPrice: v.askPrice || false,
+           stock: stock,
+           callForInventory
+        };
+      });
   } catch (e) {
      console.error("Failed to parse variants", e);
   }
 
   const price = parsedVariants.length > 0 ? parsedVariants[0].price.amount : 0;
+  const productAvailableForSale = parsedVariants.length === 0 || parsedVariants.some(v => v.availableForSale);
 
   // Auto-create category if it doesn't exist
   if (productType && productType.trim() !== "") {
@@ -263,6 +292,12 @@ export async function updateProduct(id, formData) {
     }
   }
 
+  let parsedNutrition = null;
+  try {
+    const raw = formData.get("nutritionData");
+    if (raw) parsedNutrition = JSON.parse(raw);
+  } catch {}
+
   const { error } = await supabase.from("products").update({
     handle,
     title,
@@ -273,6 +308,8 @@ export async function updateProduct(id, formData) {
     images,
     descriptionHtml: description ? `<p>${description}</p>` : "",
     variants: parsedVariants,
+    availableForSale: productAvailableForSale,
+    nutrition: parsedNutrition,
   }).eq("id", id);
 
   if (error) {
@@ -403,6 +440,41 @@ export async function deleteBrand(id) {
 
   const { error } = await supabase.from("brands").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/shop");
+  revalidatePath("/data");
+  return { success: true };
+}
+
+export async function getOrders() {
+  const user = await getAuthUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching orders:", error);
+    return [];
+  }
+  return data;
+}
+
+export async function toggleTopProduct(productId, isTop) {
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("products")
+    .update({ is_top_searched: isTop })
+    .eq("id", productId);
+
+  if (error) {
+    console.error("Error toggling top product status:", error);
+    return { success: false, error: error.message };
+  }
+
   revalidatePath("/shop");
   revalidatePath("/data");
   return { success: true };

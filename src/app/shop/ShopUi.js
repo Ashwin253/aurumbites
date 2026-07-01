@@ -198,6 +198,35 @@ export function ShopCatalog({
   const [gridCols, setGridCols] = useState(1);
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
+  // Client-side search filters
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setSearchQuery(params.get("q") || "");
+  }, []);
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+    const params = new URLSearchParams(window.location.search);
+    if (query) {
+      params.set("q", query);
+    } else {
+      params.delete("q");
+    }
+    window.history.replaceState({}, document.title, `${window.location.pathname}?${params.toString()}`);
+  };
+
+  const filteredProducts = (catalog?.products || []).filter((p) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      p.title?.toLowerCase().includes(query) ||
+      p.vendor?.toLowerCase().includes(query) ||
+      p.productType?.toLowerCase().includes(query)
+    );
+  });
+
   useEffect(() => {
     const syncGridCols = () => {
       setGridCols(window.innerWidth < 1024 ? 1 : 4);
@@ -209,6 +238,36 @@ export function ShopCatalog({
     return () => {
       window.removeEventListener("resize", syncGridCols);
     };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("orderId");
+    const cartStatus = params.get("cart");
+    if (cartStatus === "success" && orderId) {
+      startTransition(async () => {
+        try {
+          const verifyRes = await fetch("/api/checkout/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              provider: "cashfree",
+              cf_order_id: orderId
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.success) {
+            alert("Payment successful! Your order has been placed.");
+            window.history.replaceState({}, document.title, window.location.pathname);
+            window.location.reload();
+          } else {
+            alert(verifyData.error || "Payment verification failed.");
+          }
+        } catch (e) {
+          console.error("Cashfree redirect verification error", e);
+        }
+      });
+    }
   }, []);
 
   const handleFilterChange = ({
@@ -403,32 +462,6 @@ export function ShopCatalog({
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9a7a3f]">
                   Filter selection
                 </p>
-                {/* <button
-                  onClick={() => setShowOnlyAvailable(!showOnlyAvailable)}
-                  className="flex items-center gap-3 group"
-                  aria-pressed={showOnlyAvailable}
-                >
-                  <div className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showOnlyAvailable ? 'bg-emerald-500' : 'bg-neutral-200'}`}>
-                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showOnlyAvailable ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 group-hover:text-neutral-900 transition-colors">In Stock Only</span>
-                </button> */}
-                
-                {/* {(catalog.activeCollection.handle !== "all" || catalog.activeBrand !== "all" || catalog.activeProductType !== "all" || showOnlyAvailable) && (
-                  <button
-                    onClick={() => {
-                      setShowOnlyAvailable(false);
-                      handleFilterChange({
-                        collectionHandle: "all",
-                        brandHandle: "all",
-                        productTypeHandle: "all",
-                      });
-                    }}
-                    className="ml-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-700 transition"
-                  >
-                    Clear All
-                  </button>
-                )} */}
               </div>
 
               <button
@@ -506,26 +539,73 @@ export function ShopCatalog({
             </div>
           ) : null}
 
-          <div className="relative mt-8">
-            {isPending ? (
-              <div className="pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-[#f7f1e5]/70 backdrop-blur-[2px]" />
-            ) : null}
+          {filteredProducts.length === 0 ? (
+            <div className="space-y-12">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-[#e6dcc8]/65 bg-white/40 p-5 mt-6 backdrop-blur-md shadow-sm">
+                <div className="flex items-center gap-3">
+                  <svg className="h-5 w-5 text-neutral-450 shrink-0 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <p className="text-sm text-neutral-700 font-medium">
+                    No products match your search for <span className="font-semibold text-neutral-950">"{searchQuery}"</span>.
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleSearchChange("")}
+                  className="flex items-center gap-1.5 rounded-full bg-neutral-950 px-5 py-2.5 text-xs font-semibold text-white hover:bg-neutral-800 transition shadow-sm shrink-0"
+                >
+                  Clear Search
+                  <svg className="h-3.5 w-3.5 text-white/80" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-            <ProductGrid
-              products={showOnlyAvailable ? catalog.products.filter(p => p.availableForSale) : catalog.products}
-              redirectTo={redirectTo}
-              isEnquiryOnly={storefrontMode.isEnquiryOnly}
-              gridCols={gridCols}
-              isPending={isPending}
-            />
-          </div>
+              {/* Top Searched Products Section */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-[#e9dfcf] pb-3">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-[#9a7a3f] flex items-center gap-2">
+                    <svg className="h-4.5 w-4.5 text-[#9a7a3f] shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.373-1.81.588-1.81h4.906a1 1 0 00.95-.69l1.519-4.674z" />
+                    </svg>
+                    Top Searched
+                  </h3>
+                </div>
+                <ProductGrid
+                  products={
+                    (catalog?.products || []).filter(p => p.is_top_searched).length > 0
+                      ? (catalog?.products || []).filter(p => p.is_top_searched)
+                      : (catalog?.products || []).slice(0, 4)
+                  }
+                  redirectTo={redirectTo}
+                  isEnquiryOnly={storefrontMode.isEnquiryOnly}
+                  gridCols={gridCols}
+                  isPending={isPending}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="relative mt-8">
+              {isPending ? (
+                <div className="pointer-events-none absolute inset-0 z-10 rounded-[2rem] bg-[#f7f1e5]/70 backdrop-blur-[2px]" />
+              ) : null}
+
+              <ProductGrid
+                products={showOnlyAvailable ? filteredProducts.filter(p => p.availableForSale) : filteredProducts}
+                redirectTo={redirectTo}
+                isEnquiryOnly={storefrontMode.isEnquiryOnly}
+                gridCols={gridCols}
+                isPending={isPending}
+              />
+            </div>
+          )}
       </div>
     </>
   );
 }
 
 export function CollectionFilters({
-  collections,
+  collections = [],
   activeHandle,
   brandHandle = "all",
   productTypeHandle = "all",
@@ -533,7 +613,7 @@ export function CollectionFilters({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const activeHandles = (activeHandle || "all").split(",").map(h => h.trim());
-  const activeCollection = collections.find((c) => activeHandles.includes(c.handle)) || collections[0];
+  const activeCollection = (collections || []).find((c) => activeHandles.includes(c.handle)) || collections?.[0] || { title: "All", handle: "all" };
 
   return (
     <div className="relative">
@@ -543,7 +623,10 @@ export function CollectionFilters({
           onClick={() => setIsOpen(true)}
           className="flex w-full items-center justify-between rounded-full border border-[#e6dcc8] bg-[#fcf8f1] px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-[#c9b07a]"
         >
-          <span className="truncate pr-3">{activeCollection.title}</span>
+          <span className="truncate pr-3">
+            <span className="text-neutral-400 font-normal mr-1.5">Category:</span>
+            {activeCollection.title}
+          </span>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
         </button>
 
@@ -553,31 +636,35 @@ export function CollectionFilters({
             title=""
             onClose={() => setIsOpen(false)}
           >
-                {collections.map((collection) => {
-                  const isActive = activeHandles.includes(collection.handle) || (collection.handle === "all" && activeHandles.includes("all"));
-                  return (
-                    <button
-                      type="button"
-                      key={collection.id}
-                      onClick={() => {
-                        if (onSelectHandle) {
-                          onSelectHandle(collection.handle);
-                        }
-                        setIsOpen(false);
-                      }}
-                      className={`flex w-full items-center rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${
-                        isActive
-                          ? "bg-neutral-950 text-white"
-                          : "text-neutral-700 hover:bg-neutral-100"
-                      }`}
-                    >
-                      <span className="flex-1">{collection.title}</span>
-                      {isActive && (
-                        <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                      )}
-                    </button>
-                  );
-                })}
+            {collections.map((collection) => {
+              const isActive = activeHandles.includes(collection.handle) || (collection.handle === "all" && activeHandles.includes("all"));
+              return (
+                <button
+                  type="button"
+                  key={collection.id}
+                  onClick={() => {
+                    if (onSelectHandle) {
+                      if (isActive && collection.handle !== "all") {
+                        onSelectHandle("all");
+                      } else {
+                        onSelectHandle(collection.handle);
+                      }
+                    }
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-center rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${
+                    isActive
+                      ? "bg-neutral-950 text-white"
+                      : "text-neutral-700 hover:bg-neutral-100"
+                  }`}
+                >
+                  <span className="flex-1">{collection.title}</span>
+                  {isActive && (
+                    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  )}
+                </button>
+              );
+            })}
           </MobileBottomSheet>
         )}
       </div>
@@ -591,14 +678,25 @@ export function CollectionFilters({
             <button
               type="button"
               key={collection.id}
-              onClick={() => onSelectHandle?.(collection.handle)}
-              className={`flex shrink-0 items-center rounded-[1.2rem] border px-4 py-3 text-left text-sm font-semibold transition ${
+              onClick={() => {
+                if (isActive && collection.handle !== "all") {
+                  onSelectHandle?.("all");
+                } else {
+                  onSelectHandle?.(collection.handle);
+                }
+              }}
+              className={`flex shrink-0 items-center gap-1.5 rounded-[1.2rem] border px-4 py-3 text-left text-sm font-semibold transition ${
                 isActive
                   ? "border-neutral-950 bg-neutral-950 text-white"
                   : "border-neutral-300 bg-white text-neutral-800 hover:border-neutral-500"
               }`}
             >
               <span className="whitespace-nowrap leading-5">{collection.title}</span>
+              {isActive && collection.handle !== "all" && (
+                <svg className="h-3.5 w-3.5 text-white/70 hover:text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
             </button>
           );
         })}
@@ -607,7 +705,7 @@ export function CollectionFilters({
   );
 }
 export function ProductTypeFilters({
-  productTypes,
+  productTypes = [],
   activeHandle,
   collectionHandle = "all",
   brandHandle = "all",
@@ -618,7 +716,7 @@ export function ProductTypeFilters({
     return null;
   }
 
-  const activeProductType = productTypes.find((p) => p.handle === activeHandle) || productTypes[0];
+  const activeProductType = (productTypes || []).find((p) => p.handle === activeHandle) || productTypes?.[0] || { title: "All", handle: "all" };
 
   return (
     <div className="relative mt-4">
@@ -628,7 +726,10 @@ export function ProductTypeFilters({
           onClick={() => setIsOpen(!isOpen)}
           className="w-full rounded-full border border-neutral-300 bg-white px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-neutral-400 flex justify-between items-center"
         >
-          <span>{activeProductType.title}</span>
+          <span>
+            <span className="text-neutral-400 font-normal mr-1.5">Type:</span>
+            {activeProductType.title}
+          </span>
           <svg className={`w-5 h-5 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
         </button>
         {isOpen && (
@@ -676,7 +777,7 @@ export function ProductTypeFilters({
             query.set("brand", brandHandle);
           }
 
-          if (productType.handle && productType.handle !== "all") {
+          if (!isActive && productType.handle && productType.handle !== "all") {
             query.set("type", productType.handle);
           }
 
@@ -686,13 +787,18 @@ export function ProductTypeFilters({
             <Link
               key={productType.handle}
               href={href}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-medium transition ${
                 isActive
                   ? "bg-amber-600 text-white"
                   : "border border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300"
               }`}
             >
-              {productType.title}
+              <span>{productType.title}</span>
+              {isActive && productType.handle !== "all" && (
+                <svg className="h-3.5 w-3.5 text-white/70 hover:text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
             </Link>
           );
         })}
@@ -702,7 +808,7 @@ export function ProductTypeFilters({
 }
 
 export function BrandFilters({
-  brands,
+  brands = [],
   activeHandle,
   collectionHandle = "all",
   productTypeHandle = "all",
@@ -714,7 +820,7 @@ export function BrandFilters({
     return null;
   }
 
-  const activeBrand = brands.find((b) => b.handle === activeHandle) || brands[0];
+  const activeBrand = (brands || []).find((b) => b.handle === activeHandle) || brands?.[0] || { title: "All", handle: "all" };
 
   return (
     <div className="relative mt-4">
@@ -724,7 +830,10 @@ export function BrandFilters({
           onClick={() => setIsOpen(true)}
           className="flex w-full items-center justify-between rounded-full border border-[#e6dcc8] bg-[#fcf8f1] px-5 py-3 text-left text-sm font-medium text-neutral-700 transition hover:border-[#c9b07a]"
         >
-          <span className="truncate pr-3">{activeBrand.title}</span>
+          <span className="truncate pr-3">
+            <span className="text-neutral-400 font-normal mr-1.5">Brand:</span>
+            {activeBrand.title}
+          </span>
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
         </button>
         {isOpen && (
@@ -733,38 +842,42 @@ export function BrandFilters({
             title="Brands"
             onClose={() => setIsOpen(false)}
           >
-              {brands.map((brand) => {
-                const isActive = brand.handle === activeHandle;
-                return (
-                  <button
-                    type="button"
-                    key={brand.handle}
-                    onClick={() => {
+            {brands.map((brand) => {
+              const isActive = brand.handle === activeHandle;
+              return (
+                <button
+                  type="button"
+                  key={brand.handle}
+                  onClick={() => {
+                    if (isActive && brand.handle !== "all") {
+                      onSelectHandle?.("all");
+                    } else {
                       onSelectHandle?.(brand.handle);
-                      setIsOpen(false);
-                    }}
-                    className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
-                      isActive
-                        ? "bg-neutral-950 text-white"
-                        : "text-neutral-700 hover:bg-neutral-100"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {brand.image && (
-                        <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
-                          <Image src={brand.image} alt="" fill className="object-contain p-1" />
-                        </div>
-                      )}
-                      <span>{brand.title}</span>
-                    </div>
-                    {isActive ? (
-                      <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : null}
-                  </button>
-                );
-              })}
+                    }
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                    isActive
+                      ? "bg-neutral-950 text-white"
+                      : "text-neutral-700 hover:bg-neutral-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {brand.image && (
+                      <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                        <Image src={brand.image} alt="" fill className="object-contain p-1" />
+                      </div>
+                    )}
+                    <span>{brand.title}</span>
+                  </div>
+                  {isActive ? (
+                    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : null}
+                </button>
+              );
+            })}
           </MobileBottomSheet>
         )}
       </div>
@@ -777,7 +890,13 @@ export function BrandFilters({
             <button
               type="button"
               key={brand.handle}
-              onClick={() => onSelectHandle?.(brand.handle)}
+              onClick={() => {
+                if (isActive && brand.handle !== "all") {
+                  onSelectHandle?.("all");
+                } else {
+                  onSelectHandle?.(brand.handle);
+                }
+              }}
               className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full pl-1.5 pr-4 py-1.5 text-xs font-semibold tracking-[0.04em] transition sm:text-sm ${
                 isActive
                   ? "bg-neutral-950 text-white shadow-[0_10px_30px_rgba(23,23,23,0.12)]"
@@ -793,7 +912,14 @@ export function BrandFilters({
                   {brand.title === "All" ? "*" : brand.title.slice(0,1)}
                 </span>
               )}
-              {brand.title}
+              <span className="flex items-center gap-1.5">
+                {brand.title}
+                {isActive && brand.handle !== "all" && (
+                  <svg className="h-3.5 w-3.5 text-white/70 hover:text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </span>
             </button>
           );
         })}
@@ -997,6 +1123,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
   const [showNotify, setShowNotify] = useState(false);
   const isCompact = gridCols >= 3;
   const isList = gridCols === 1;
+  const canShowDiscount = product.showDiscount && !product.askPrice;
   const subscriptionUrl = getSubscriptionUrl({
     handle: product.handle,
     variantId: product.variantId || "",
@@ -1019,9 +1146,9 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
   };
 
   return (
-    <article className={`glossy-card overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-neutral-200 bg-white shadow-sm transition hover:shadow-xl ${isList ? 'flex flex-row items-stretch' : 'flex flex-col'}`}>
+    <article className={`glossy-card overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-[#e6dcc8]/60 bg-white/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-[0_20px_50px_rgba(201,176,122,0.12)] hover:bg-white/60 hover:border-[#c9b07a]/40 ${isList ? 'flex flex-row items-stretch' : 'flex flex-col'}`}>
       <Link href={`/shop/${product.handle}`} className={`block ${isList ? 'w-2/5 shrink-0' : ''}`}>
-        <div className={`relative bg-neutral-100 h-full ${!isList && (isCompact ? 'aspect-square sm:aspect-auto sm:h-48' : 'aspect-square sm:aspect-auto sm:h-72')}`}>
+        <div className={`relative bg-transparent h-full ${!isList && (isCompact ? 'aspect-square sm:aspect-auto sm:h-48' : 'aspect-square sm:aspect-auto sm:h-72')}`}>
           <div className="absolute top-4 left-4 z-10">
             {/* <span className={`rounded-full px-2 py-0.5 font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${isCompact ? 'text-[8px]' : 'text-[10px]'} ${
               product.availableForSale 
@@ -1085,9 +1212,9 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                     {product.packSize && product.price && <span className="text-neutral-300">•</span>}
                     {product.price && (
                       <div className="flex items-center gap-1.5">
-                        {product.showDiscount && <span className="text-neutral-400 line-through text-[10px]">₹{product.originalPrice}</span>}
-                        <span className="text-neutral-900 font-bold">₹{product.sellingPrice}</span>
-                        {product.showDiscount && (
+                        {canShowDiscount && <span className="text-neutral-400 line-through text-[10px]">₹{product.originalPrice}</span>}
+                        <span className="text-neutral-900 font-bold">{product.askPrice ? "Ask Price" : `₹${product.sellingPrice}`}</span>
+                        {canShowDiscount && (
                            <span className="text-[10px] font-bold text-emerald-600 ml-1">
                              {product.discountPercent}% OFF
                            </span>
@@ -1102,12 +1229,12 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
           {!(product.variants && product.variants.length > 1) && !isList && (
             <div className={`shrink-0 flex flex-col items-end gap-0.5`}>
               <div className={`flex items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 font-medium whitespace-nowrap ${isCompact ? 'text-[10px]' : 'text-sm'}`}>
-                {product.showDiscount && (
+                {canShowDiscount && (
                   <span className="text-neutral-400 line-through">₹{product.originalPrice}</span>
                 )}
-                <span className="text-neutral-700">₹{product.sellingPrice}</span>
+                <span className="text-neutral-700">{product.askPrice ? "Ask Price" : `₹${product.sellingPrice}`}</span>
               </div>
-              {product.showDiscount && !isCompact && (
+              {canShowDiscount && !isCompact && (
                  <div className="text-[10px] font-bold text-emerald-600 px-2 uppercase tracking-wide">
                    {product.discountPercent}% OFF (Save ₹{product.savedAmount})
                  </div>
@@ -1116,7 +1243,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:flex">
+        <div className={`grid gap-2 w-full ${product.variants && product.variants.length > 1 ? "grid-cols-1" : "grid-cols-2"}`}>
           <Link
             href={`/shop/${product.handle}`}
             className={`flex w-full items-center justify-center rounded-full border transition ${
@@ -1129,17 +1256,17 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
           >
             {product.variants && product.variants.length > 1 ? (
               <>
-                <svg className="h-4 w-4 shrink-0 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12h18m-6-6 6 6-6 6" />
                 </svg>
-                <span className="hidden sm:inline">View options</span>
+                <span className="whitespace-nowrap">View options</span>
               </>
             ) : (
               <>
-                <svg className="h-4 w-4 shrink-0 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12H3m0 0 4-4m-4 4 4 4" />
+                <span className="whitespace-nowrap">Details</span>
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
-                <span className="hidden whitespace-nowrap sm:inline">Details</span>
               </>
             )}
           </Link>
@@ -1157,7 +1284,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                   {adding
                     ? (
                       <>
-                        <svg className="h-4 w-4 animate-spin sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                           <path className="opacity-75" fill="currentColor" d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2Z" />
                         </svg>
@@ -1166,12 +1293,12 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                     )
                     : (
                       <div className="flex items-center justify-center gap-2" aria-label="Add to bucket">
-                        <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
                         </svg>
-                        <span className="hidden whitespace-nowrap sm:inline">{isEnquiryOnly ? "Proceed to enquire" : "Add to cart"}</span>
+                        <span className="whitespace-nowrap">{isEnquiryOnly ? "Enquire" : "Add to cart"}</span>
                       </div>
                     )}
                 </button>
@@ -1183,10 +1310,10 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
                     className={`flex w-full items-center justify-center rounded-full bg-[#25D366] text-white transition hover:bg-[#20bd5c] shadow-sm ${isCompact ? 'p-2 sm:px-4 sm:py-2.5' : 'px-3 py-2.5 text-xs font-medium sm:px-4 sm:py-3 sm:text-sm'}`}
                     aria-label="Notify me"
                   >
-                    <svg className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                     </svg>
-                    <span className="hidden whitespace-nowrap sm:inline">Notify</span>
+                    <span className="whitespace-nowrap">Notify</span>
                   </button>
                   {showNotify ? (
                     <NotifyPopup 
@@ -1243,8 +1370,143 @@ export function CartPanel({
   onCartChange,
 }) {
   const [isPending, startTransition] = useTransition();
+  
+  // Payment Gateway Hooks
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  const loadScript = (src) => {
+    return new Promise((resolve) => {
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayOnline = async (e) => {
+    e.preventDefault();
+    setCheckoutLoading(true);
+    setCheckoutError("");
+
+    try {
+      const checkoutRes = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.lines.map((l) => ({
+            productId: l.productId || l.id,
+            variantId: l.merchandiseId,
+            title: l.title,
+            variantTitle: l.variantTitle,
+            price: parseFloat(l.price?.replace(/[^\d.]/g, '') || 0),
+            quantity: l.quantity
+          })),
+          customerName,
+          customerEmail,
+          customerPhone
+        })
+      });
+
+      const res = await checkoutRes.json();
+      if (!checkoutRes.ok) {
+        setCheckoutError(res.error || "Failed to initiate checkout.");
+        setCheckoutLoading(false);
+        return;
+      }
+
+      if (res.provider === "razorpay") {
+        const scriptLoaded = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+        if (!scriptLoaded) {
+          setCheckoutError("Failed to load Razorpay library.");
+          setCheckoutLoading(false);
+          return;
+        }
+
+        const options = {
+          key: res.key,
+          amount: res.amount,
+          currency: res.currency,
+          name: "Aurum Bites",
+          description: "Online Order Payment",
+          order_id: res.orderId,
+          handler: async function (paymentRes) {
+            try {
+              setCheckoutLoading(true);
+              const verifyRes = await fetch("/api/checkout/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  provider: "razorpay",
+                  razorpay_payment_id: paymentRes.razorpay_payment_id,
+                  razorpay_order_id: paymentRes.razorpay_order_id,
+                  razorpay_signature: paymentRes.razorpay_signature
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyRes.ok && verifyData.success) {
+                alert("Payment successful! Your order has been placed.");
+                window.location.reload();
+              } else {
+                setCheckoutError(verifyData.error || "Payment verification failed.");
+              }
+            } catch (err) {
+              setCheckoutError("Error verifying payment.");
+            } finally {
+              setCheckoutLoading(false);
+            }
+          },
+          prefill: {
+            name: customerName,
+            email: customerEmail,
+            contact: customerPhone
+          },
+          theme: {
+            color: "#9a7a3f"
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+        setCheckoutLoading(false);
+
+      } else if (res.provider === "cashfree") {
+        const scriptLoaded = await loadScript("https://sdk.cashfree.com/js/v3/cashfree.js");
+        if (!scriptLoaded) {
+          setCheckoutError("Failed to load Cashfree library.");
+          setCheckoutLoading(false);
+          return;
+        }
+
+        const cashfree = window.Cashfree({
+          mode: res.cfEnv === "production" ? "production" : "sandbox"
+        });
+        
+        cashfree.checkout({
+          paymentSessionId: res.paymentSessionId,
+          returnUrl: `${window.location.origin}/shop?cart=success&orderId=${res.orderId}`
+        });
+      }
+
+    } catch (error) {
+      console.error("Pay online error:", error);
+      setCheckoutError("An unexpected error occurred during payment processing.");
+      setCheckoutLoading(false);
+    }
+  };
+
   const infoBoxClassName = "border-neutral-200 bg-neutral-50 text-neutral-700";
-  const infoMessage = "Review your items and place your order directly via WhatsApp.";
+  const infoMessage = isEnquiryOnly
+    ? "Review your items and place your order directly via WhatsApp."
+    : "Provide details and pay securely online to finalize your purchase.";
 
   const handleAdd = (line) => {
     startTransition(async () => {
@@ -1367,29 +1629,83 @@ export function CartPanel({
 
       <div className="mt-6">
         {cart.totalQuantity > 0 ? (
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">Share Order to WhatsApp</p>
-            <button
-              type="button"
-              onClick={() => {
-                const items = cart.lines.map(line => `- ${line.title} x ${line.quantity} (${line.price || ''})`).join('%0A');
-                const msg = `Hi! I would like to order the following items:%0A%0A${items}%0A%0ATotal items: ${cart.totalQuantity}`;
-                window.open(`https://wa.me/919654979085?text=${msg}`, '_blank', 'noopener,noreferrer');
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#20bd5c]"
-            >
-              <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-              </svg>
-              Send to WhatsApp
-            </button>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
-            Add a product to get started.
-          </div>
-        )}
-      </div>
+          isEnquiryOnly ? (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">Share Order to WhatsApp</p>
+              <button
+                type="button"
+                onClick={() => {
+                  const items = cart.lines.map(line => `- ${line.title} x ${line.quantity} (${line.price || ''})`).join('%0A');
+                  const msg = `Hi! I would like to order the following items:%0A%0A${items}%0A%0ATotal items: ${cart.totalQuantity}`;
+                  window.open(`https://wa.me/919654979085?text=${msg}`, '_blank', 'noopener,noreferrer');
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#20bd5c]"
+              >
+                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.88 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                  </svg>
+                  Send to WhatsApp
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handlePayOnline} className="space-y-4 pt-4 border-t border-neutral-100">
+                <p className="text-xs font-semibold uppercase tracking-widest text-[#9a7a3f]">Checkout Details</p>
+                <div className="space-y-2">
+                  <input 
+                    type="text" 
+                    placeholder="Full Name" 
+                    required 
+                    value={customerName} 
+                    onChange={(e) => setCustomerName(e.target.value)} 
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="Email Address" 
+                    required 
+                    value={customerEmail} 
+                    onChange={(e) => setCustomerEmail(e.target.value)} 
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
+                  />
+                  <input 
+                    type="tel" 
+                    placeholder="Phone Number" 
+                    required 
+                    value={customerPhone} 
+                    onChange={(e) => setCustomerPhone(e.target.value)} 
+                    className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
+                  />
+                </div>
+
+                {checkoutError && (
+                  <p className="text-xs font-medium text-red-600 bg-red-50 p-2 rounded-lg">{checkoutError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={checkoutLoading}
+                  className="w-full rounded-full bg-neutral-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
+                >
+                  {checkoutLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    "Proceed to Pay Online"
+                  )}
+                </button>
+              </form>
+            )
+          ) : (
+            <div className="rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600">
+              Add a product to get started.
+            </div>
+          )}
+        </div>
     </aside>
   );
 }

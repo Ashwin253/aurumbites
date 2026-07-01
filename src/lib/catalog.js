@@ -87,12 +87,14 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
   let dbCategories = [];
   let dbBrands = [];
   
+  let activeHolds = [];
   // Try fetching from Supabase first
   try {
-    const [productsRes, categoriesRes, brandsRes] = await Promise.all([
+    const [productsRes, categoriesRes, brandsRes, holdsRes] = await Promise.all([
       supabase.from('products').select('*'),
       supabase.from('categories').select('*'),
-      supabase.from('brands').select('*')
+      supabase.from('brands').select('*'),
+      supabase.from('inventory_holds').select('variant_id, quantity').gt('expires_at', new Date().toISOString())
     ]);
 
     if (productsRes.data && productsRes.data.length > 0) {
@@ -103,11 +105,18 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
 
     if (categoriesRes.data) dbCategories = categoriesRes.data;
     if (brandsRes.data) dbBrands = brandsRes.data;
+    if (holdsRes && holdsRes.data) activeHolds = holdsRes.data;
 
   } catch (error) {
     console.warn("Supabase fetch failed or not configured, falling back to local catalog:", error.message);
     rawProducts = await getLocalCatalog();
   }
+
+  const heldQuantities = new Map();
+  activeHolds.forEach((hold) => {
+    const current = heldQuantities.get(hold.variant_id) || 0;
+    heldQuantities.set(hold.variant_id, current + (hold.quantity || 1));
+  });
   
   const categoriesSet = new Set();
   const brandsSet = new Set();
@@ -137,7 +146,8 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
     const sellingPrice = parseFloat(rawSellingPrice) || 0;
     const originalPrice = parseFloat(rawOriginalPrice) || 0;
     
-    const showDiscount = originalPrice > sellingPrice;
+    const hasAskPrice = !!(firstVar?.askPrice || p.askPrice);
+    const showDiscount = !hasAskPrice && originalPrice > sellingPrice;
     const discountPercent = showDiscount ? Math.round(((originalPrice - sellingPrice) / originalPrice) * 100) : 0;
     const savedAmount = showDiscount ? (originalPrice - sellingPrice) : 0;
     
@@ -164,17 +174,12 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
       unitPrice,
       packSize,
       showDiscount,
+      askPrice: hasAskPrice,
       
       // Legacy formatted properties
-      price: `₹${sellingPrice}`,
+      price: (firstVar?.askPrice || p.askPrice) ? "Ask Price" : `₹${sellingPrice}`,
       compareAtPrice: showDiscount ? `₹${originalPrice}` : null,
       
-      availableForSale: p.available_for_sale !== false,
-      weight: packSize,
-      image: p.image_url ? { url: p.image_url, altText: title } : (p.image?.url ? p.image : null),
-      images: (p.images && p.images.length > 0)
-        ? p.images.map(url => ({ url, altText: title }))
-        : (p.image_url ? [{ url: p.image_url, altText: title }] : (p.image?.url ? [p.image] : [])),
       variants: (parsedVariants || []).map(v => {
         const rawAmount = v.price?.amount ?? v.price ?? 0;
         const currency = v.price?.currencyCode ?? "INR";
@@ -185,20 +190,45 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
 
         const weight = v.title || v.weight || "";
 
+        const variantId = v.id || `var-${Date.now()}-${Math.random()}`;
+        const held = heldQuantities.get(variantId) || 0;
+        const rawStock = v.stock !== undefined && v.stock !== null ? parseInt(v.stock, 10) : null;
+        const stock = rawStock !== null ? Math.max(0, rawStock - held) : null;
+
+        const callForInventory = v.callForInventory || false;
+        const availableForSale = callForInventory || stock === null || stock > 0;
+
         return {
-          id: v.id || `var-${Date.now()}-${Math.random()}`,
+          id: variantId,
           title: v.title || "Default Title",
-          availableForSale: v.availableForSale !== false,
-          price: `₹${amount}`,
-          compareAtPrice: compareAmount ? `₹${compareAmount}` : null,
+          availableForSale,
+          price: v.askPrice ? "Ask Price" : `₹${amount}`,
+          compareAtPrice: v.askPrice ? null : (compareAmount ? `₹${compareAmount}` : null),
           amount: amount,
           compareAtAmount: compareAmount,
           currencyCode: currency,
           weight: weight,
-          selectedOptions: v.selectedOptions || [{ name: "Size", value: v.title || "Default" }]
+          askPrice: v.askPrice || false,
+          selectedOptions: v.selectedOptions || [{ name: "Size", value: v.title || "Default" }],
+          stock,
+          callForInventory
         };
       }),
+      availableForSale: p.availableForSale !== false && p.available_for_sale !== false && ((parsedVariants || []).length === 0 || (parsedVariants || []).some(v => {
+        const variantId = v.id;
+        const held = heldQuantities.get(variantId) || 0;
+        const rawStock = v.stock !== undefined && v.stock !== null ? parseInt(v.stock, 10) : null;
+        const stock = rawStock !== null ? Math.max(0, rawStock - held) : null;
+        return v.callForInventory || stock === null || stock > 0;
+      })),
+      weight: packSize,
+      image: p.image_url ? { url: p.image_url, altText: title } : (p.image?.url ? p.image : null),
+      images: (p.images && p.images.length > 0)
+        ? p.images.map(url => ({ url, altText: title }))
+        : (p.image_url ? [{ url: p.image_url, altText: title }] : (p.image?.url ? [p.image] : [])),
       variantId: firstVar?.id || handle + '-variant',
+      description: p.descriptionHtml || p.description || "",
+      nutrition: p.nutrition || null,
       raw: p
     };
   });

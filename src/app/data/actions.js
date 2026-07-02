@@ -168,6 +168,12 @@ export async function addProduct(formData) {
     if (raw) parsedNutrition = JSON.parse(raw);
   } catch {}
 
+  let parsedFaq = null;
+  try {
+    const raw = formData.get("faqData");
+    if (raw) parsedFaq = JSON.parse(raw);
+  } catch {}
+
   const { error } = await supabase.from("products").insert([
     {
       handle,
@@ -182,6 +188,7 @@ export async function addProduct(formData) {
       availableForSale: productAvailableForSale,
       variants: parsedVariants,
       nutrition: parsedNutrition,
+      faq: parsedFaq,
     },
   ]);
 
@@ -303,6 +310,12 @@ export async function updateProduct(id, formData) {
     if (raw) parsedNutrition = JSON.parse(raw);
   } catch {}
 
+  let parsedFaq = null;
+  try {
+    const raw = formData.get("faqData");
+    if (raw) parsedFaq = JSON.parse(raw);
+  } catch {}
+
   const { error } = await supabase.from("products").update({
     handle,
     title,
@@ -316,6 +329,7 @@ export async function updateProduct(id, formData) {
     variants: parsedVariants,
     availableForSale: productAvailableForSale,
     nutrition: parsedNutrition,
+    faq: parsedFaq,
   }).eq("id", id);
 
   if (error) {

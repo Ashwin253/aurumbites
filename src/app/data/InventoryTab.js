@@ -1,7 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { addProduct, deleteProduct, addCategory, deleteCategory, addBrand, deleteBrand, updateProduct, updateBrand } from "./actions";
+
+function slugifySegment(text) {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+function buildRecommendedProductHandle(title, brand, category) {
+  return [title, brand, category].map(slugifySegment).filter(Boolean).join("-");
+}
 
 export default function InventoryTab({ initialProducts, initialCategories, initialBrands }) {
   const [activeSubTab, setActiveSubTab] = useState("products");
@@ -112,13 +129,70 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
   };
 
   const defaultNutrition = () => ({
-    title: "Nutrition Facts",
+    title: "NUTRITION",
     servingSize: "",
     columns: ["Nutrient", "Per Serving"],
     rows: [],
   });
   const [nutrition, setNutrition] = useState(defaultNutrition());
   const [showNutrition, setShowNutrition] = useState(false);
+
+  const defaultFaq = () => ({
+    title: "FAQ",
+    rows: [],
+  });
+  const [faq, setFaq] = useState(defaultFaq());
+  const [showFaq, setShowFaq] = useState(false);
+
+  const [formTitle, setFormTitle] = useState("");
+  const [formHandle, setFormHandle] = useState("");
+  const [formVendor, setFormVendor] = useState("");
+  const [formCategory, setFormCategory] = useState("");
+  const [handleManuallyEdited, setHandleManuallyEdited] = useState(false);
+
+  const applyRecommendedHandle = ({
+    title = formTitle,
+    vendor = formVendor,
+    category = formCategory,
+    force = false,
+  } = {}) => {
+    if (!force && handleManuallyEdited) return;
+
+    if (activeSubTab === "products") {
+      setFormHandle(buildRecommendedProductHandle(title, vendor, category));
+      return;
+    }
+
+    setFormHandle(slugifySegment(title));
+  };
+
+  const initNewEntityForm = () => {
+    setFormTitle("");
+    setFormHandle("");
+    setFormVendor("");
+    setFormCategory("");
+    setHandleManuallyEdited(false);
+  };
+
+  const syncFormFromProduct = (item, { preserveHandle = false } = {}) => {
+    const title = item?.title || "";
+    const vendor = item?.vendor || "";
+    const category = item?.productType || "";
+
+    setFormTitle(title);
+    setFormVendor(vendor);
+    setFormCategory(category);
+
+    if (preserveHandle) {
+      setFormHandle(item?.handle || "");
+      setHandleManuallyEdited(true);
+      return;
+    }
+
+    const recommended = buildRecommendedProductHandle(title, vendor, category);
+    setFormHandle(recommended || item?.handle || "");
+    setHandleManuallyEdited(false);
+  };
 
   const resetFormState = () => {
     setIsAdding(false);
@@ -129,9 +203,12 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
     setVariants([{ weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
     setNutrition(defaultNutrition());
     setShowNutrition(false);
+    setFaq(defaultFaq());
+    setShowFaq(false);
     setImportQueue([]);
     setIsPastingData(false);
     setBrandFilter("");
+    initNewEntityForm();
   };
 
   const openAddBrand = () => {
@@ -215,7 +292,17 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
       setNutrition(defaultNutrition());
       setShowNutrition(false);
     }
+
+    // Load existing FAQ
+    if (p.faq && p.faq.rows?.length > 0) {
+      setFaq(p.faq);
+      setShowFaq(true);
+    } else {
+      setFaq(defaultFaq());
+      setShowFaq(false);
+    }
     
+    syncFormFromProduct(p, { preserveHandle: true });
     setIsAdding(true); // Open the form
     setIsPastingData(false);
     setImportQueue([]);
@@ -223,6 +310,11 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
 
   const handleEditBrandClick = (b) => {
     setEditingBrand(b);
+    setFormTitle(b.title || "");
+    setFormHandle(b.handle || "");
+    setFormVendor("");
+    setFormCategory("");
+    setHandleManuallyEdited(true);
     
     // Map existing image
     const imgs = b.image_url ? [b.image_url] : [];
@@ -265,8 +357,9 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
       
       const mappedQueue = productsArray.map((item, idx) => {
         const title = item.productName || item.title || `Imported Product ${idx + 1}`;
-        const rawHandle = (item.productName || item.title || "").toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-        const handle = `${rawHandle}-${item.sno || Date.now() + idx}`;
+        const vendor = item.brand || item.vendor || "";
+        const productType = item.category || item.productType || "";
+        const handle = buildRecommendedProductHandle(title, vendor, productType) || `imported-product-${item.sno || Date.now() + idx}`;
         
         let weight = "250gm";
         let customWeight = "";
@@ -293,8 +386,8 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
         return {
           title,
           handle,
-          vendor: item.brand || item.vendor || "",
-          productType: item.category || item.productType || "",
+          vendor,
+          productType,
           description: item.description || "",
           variants: [
             {
@@ -319,6 +412,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
       setActiveSubTab("products");
       if (mappedQueue.length > 0) {
         setVariants(mappedQueue[0].variants);
+        syncFormFromProduct(mappedQueue[0]);
       }
     } catch (err) {
       alert("Failed to parse JSON. Please ensure it is valid JSON format.");
@@ -351,8 +445,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
         const itemPackSize = item["packsize"] || item["pack size"] || item["weight"] || "250gm";
         const itemDesc = item["description"] || item["desc"] || "";
         
-        const rawHandle = itemTitle.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-        const handle = `${rawHandle}-${itemSno}`;
+        const handle = buildRecommendedProductHandle(itemTitle, itemBrand, itemCategory) || `imported-product-${itemSno}`;
 
         let weight = "250gm";
         let customWeight = "";
@@ -392,6 +485,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
       setActiveSubTab("products");
       if (mappedQueue.length > 0) {
         setVariants(mappedQueue[0].variants);
+        syncFormFromProduct(mappedQueue[0]);
       }
     } catch (err) {
       alert("Failed to parse Excel data. Make sure you copied rows with headers from Excel.");
@@ -403,6 +497,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
      if (nextIndex < importQueue.length) {
         setCurrentImportIndex(nextIndex);
         setVariants(importQueue[nextIndex].variants);
+        syncFormFromProduct(importQueue[nextIndex]);
      } else {
         alert("All imported products processed!");
         setImportQueue([]);
@@ -425,6 +520,15 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
       formData.append("variantsData", JSON.stringify(variants));
       if (showNutrition && nutrition.rows.length > 0) {
         formData.append("nutritionData", JSON.stringify(nutrition));
+      }
+      if (showFaq && faq.rows.some((r) => r.question?.trim())) {
+        formData.append(
+          "faqData",
+          JSON.stringify({
+            ...faq,
+            rows: faq.rows.filter((r) => r.question?.trim()),
+          })
+        );
       }
       if (editingProduct) {
         formData.append("existingImages", JSON.stringify(existingImages));
@@ -560,11 +664,50 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
           <label className="block text-sm font-medium text-neutral-700">Title</label>
-          <input name="title" defaultValue={editingProduct ? editingProduct.title : editingBrand ? editingBrand.title : (currentImportItem?.title || "")} required className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+          <input
+            name="title"
+            value={formTitle}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFormTitle(val);
+              applyRecommendedHandle({ title: val });
+            }}
+            required
+            className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-neutral-700">Handle (Slug)</label>
-          <input name="handle" defaultValue={editingProduct ? editingProduct.handle : editingBrand ? editingBrand.handle : (currentImportItem?.handle || "")} required className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="e.g. fresh-milk" />
+          <div className="flex items-center justify-between gap-2">
+            <label className="block text-sm font-medium text-neutral-700">Handle (Slug)</label>
+            {activeSubTab === "products" && handleManuallyEdited ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setHandleManuallyEdited(false);
+                  applyRecommendedHandle({ force: true });
+                }}
+                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900"
+              >
+                Use recommended
+              </button>
+            ) : null}
+          </div>
+          <input
+            name="handle"
+            value={formHandle}
+            onChange={(e) => {
+              setFormHandle(e.target.value);
+              setHandleManuallyEdited(true);
+            }}
+            required
+            className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+            placeholder={activeSubTab === "products" ? "title-brand-category" : "e.g. fresh-milk"}
+          />
+          {activeSubTab === "products" && !handleManuallyEdited ? (
+            <p className="mt-1 text-[10px] text-neutral-500">
+              Recommended from Title · Brand · Category
+            </p>
+          ) : null}
         </div>
         
         {activeSubTab === "products" && (
@@ -574,8 +717,13 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
               <div className="flex gap-2">
                 <select
                   name="vendor"
+                  value={formVendor}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormVendor(val);
+                    applyRecommendedHandle({ vendor: val });
+                  }}
                   className="flex-1 mt-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
-                  defaultValue={editingProduct ? (editingProduct.vendor || "") : (currentImportItem?.vendor || "")}
                 >
                   <option value="">-- Select brand --</option>
                   {brandListForDropdown.map((title, idx) => (
@@ -596,8 +744,13 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
               <div className="flex gap-2">
                 <select
                   name="productType"
+                  value={formCategory}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormCategory(val);
+                    applyRecommendedHandle({ category: val });
+                  }}
                   className="flex-1 mt-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
-                  defaultValue={editingProduct ? (editingProduct.productType || "") : (currentImportItem?.productType || "")}
                 >
                   <option value="">-- Select category --</option>
                   {categoryListForDropdown.map((title, idx) => (
@@ -748,7 +901,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
                       type="text"
                       value={nutrition.title}
                       onChange={e => setNutrition(n => ({ ...n, title: e.target.value }))}
-                      placeholder="Nutrition Facts"
+                      placeholder="NUTRITION"
                       className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
                     />
                   </div>
@@ -932,7 +1085,7 @@ ALTER TABLE products
 
 -- nutrition column stores:
 -- {
---   "title": "Nutrition Facts",
+--   "title": "NUTRITION",
 --   "servingSize": "100g",
 --   "columns": ["Nutrient", "Per Serving"],
 --   "rows": [
@@ -960,6 +1113,94 @@ ALTER TABLE products
               <summary className="text-[10px] text-neutral-500 cursor-pointer hover:text-neutral-700">Supabase: Run this once</summary>
               <pre className="mt-1 p-2 text-[10px] bg-neutral-100 rounded text-neutral-600 overflow-auto select-all">ALTER TABLE products ADD COLUMN IF NOT EXISTS ingredients text;</pre>
             </details> */}
+          </div>
+
+          {/* ── FAQ ── */}
+          <div className="pt-4 border-t border-neutral-100">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-neutral-900">FAQ</h4>
+              <button
+                type="button"
+                onClick={() => {
+                  const newShow = !showFaq;
+                  if (newShow && (!faq.rows || faq.rows.length === 0)) {
+                    setFaq((f) => ({
+                      ...f,
+                      rows: [{ question: "", answer: "" }],
+                    }));
+                  }
+                  setShowFaq(newShow);
+                }}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${showFaq ? "bg-neutral-200 text-neutral-700" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"}`}
+              >
+                {showFaq ? "Remove FAQ" : "+ Add FAQ"}
+              </button>
+            </div>
+
+            {showFaq && (
+              <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-1">Section Title</label>
+                  <input
+                    type="text"
+                    value={faq.title}
+                    onChange={(e) => setFaq((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="FAQ"
+                    className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Questions</label>
+                  <div className="space-y-3">
+                    {faq.rows.map((row, ri) => (
+                      <div key={ri} className="rounded-xl border border-neutral-200 bg-white p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <input
+                            type="text"
+                            value={row.question}
+                            onChange={(e) => {
+                              const rows = faq.rows.map((r, rIdx) =>
+                                rIdx === ri ? { ...r, question: e.target.value } : r
+                              );
+                              setFaq((f) => ({ ...f, rows }));
+                            }}
+                            placeholder="Question"
+                            className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFaq((f) => ({ ...f, rows: f.rows.filter((_, i) => i !== ri) }))}
+                            className="text-red-400 hover:text-red-600 text-xs px-2 py-2"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <textarea
+                          value={row.answer}
+                          onChange={(e) => {
+                            const rows = faq.rows.map((r, rIdx) =>
+                              rIdx === ri ? { ...r, answer: e.target.value } : r
+                            );
+                            setFaq((f) => ({ ...f, rows }));
+                          }}
+                          placeholder="Answer"
+                          rows={2}
+                          className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFaq((f) => ({ ...f, rows: [...f.rows, { question: "", answer: "" }] }))}
+                    className="mt-2 rounded-full bg-white border border-dashed border-neutral-300 px-4 py-1.5 text-xs font-medium text-neutral-600 hover:border-neutral-400"
+                  >
+                    + Add Question
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 pt-4 border-t border-neutral-100">
@@ -1157,7 +1398,16 @@ ALTER TABLE products
             </button>
           )}
           <button
-            onClick={() => { if (isAdding) { resetFormState(); } else { setIsAdding(true); setImportQueue([]); setIsPastingData(false); } }}
+            onClick={() => {
+              if (isAdding) {
+                resetFormState();
+              } else {
+                setImportQueue([]);
+                setIsPastingData(false);
+                initNewEntityForm();
+                setIsAdding(true);
+              }
+            }}
             className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition whitespace-nowrap"
           >
             {isAdding ? "Cancel" : `Add ${activeSubTab === "products" ? "Product" : activeSubTab === "categories" ? "Category" : "Brand"}`}

@@ -97,7 +97,10 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
       supabase.from('inventory_holds').select('variant_id, quantity').gt('expires_at', new Date().toISOString())
     ]);
 
-    if (productsRes.data && productsRes.data.length > 0) {
+    if (productsRes.error) {
+      console.warn("Supabase products fetch error, falling back to local catalog:", productsRes.error.message);
+      rawProducts = await getLocalCatalog();
+    } else if (Array.isArray(productsRes.data) && productsRes.data.length > 0) {
       rawProducts = productsRes.data;
     } else {
       rawProducts = await getLocalCatalog();
@@ -228,10 +231,17 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
         : (p.image_url ? [{ url: p.image_url, altText: title }] : (p.image?.url ? [p.image] : [])),
       variantId: firstVar?.id || handle + '-variant',
       description: p.descriptionHtml || p.description || "",
+      ingredients: p.ingredients || "",
       nutrition: p.nutrition || null,
+      faq: p.faq || null,
+      is_top_searched: !!(p.is_top_searched),
       raw: p
     };
   });
+
+  const markedTopSearched = products.filter((p) => p.is_top_searched);
+  const topSearchedProducts =
+    markedTopSearched.length > 0 ? markedTopSearched : products.slice(0, 4);
 
   // Extract filters
   let collections = [{ id: 'all', handle: 'all', title: 'All', image: null }];
@@ -314,6 +324,7 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
     productTypes,
     activeProductType: productTypeHandle,
     products,
+    topSearchedProducts,
     shop: { description: "Curated dairy, cheese, and pantry essentials." }
   };
 }

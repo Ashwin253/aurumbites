@@ -22,6 +22,7 @@ export default async function ShopPage({ searchParams }) {
     {
       isConfigured,
       products,
+      topSearchedProducts,
       shop,
       error,
       collections,
@@ -67,6 +68,7 @@ export default async function ShopPage({ searchParams }) {
             initialCatalog={{
               isConfigured,
               products,
+              topSearchedProducts,
               shop,
               error,
               collections,

@@ -25,6 +25,7 @@ export async function GET(request) {
       productTypes: data.productTypes,
       activeProductType: data.activeProductType,
       products: data.products,
+      topSearchedProducts: data.topSearchedProducts,
       shop: data.shop,
     });
   } catch (error) {

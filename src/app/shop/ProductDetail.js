@@ -51,6 +51,29 @@ export function ProductDetailUi({
 
 export function ImageCarousel({ images }) {
   const [active, setActive] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setLightboxOpen(false);
+      } else if (event.key === "ArrowLeft" && images.length > 1) {
+        setActive((i) => (i - 1 + images.length) % images.length);
+      } else if (event.key === "ArrowRight" && images.length > 1) {
+        setActive((i) => (i + 1) % images.length);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [lightboxOpen, images.length]);
 
   if (!images || images.length === 0) {
     return (
@@ -58,12 +81,14 @@ export function ImageCarousel({ images }) {
     );
   }
 
+  const activeImage = images[active];
+
   return (
     <div>
       <div className="relative h-[28rem] bg-neutral-100">
         <Image
-          src={images[active].url}
-          alt={images[active].altText}
+          src={activeImage.url}
+          alt={activeImage.altText}
           fill
           className="object-contain object-center"
         />
@@ -87,6 +112,16 @@ export function ImageCarousel({ images }) {
             </button>
           </>
         )}
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          className="absolute right-3 bottom-3 rounded-full bg-black/40 p-2.5 text-white backdrop-blur transition hover:bg-black/60"
+          aria-label="Enlarge image"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+        </button>
       </div>
       {images.length > 1 && (
         <div className="flex gap-2 overflow-x-auto p-3">
@@ -104,6 +139,68 @@ export function ImageCarousel({ images }) {
           ))}
         </div>
       )}
+
+      {lightboxOpen ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 sm:p-8"
+          onClick={() => setLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enlarged product image"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2.5 text-white backdrop-blur transition hover:bg-white/20"
+            aria-label="Close enlarged image"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {images.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setActive((i) => (i - 1 + images.length) % images.length);
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20"
+                aria-label="Previous image"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setActive((i) => (i + 1) % images.length);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20"
+                aria-label="Next image"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </>
+          ) : null}
+
+          <div
+            className="relative h-[80vh] w-full max-w-5xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Image
+              src={activeImage.url}
+              alt={activeImage.altText}
+              fill
+              className="object-contain"
+              sizes="100vw"
+              priority
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -115,7 +212,10 @@ export function VariantSelector({
   isEnquiryOnly,
   sellingPlanGroups = [],
 }) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [selectedIdx, setSelectedIdx] = useState(() => {
+    const firstAvailable = variants.findIndex((v) => v.availableForSale);
+    return firstAvailable >= 0 ? firstAvailable : 0;
+  });
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [purchaseType, setPurchaseType] = useState("one-time");
@@ -123,7 +223,6 @@ export function VariantSelector({
   const onCartChange = useCartChange();
   const selected = variants[selectedIdx];
   const hasMultiple = variants.length > 1;
-  const optionLabel = cleanVariantLabel(variants[0]?.selectedOptions?.[0]?.name);
   const subscriptionUrl = getSubscriptionUrl({
     handle,
     variantId: selected?.id,
@@ -171,32 +270,29 @@ export function VariantSelector({
 
   return (
     <div className="space-y-4">
-      {hasMultiple && (
+      {hasMultiple ? (
         <div>
-          <p className="text-sm font-medium text-neutral-700 mb-2">
-            {optionLabel}
-          </p>
-          <div className="flex flex-wrap gap-2">
+          <label htmlFor="variant-weight-select" className="mb-2 block text-sm font-medium text-neutral-700">
+            Weight
+          </label>
+          <select
+            id="variant-weight-select"
+            value={selectedIdx}
+            onChange={(e) => setSelectedIdx(Number(e.target.value))}
+            className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm font-medium text-neutral-900 focus:ring-2 focus:ring-neutral-900"
+          >
             {variants.map((v, i) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => setSelectedIdx(i)}
-                className={`rounded-full px-4 py-2 text-sm font-medium border transition ${
-                  i === selectedIdx
-                    ? "border-neutral-950 bg-neutral-950 text-white"
-                    : v.availableForSale
-                    ? "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-500"
-                    : "border-neutral-200 bg-neutral-100 text-neutral-400 line-through cursor-not-allowed"
-                }`}
-                disabled={!v.availableForSale}
-              >
-                {cleanVariantLabel(v.title, "Default")}
-              </button>
+              <option key={v.id} value={i} disabled={!v.availableForSale}>
+                {cleanVariantLabel(v.title || v.weight, "Default")}
+                {!v.availableForSale ? " (Out of stock)" : ""}
+              </option>
             ))}
-          </div>
+          </select>
+          <p className="mt-1.5 text-xs text-neutral-500">
+            {variants.length} variant{variants.length === 1 ? "" : "s"} available
+          </p>
         </div>
-      )}
+      ) : null}
 
       <div className="flex flex-wrap gap-4 text-sm">
         <div className="rounded-3xl border border-neutral-200 bg-white px-5 py-3">
@@ -221,35 +317,16 @@ export function VariantSelector({
             </p>
           ) : null}
         </div>
-        {selected.weight && (
+        {!hasMultiple && selected.weight ? (
           <div className="rounded-3xl border border-neutral-200 bg-white px-5 py-3">
             <span className="text-neutral-500">Weight </span>
             <span className="font-semibold text-neutral-950">{selected.weight}</span>
           </div>
-        )}
-        {!isCallForInventory && (
-          selected?.stock !== undefined && selected?.stock !== null && selected?.stock !== "" ? (
-            <div className={`rounded-3xl border px-5 py-3 font-semibold ${
-              isOutOfStock 
-                ? "border-red-200 bg-red-50/70 text-red-700" 
-                : isLowStock 
-                ? "border-amber-200 bg-amber-50/70 text-amber-700" 
-                : "border-emerald-200 bg-emerald-50/70 text-emerald-700"
-            }`}>
-              {isOutOfStock ? "Out of Stock" : isLowStock ? `Only ${selected.stock} left!` : `In Stock (${selected.stock} available)`}
-            </div>
-          ) : (
-            <div className="rounded-3xl border border-emerald-200 bg-emerald-50/70 px-5 py-3 font-semibold text-emerald-700">
-              {isOutOfStock ? "Out of Stock" : "In Stock"}
-            </div>
-          )
-        )}
+        ) : null}
       </div>
 
-
-
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <label className="flex items-center gap-3 rounded-full border border-neutral-300 px-4 py-3 text-sm text-neutral-700">
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-3 rounded-full border border-neutral-300 px-4 py-3 text-sm text-neutral-700 shrink-0">
           <span>Qty</span>
           <input
             type="number"
@@ -263,11 +340,30 @@ export function VariantSelector({
             className="w-16 bg-transparent outline-none"
           />
         </label>
-        <button
+        {!isCallForInventory ? (
+          selected?.stock !== undefined && selected?.stock !== null && selected?.stock !== "" ? (
+            <div className={`rounded-full border px-4 py-2.5 text-sm font-semibold shrink-0 ${
+              isOutOfStock
+                ? "border-red-200 bg-red-50/70 text-red-700"
+                : isLowStock
+                ? "border-amber-200 bg-amber-50/70 text-amber-700"
+                : "border-emerald-200 bg-emerald-50/70 text-emerald-700"
+            }`}>
+              {isOutOfStock ? "Out of Stock" : isLowStock ? `Only ${selected.stock} left!` : `In Stock (${selected.stock})`}
+            </div>
+          ) : (
+            <div className="rounded-full border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-sm font-semibold text-emerald-700 shrink-0">
+              {isOutOfStock ? "Out of Stock" : "In Stock"}
+            </div>
+          )
+        ) : null}
+      </div>
+
+      <button
           type="button"
           onClick={handleAdd}
           disabled={isOutOfStock || adding}
-          className="rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
@@ -284,7 +380,6 @@ export function VariantSelector({
               : "Add to cart"}
           </span>
         </button>
-      </div>
     </div>
   );
 }
@@ -388,21 +483,70 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
   );
 }
 
-export function ProductInfoTabs({ description, nutrition, ingredients }) {
+function FaqAccordion({ rows }) {
+  const [openIndex, setOpenIndex] = useState(null);
+
+  return (
+    <div className="divide-y divide-neutral-100 border border-neutral-100 rounded-2xl overflow-hidden">
+      {rows.map((row, i) => {
+        const isOpen = openIndex === i;
+        return (
+          <div key={i} className="bg-white">
+            <button
+              type="button"
+              onClick={() => setOpenIndex(isOpen ? null : i)}
+              className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left transition hover:bg-neutral-50"
+            >
+              <span className="text-sm font-medium text-neutral-900">{row.question}</span>
+              <svg
+                className={`h-4 w-4 shrink-0 text-neutral-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isOpen && row.answer?.trim() ? (
+              <div className="px-4 pb-4 text-sm text-neutral-600 leading-relaxed whitespace-pre-line">
+                {row.answer}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getNutritionTabLabel(title) {
+  const normalized = (title || "").trim();
+  if (!normalized || /^nutrition(\s+facts?)?$/i.test(normalized)) {
+    return "Nutrition";
+  }
+  return normalized;
+}
+
+export function ProductInfoTabs({ description, nutrition, ingredients, faq }) {
   const hasDescription = !!(description && description.replace(/<[^>]*>/g, "").trim());
   const hasNutrition = !!(nutrition?.rows?.length > 0);
+  const nutritionLabel = getNutritionTabLabel(nutrition?.title);
   const hasIngredients = !!(ingredients && ingredients.trim());
+  const faqRows = (faq?.rows || []).filter((row) => row.question?.trim());
+  const hasFaq = faqRows.length > 0;
 
   const [activeTab, setActiveTab] = useState(
-    hasDescription ? "description" : hasNutrition ? "nutrition" : "ingredients"
+    hasDescription ? "description" : hasNutrition ? "nutrition" : hasIngredients ? "ingredients" : "faq"
   );
 
-  if (!hasDescription && !hasNutrition && !hasIngredients) return null;
+  if (!hasDescription && !hasNutrition && !hasIngredients && !hasFaq) return null;
 
   const tabs = [];
   if (hasDescription) tabs.push({ id: "description", label: "Description" });
-  if (hasNutrition) tabs.push({ id: "nutrition", label: nutrition?.title || "Nutrition" });
+  if (hasNutrition) tabs.push({ id: "nutrition", label: nutritionLabel });
   if (hasIngredients) tabs.push({ id: "ingredients", label: "Ingredients" });
+  if (hasFaq) tabs.push({ id: "faq", label: faq?.title || "FAQ" });
 
   const showTabs = tabs.length > 1;
 
@@ -438,7 +582,7 @@ export function ProductInfoTabs({ description, nutrition, ingredients }) {
         <div>
           {!showTabs && (
             <p className="mb-4 text-xs font-bold uppercase tracking-widest text-neutral-500">
-              {nutrition?.title || "Nutrition"}
+              {nutritionLabel}
             </p>
           )}
           {nutrition?.servingSize && (
@@ -484,6 +628,17 @@ export function ProductInfoTabs({ description, nutrition, ingredients }) {
           <div className="text-sm text-neutral-700 whitespace-pre-line leading-relaxed">
             {ingredients}
           </div>
+        </div>
+      ) : null}
+
+      {(!showTabs && hasFaq) || (showTabs && activeTab === "faq") ? (
+        <div>
+          {!showTabs && (
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-neutral-500">
+              {faq?.title || "FAQ"}
+            </p>
+          )}
+          <FaqAccordion rows={faqRows} />
         </div>
       ) : null}
     </div>

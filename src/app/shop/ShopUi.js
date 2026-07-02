@@ -227,6 +227,13 @@ export function ShopCatalog({
     );
   });
 
+  const topSearchedProducts =
+    catalog?.topSearchedProducts?.length > 0
+      ? catalog.topSearchedProducts
+      : (catalog?.products || []).filter((p) => p.is_top_searched).length > 0
+        ? (catalog?.products || []).filter((p) => p.is_top_searched)
+        : (catalog?.products || []).slice(0, 4);
+
   useEffect(() => {
     const syncGridCols = () => {
       setGridCols(window.innerWidth < 1024 ? 1 : 4);
@@ -572,15 +579,11 @@ export function ShopCatalog({
                   </h3>
                 </div>
                 <ProductGrid
-                  products={
-                    (catalog?.products || []).filter(p => p.is_top_searched).length > 0
-                      ? (catalog?.products || []).filter(p => p.is_top_searched)
-                      : (catalog?.products || []).slice(0, 4)
-                  }
+                  products={topSearchedProducts}
                   redirectTo={redirectTo}
                   isEnquiryOnly={storefrontMode.isEnquiryOnly}
                   gridCols={gridCols}
-                  isPending={isPending}
+                  isPending={false}
                 />
               </div>
             </div>

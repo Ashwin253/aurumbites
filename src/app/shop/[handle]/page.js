@@ -151,10 +151,12 @@ export default async function ProductDetailPage({ params, searchParams }) {
                         {product.vendor}
                       </Link>
                     ) : null}
-                    <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-950">
-                      {product.title}
-                    </h1>
-                    <SocialShareButtons title={product.title} />
+                    <div className="mt-3 flex items-start justify-between gap-3 sm:gap-4">
+                      <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
+                        {product.title}
+                      </h1>
+                      <SocialShareButtons title={product.title} className="shrink-0" />
+                    </div>
                   </div>
 
                 <VariantSelector
@@ -169,6 +171,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
                     description={product.description}
                     nutrition={product.nutrition}
                     ingredients={product.ingredients}
+                    faq={product.faq}
                   />
 
                   {/* <div className="rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm">

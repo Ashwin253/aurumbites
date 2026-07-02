@@ -65,7 +65,7 @@ export function ImageCarousel({ images }) {
           src={images[active].url}
           alt={images[active].altText}
           fill
-          className="object-cover"
+          className="object-contain object-center"
         />
         {images.length > 1 && (
           <>
@@ -99,7 +99,7 @@ export function ImageCarousel({ images }) {
                 i === active ? "border-neutral-950" : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              <Image src={img.url} alt={img.altText} fill className="object-cover" />
+              <Image src={img.url} alt={img.altText} fill className="object-contain object-center" />
             </button>
           ))}
         </div>
@@ -323,7 +323,7 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
               src={product.image.url}
               alt={product.image.altText || product.title}
               fill
-              className="object-cover"
+              className="object-contain object-center"
               sizes="260px"
             />
           ) : (
@@ -388,35 +388,39 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
   );
 }
 
-export function ProductInfoTabs({ description, nutrition }) {
+export function ProductInfoTabs({ description, nutrition, ingredients }) {
   const hasDescription = !!(description && description.replace(/<[^>]*>/g, "").trim());
   const hasNutrition = !!(nutrition?.rows?.length > 0);
-  const [activeTab, setActiveTab] = useState(hasDescription ? "description" : "nutrition");
+  const hasIngredients = !!(ingredients && ingredients.trim());
 
-  if (!hasDescription && !hasNutrition) return null;
+  const [activeTab, setActiveTab] = useState(
+    hasDescription ? "description" : hasNutrition ? "nutrition" : "ingredients"
+  );
 
-  const showTabs = hasDescription && hasNutrition;
+  if (!hasDescription && !hasNutrition && !hasIngredients) return null;
+
+  const tabs = [];
+  if (hasDescription) tabs.push({ id: "description", label: "Description" });
+  if (hasNutrition) tabs.push({ id: "nutrition", label: nutrition?.title || "Nutrition" });
+  if (hasIngredients) tabs.push({ id: "ingredients", label: "Ingredients" });
+
+  const showTabs = tabs.length > 1;
 
   return (
     <div className="mt-6 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
       {showTabs && (
         <div className="flex gap-6 border-b border-neutral-100 mb-5">
-          <button
-            onClick={() => setActiveTab("description")}
-            className={`pb-3 text-sm font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
-              activeTab === "description" ? "border-neutral-950 text-neutral-950" : "border-transparent text-neutral-400 hover:text-neutral-600"
-            }`}
-          >
-            Description
-          </button>
-          <button
-            onClick={() => setActiveTab("nutrition")}
-            className={`pb-3 text-sm font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
-              activeTab === "nutrition" ? "border-neutral-950 text-neutral-950" : "border-transparent text-neutral-400 hover:text-neutral-600"
-            }`}
-          >
-            {nutrition?.title || "Nutrition"}
-          </button>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`pb-3 text-sm font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
+                activeTab === tab.id ? "border-neutral-950 text-neutral-950" : "border-transparent text-neutral-400 hover:text-neutral-600"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       )}
 
@@ -466,6 +470,19 @@ export function ProductInfoTabs({ description, nutrition }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      ) : null}
+
+      {(!showTabs && hasIngredients) || (showTabs && activeTab === "ingredients") ? (
+        <div>
+          {!showTabs && (
+            <p className="mb-4 text-xs font-bold uppercase tracking-widest text-neutral-500">
+              Ingredients
+            </p>
+          )}
+          <div className="text-sm text-neutral-700 whitespace-pre-line leading-relaxed">
+            {ingredients}
           </div>
         </div>
       ) : null}

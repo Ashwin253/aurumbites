@@ -86,6 +86,7 @@ export async function addProduct(formData) {
   const vendor = formData.get("vendor");
   const productType = formData.get("productType");
   const description = formData.get("description");
+  const ingredients = formData.get("ingredients") || "";
   const variantsData = formData.get("variantsData");
   const nutritionData = formData.get("nutritionData");
   const imageFiles = formData.getAll("imageFile");
@@ -117,6 +118,7 @@ export async function addProduct(formData) {
         return {
            id: `var-${Date.now()}-${i}`,
            title: v.weight === "Custom" ? v.customWeight : v.weight,
+           unit: v.unit || "g",
            price: { amount: parseFloat(v.sellingPrice || v.mrp) || 0, currencyCode: "INR" },
            compareAtPrice: (v.originalPrice || v.price) ? { amount: parseFloat(v.originalPrice || v.price), currencyCode: "INR" } : null,
            unitPrice: (v.sellingUnitPrice || v.unitPrice) ? { amount: parseFloat(v.sellingUnitPrice || v.unitPrice), currencyCode: "INR" } : null,
@@ -176,6 +178,7 @@ export async function addProduct(formData) {
       image_url: imageUrl,
       images,
       descriptionHtml: description ? `<p>${description}</p>` : "",
+      ingredients,
       availableForSale: productAvailableForSale,
       variants: parsedVariants,
       nutrition: parsedNutrition,
@@ -213,6 +216,7 @@ export async function updateProduct(id, formData) {
   const vendor = formData.get("vendor");
   const productType = formData.get("productType");
   const description = formData.get("description");
+  const ingredients = formData.get("ingredients") || "";
   const variantsData = formData.get("variantsData");
   const nutritionData = formData.get("nutritionData");
   const existingImagesData = formData.get("existingImages");
@@ -249,6 +253,7 @@ export async function updateProduct(id, formData) {
         return {
            id: v.id || `var-${Date.now()}-${i}`,
            title: v.weight === "Custom" ? v.customWeight : v.weight,
+           unit: v.unit || "g",
            price: { amount: parseFloat(v.sellingPrice || v.mrp) || 0, currencyCode: "INR" },
            compareAtPrice: (v.originalPrice || v.price) ? { amount: parseFloat(v.originalPrice || v.price), currencyCode: "INR" } : null,
            unitPrice: (v.sellingUnitPrice || v.unitPrice) ? { amount: parseFloat(v.sellingUnitPrice || v.unitPrice), currencyCode: "INR" } : null,
@@ -307,6 +312,7 @@ export async function updateProduct(id, formData) {
     image_url: imageUrl,
     images,
     descriptionHtml: description ? `<p>${description}</p>` : "",
+    ingredients,
     variants: parsedVariants,
     availableForSale: productAvailableForSale,
     nutrition: parsedNutrition,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { addProduct, deleteProduct, addCategory, deleteCategory, addBrand, deleteBrand, updateProduct, updateBrand } from "./actions";
 
 export default function InventoryTab({ initialProducts, initialCategories, initialBrands }) {
@@ -10,11 +10,69 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
   const [categories, setCategories] = useState(initialCategories || []);
   const [brands, setBrands] = useState(initialBrands || []);
   const [brandFilter, setBrandFilter] = useState("");
+
+  const brandListForDropdown = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+
+    // Prioritize brands managed in the Brands tab
+    brands.forEach((b) => {
+      if (b.title) {
+        const key = b.title.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(b.title);
+        }
+      }
+    });
+
+    // Also include any additional brands mentioned in products
+    products.forEach((p) => {
+      if (p.vendor) {
+        const key = p.vendor.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(p.vendor);
+        }
+      }
+    });
+
+    return list.sort((a, b) => a.localeCompare(b));
+  }, [brands, products]);
+
+  const categoryListForDropdown = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+
+    // Prioritize categories managed in the Categories tab
+    categories.forEach((c) => {
+      if (c.title) {
+        const key = c.title.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(c.title);
+        }
+      }
+    });
+
+    // Also include any additional categories mentioned in products
+    products.forEach((p) => {
+      if (p.productType) {
+        const key = p.productType.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          list.push(p.productType);
+        }
+      }
+    });
+
+    return list.sort((a, b) => a.localeCompare(b));
+  }, [categories, products]);
   
   const [isAdding, setIsAdding] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [variants, setVariants] = useState([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", stock: "", callForInventory: false }]);
+  const [variants, setVariants] = useState([{ weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", stock: "", callForInventory: false }]);
   const [selectedImages, setSelectedImages] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingBrand, setEditingBrand] = useState(null);
@@ -23,6 +81,36 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
   // Nutrition table state
   const UNIT_OPTIONS = ["", "g", "mg", "kg", "ml", "l", "kcal","mcg", "%", "IU"];
   const STANDARD_NUTRIENTS = ["Energy", "Total Fat", "Sodium", "Protein", "Carbohydrate"];
+
+  const getPackUnit = (title) => {
+    if (!title) return "g";
+    const t = String(title).toLowerCase().replace(/\s/g, "");
+    if (t.includes("kg")) return "kg";
+    if (t.includes("gm") || t.includes("g")) return "g";
+    if (t.includes("ml")) return "ml";
+    if (t.includes("l") && !t.includes("ml")) return "l";
+    return "g";
+  };
+
+  const getUnitDisplay = (u) => {
+    if (!u) return "gm";
+    if (u === "g") return "gm";
+    if (u === "kg") return "kg";
+    if (u === "l") return "L";
+    if (u === "ml") return "ml";
+    return u;
+  };
+
+  const getPricingUnit = (u) => {
+    if (!u) return "kg";
+    const lower = u.toLowerCase();
+    if (lower === "g" || lower === "gm") return "kg";
+    if (lower === "ml") return "L";
+    if (lower === "kg") return "kg";
+    if (lower === "l") return "L";
+    return "kg";
+  };
+
   const defaultNutrition = () => ({
     title: "Nutrition Facts",
     servingSize: "",
@@ -38,7 +126,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
     setEditingBrand(null);
     setExistingImages([]);
     setSelectedImages([]);
-    setVariants([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
+    setVariants([{ weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
     setNutrition(defaultNutrition());
     setShowNutrition(false);
     setImportQueue([]);
@@ -46,11 +134,23 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
     setBrandFilter("");
   };
 
+  const openAddBrand = () => {
+    resetFormState();
+    setActiveSubTab("brands");
+    setIsAdding(true);
+  };
+
+  const openAddCategory = () => {
+    resetFormState();
+    setActiveSubTab("categories");
+    setIsAdding(true);
+  };
+
   const handleEditClick = (p) => {
     setEditingProduct(p);
     
     // Map variants back
-    let loadedVariants = [{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }];
+    let loadedVariants = [{ weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }];
     
     try {
       let rawVariants = p.variants;
@@ -70,6 +170,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
             id: v.id,
             weight: isStandard ? title.toLowerCase().replace(" ", "") : "Custom",
             customWeight: isStandard ? "" : title,
+            unit: v.unit || (isStandard ? getPackUnit(title) : "g"),
             sellingPrice: v.price?.amount ?? v.price ?? "",
             originalPrice: v.compareAtPrice?.amount ?? v.compareAtPrice ?? "",
             sellingUnitPrice: v.unitPrice?.amount ?? v.unitPrice ?? "",
@@ -199,6 +300,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
             {
               weight,
               customWeight,
+              unit: weight === "Custom" ? "g" : getPackUnit(weight),
               sellingPrice: sellingPriceVal,
               originalPrice: originalPriceVal,
               sellingUnitPrice: sellingUnitPriceVal,
@@ -271,6 +373,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
             {
               weight,
               customWeight,
+              unit: weight === "Custom" ? "g" : getPackUnit(weight),
               sellingPrice: itemMrp,
               originalPrice: itemPrice,
               sellingUnitPrice: "",
@@ -364,6 +467,23 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
              variants: JSON.parse(formData.get("variantsData") || "[]")
            };
            setProducts(prev => [newProduct, ...prev]);
+
+           // Also add the vendor to local brands list so the dropdown immediately reflects it
+           const vendorName = formData.get("vendor")?.trim();
+           if (vendorName) {
+             const lower = vendorName.toLowerCase();
+             const alreadyExists = brands.some((b) => (b.title || "").toLowerCase() === lower);
+             if (!alreadyExists) {
+               setBrands((prev) => [
+                 {
+                   id: Date.now(),
+                   title: vendorName,
+                   handle: vendorName.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]+/g, ""),
+                 },
+                 ...prev,
+               ]);
+             }
+           }
          } else if (activeSubTab === "categories") {
            setCategories(prev => [{ id: Date.now(), title: formData.get("title"), handle: formData.get("handle") }, ...prev]);
          } else if (activeSubTab === "brands") {
@@ -386,7 +506,7 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
          } else {
            alert("Added successfully!");
            setIsAdding(false);
-            setVariants([{ weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
+            setVariants([{ weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }]);
            setSelectedImages([]);
          }
        }
@@ -451,17 +571,47 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
           <>
             <div>
               <label className="block text-sm font-medium text-neutral-700">Brand / Vendor</label>
-              <input list="brand-options" name="vendor" defaultValue={editingProduct ? editingProduct.vendor : (currentImportItem?.vendor || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type brand" />
-              <datalist id="brand-options">
-                {brands.map((b) => <option key={b.id} value={b.title} />)}
-              </datalist>
+              <div className="flex gap-2">
+                <select
+                  name="vendor"
+                  className="flex-1 mt-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                  defaultValue={editingProduct ? (editingProduct.vendor || "") : (currentImportItem?.vendor || "")}
+                >
+                  <option value="">-- Select brand --</option>
+                  {brandListForDropdown.map((title, idx) => (
+                    <option key={idx} value={title}>{title}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={openAddBrand}
+                  className="mt-1 px-3 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-xl whitespace-nowrap transition"
+                >
+                  + Add new brand
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700">Category / Type</label>
-              <input list="category-options" name="productType" defaultValue={editingProduct ? editingProduct.productType : (currentImportItem?.productType || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type category" />
-              <datalist id="category-options">
-                {categories.map((c) => <option key={c.id} value={c.title} />)}
-              </datalist>
+              <div className="flex gap-2">
+                <select
+                  name="productType"
+                  className="flex-1 mt-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                  defaultValue={editingProduct ? (editingProduct.productType || "") : (currentImportItem?.productType || "")}
+                >
+                  <option value="">-- Select category --</option>
+                  {categoryListForDropdown.map((title, idx) => (
+                    <option key={idx} value={title}>{title}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={openAddCategory}
+                  className="mt-1 px-3 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-xl whitespace-nowrap transition"
+                >
+                  + Add new category
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -795,10 +945,27 @@ ALTER TABLE products
             )}
           </div>
 
+          {/* ── Ingredients ── */}
+          <div className="pt-4 border-t border-neutral-100">
+            <h4 className="font-medium text-neutral-900 mb-2">Ingredients</h4>
+            <textarea
+              name="ingredients"
+              defaultValue={editingProduct ? (editingProduct.ingredients || "") : (currentImportItem?.ingredients || "")}
+              rows={3}
+              placeholder="Milk, Sugar, Cocoa Mass, Cocoa Butter, Emulsifier (Soy Lecithin), Natural Vanilla Flavour"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+            />
+            <p className="text-[10px] text-neutral-500 mt-1">Comma separated list of ingredients used in the product.</p>
+            {/* <details className="mt-2">
+              <summary className="text-[10px] text-neutral-500 cursor-pointer hover:text-neutral-700">Supabase: Run this once</summary>
+              <pre className="mt-1 p-2 text-[10px] bg-neutral-100 rounded text-neutral-600 overflow-auto select-all">ALTER TABLE products ADD COLUMN IF NOT EXISTS ingredients text;</pre>
+            </details> */}
+          </div>
+
           <div className="space-y-3 pt-4 border-t border-neutral-100">
             <div className="flex items-center justify-between">
                <h4 className="font-medium text-neutral-900">Variants & Pricing</h4>
-                <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
+                <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
             </div>
             {variants.map((v, i) => (
               <div key={i} className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
@@ -806,7 +973,18 @@ ALTER TABLE products
                     <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">Pack Size</label>
                     <select 
                        value={v.weight}
-                       onChange={(e) => { const newV = [...variants]; newV[i].weight = e.target.value; setVariants(newV); }}
+                       onChange={(e) => { 
+                         const newV = [...variants]; 
+                         const val = e.target.value; 
+                         newV[i].weight = val; 
+                         if (val === "Custom") {
+                           newV[i].unit = newV[i].unit || "g";
+                         } else {
+                           newV[i].unit = getPackUnit(val);
+                           newV[i].customWeight = "";
+                         }
+                         setVariants(newV); 
+                       }}
                        className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
                     >
                        <option value="250gm">250gm</option>
@@ -817,7 +995,19 @@ ALTER TABLE products
                        <option value="Custom">Custom</option>
                     </select>
                     {v.weight === "Custom" && (
-                       <input placeholder="e.g. 1 Dozen" value={v.customWeight || ""} onChange={(e) => { const newV = [...variants]; newV[i].customWeight = e.target.value; setVariants(newV); }} className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                      <>
+                        <input placeholder="e.g. 1 Dozen or 500" value={v.customWeight || ""} onChange={(e) => { const newV = [...variants]; newV[i].customWeight = e.target.value; setVariants(newV); }} className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                        <select 
+                          value={v.unit || "g"} 
+                          onChange={(e) => { const newV = [...variants]; newV[i].unit = e.target.value; setVariants(newV); }} 
+                          className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                        >
+                          <option value="g">g / gm</option>
+                          <option value="kg">kg</option>
+                          <option value="ml">ml</option>
+                          <option value="l">L</option>
+                        </select>
+                      </>
                     )}
                  </div>
                  
@@ -867,7 +1057,7 @@ ALTER TABLE products
                                <input type="number" placeholder="â‚¹" value={v.sellingPrice} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" required={!v.askPrice} />
                             </div>
                             <div className="flex-1">
-                               <label className="block text-[10px] text-emerald-600 mb-1">Rs / Kg</label>
+                               <label className="block text-[10px] text-emerald-600 mb-1">Rs / {getPricingUnit(v.unit)}</label>
                                <input type="number" placeholder="â‚¹" value={v.sellingUnitPrice || ""} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" />
                             </div>
                          </div>
@@ -899,7 +1089,7 @@ ALTER TABLE products
                                <input type="number" placeholder="â‚¹" value={v.originalPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].originalPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-neutral-50" />
                             </div>
                             <div className="flex-1">
-                               <label className="block text-[10px] text-neutral-500 mb-1">Rs / Kg</label>
+                               <label className="block text-[10px] text-neutral-500 mb-1">Rs / {getPricingUnit(v.unit)}</label>
                                <input type="number" placeholder="â‚¹" value={v.originalUnitPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].originalUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-neutral-50" />
                             </div>
                          </div>
@@ -975,7 +1165,7 @@ ALTER TABLE products
         </div>
       </div>
 
-      {activeSubTab === "products" && brands.length > 0 && (
+      {activeSubTab === "products" && brandListForDropdown.length > 0 && (
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium text-neutral-600">Filter by Brand:</span>
           <select
@@ -984,8 +1174,8 @@ ALTER TABLE products
             className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-600"
           >
             <option value="">All Brands</option>
-            {brands.map((b) => (
-              <option key={b.id} value={b.title}>{b.title}</option>
+            {brandListForDropdown.map((title, idx) => (
+              <option key={idx} value={title}>{title}</option>
             ))}
           </select>
           {brandFilter && (
@@ -1064,17 +1254,47 @@ ALTER TABLE products
               <>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700">Brand / Vendor</label>
-                  <input list="brand-options" name="vendor" defaultValue={editingProduct ? editingProduct.vendor : (currentImportItem?.vendor || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type brand" />
-                  <datalist id="brand-options">
-                    {brands.map((b) => <option key={b.id} value={b.title} />)}
-                  </datalist>
+                  <div className="flex gap-2">
+                    <select
+                      name="vendor"
+                      className="flex-1 mt-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                      defaultValue={editingProduct ? (editingProduct.vendor || "") : (currentImportItem?.vendor || "")}
+                    >
+                      <option value="">-- Select brand --</option>
+                      {brandListForDropdown.map((title, idx) => (
+                        <option key={idx} value={title}>{title}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={openAddBrand}
+                      className="mt-1 px-3 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-xl whitespace-nowrap transition"
+                    >
+                      + Add new brand
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700">Category / Type</label>
-                  <input list="category-options" name="productType" defaultValue={editingProduct ? editingProduct.productType : (currentImportItem?.productType || "")} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" placeholder="Select or type category" />
-                  <datalist id="category-options">
-                    {categories.map((c) => <option key={c.id} value={c.title} />)}
-                  </datalist>
+                  <div className="flex gap-2">
+                    <select
+                      name="productType"
+                      className="flex-1 mt-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                      defaultValue={editingProduct ? (editingProduct.productType || "") : (currentImportItem?.productType || "")}
+                    >
+                      <option value="">-- Select category --</option>
+                      {categoryListForDropdown.map((title, idx) => (
+                        <option key={idx} value={title}>{title}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={openAddCategory}
+                      className="mt-1 px-3 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-xl whitespace-nowrap transition"
+                    >
+                      + Add new category
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -1172,10 +1392,23 @@ ALTER TABLE products
                 <textarea name="description" defaultValue={editingProduct ? (editingProduct.descriptionHtml?.replace(/^<p>|<\/p>$/g, '') || "") : (currentImportItem?.description || "")} rows={3} className="mt-1 w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
               </div>
 
+              {/* ── Ingredients ── */}
+              <div className="pt-4 border-t border-neutral-100">
+                <h4 className="font-medium text-neutral-900 mb-2">Ingredients</h4>
+                <textarea
+                  name="ingredients"
+                  defaultValue={editingProduct ? (editingProduct.ingredients || "") : (currentImportItem?.ingredients || "")}
+                  rows={3}
+                  placeholder="Milk, Sugar, Cocoa Mass, Cocoa Butter, Emulsifier (Soy Lecithin), Natural Vanilla Flavour"
+                  className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                />
+                <p className="text-[10px] text-neutral-500 mt-1">Comma separated list of ingredients used in the product.</p>
+              </div>
+
               <div className="space-y-3 pt-4 border-t border-neutral-100">
                 <div className="flex items-center justify-between">
                    <h4 className="font-medium text-neutral-900">Variants & Pricing</h4>
-                    <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
+                    <button type="button" onClick={() => setVariants([...variants, { weight: "250gm", customWeight: "", unit: "g", sellingPrice: "", originalPrice: "", sellingUnitPrice: "", originalUnitPrice: "", askPrice: false, stock: "", callForInventory: false }])} className="text-sm font-medium text-emerald-600 hover:text-emerald-700">+ Add Variant</button>
                 </div>
                 {variants.map((v, i) => (
                   <div key={i} className="flex flex-col sm:flex-row items-start gap-4 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
@@ -1183,7 +1416,18 @@ ALTER TABLE products
                         <label className="block text-[11px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">Pack Size</label>
                         <select 
                            value={v.weight}
-                           onChange={(e) => { const newV = [...variants]; newV[i].weight = e.target.value; setVariants(newV); }}
+                           onChange={(e) => { 
+                             const newV = [...variants]; 
+                             const val = e.target.value; 
+                             newV[i].weight = val; 
+                             if (val === "Custom") {
+                               newV[i].unit = newV[i].unit || "g";
+                             } else {
+                               newV[i].unit = getPackUnit(val);
+                               newV[i].customWeight = "";
+                             }
+                             setVariants(newV); 
+                           }}
                            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
                         >
                            <option value="250gm">250gm</option>
@@ -1194,7 +1438,19 @@ ALTER TABLE products
                            <option value="Custom">Custom</option>
                         </select>
                         {v.weight === "Custom" && (
-                           <input placeholder="e.g. 1 Dozen" value={v.customWeight || ""} onChange={(e) => { const newV = [...variants]; newV[i].customWeight = e.target.value; setVariants(newV); }} className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                          <>
+                            <input placeholder="e.g. 1 Dozen or 500" value={v.customWeight || ""} onChange={(e) => { const newV = [...variants]; newV[i].customWeight = e.target.value; setVariants(newV); }} className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900" />
+                            <select 
+                              value={v.unit || "g"} 
+                              onChange={(e) => { const newV = [...variants]; newV[i].unit = e.target.value; setVariants(newV); }} 
+                              className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900"
+                            >
+                              <option value="g">g / gm</option>
+                              <option value="kg">kg</option>
+                              <option value="ml">ml</option>
+                              <option value="l">L</option>
+                            </select>
+                          </>
                         )}
                      </div>
                      
@@ -1244,7 +1500,7 @@ ALTER TABLE products
                                    <input type="number" placeholder="₹" value={v.sellingPrice} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" required={!v.askPrice} />
                                 </div>
                                 <div className="flex-1">
-                                   <label className="block text-[10px] text-emerald-600 mb-1">Rs / Kg</label>
+                                   <label className="block text-[10px] text-emerald-600 mb-1">Rs / {getPricingUnit(v.unit)}</label>
                                    <input type="number" placeholder="₹" value={v.sellingUnitPrice || ""} disabled={v.askPrice} onChange={(e) => { const newV = [...variants]; newV[i].sellingUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-emerald-200 px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-neutral-100 disabled:text-neutral-400" />
                                 </div>
                              </div>
@@ -1276,7 +1532,7 @@ ALTER TABLE products
                                    <input type="number" placeholder="₹" value={v.originalPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].originalPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-neutral-50" />
                                 </div>
                                 <div className="flex-1">
-                                   <label className="block text-[10px] text-neutral-500 mb-1">Rs / Kg</label>
+                                   <label className="block text-[10px] text-neutral-500 mb-1">Rs / {getPricingUnit(v.unit)}</label>
                                    <input type="number" placeholder="₹" value={v.originalUnitPrice || ""} onChange={(e) => { const newV = [...variants]; newV[i].originalUnitPrice = e.target.value; setVariants(newV); }} className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:ring-2 focus:ring-neutral-900 bg-neutral-50" />
                                 </div>
                              </div>

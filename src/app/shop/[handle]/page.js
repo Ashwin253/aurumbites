@@ -168,6 +168,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
                   <ProductInfoTabs
                     description={product.description}
                     nutrition={product.nutrition}
+                    ingredients={product.ingredients}
                   />
 
                   {/* <div className="rounded-[2rem] border border-neutral-200 bg-white p-6 shadow-sm">

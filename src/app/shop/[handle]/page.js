@@ -106,7 +106,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
 
       <main className="bg-neutral-50">
         <section className="border-b border-neutral-200 bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-16">
+          <div className="mx-auto max-w-7xl overflow-x-hidden px-4 py-12 sm:px-6 sm:py-16">
             <div className="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
               <Link href="/shop" className="hover:text-neutral-900">
                 Shop
@@ -138,7 +138,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
                   <ImageCarousel images={images} />
                 </div>
 
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                   <div>
                     {/* <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
                       Product detail

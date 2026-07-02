@@ -551,14 +551,14 @@ export function ProductInfoTabs({ description, nutrition, ingredients, faq }) {
   const showTabs = tabs.length > 1;
 
   return (
-    <div className="mt-6 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+    <div className="mt-6 min-w-0 overflow-hidden rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
       {showTabs && (
-        <div className="flex gap-6 border-b border-neutral-100 mb-5">
+        <div className="mb-5 grid grid-cols-2 gap-x-2 gap-y-1 border-b border-neutral-100 sm:flex sm:flex-wrap sm:gap-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 text-sm font-bold uppercase tracking-widest transition-all border-b-2 -mb-px ${
+              className={`pb-3 text-[11px] font-bold uppercase tracking-wide transition-all border-b-2 -mb-px sm:text-sm sm:tracking-widest ${
                 activeTab === tab.id ? "border-neutral-950 text-neutral-950" : "border-transparent text-neutral-400 hover:text-neutral-600"
               }`}
             >

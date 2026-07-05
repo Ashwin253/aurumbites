@@ -3,8 +3,9 @@
 import { cookies } from "next/headers";
 import { supabase } from "../../lib/supabase";
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
 
-async function getAuthUser() {
+export async function getAuthUser() {
   const cookieStore = await cookies();
   const token = cookieStore.get("sb-access-token")?.value;
   if (!token) return null;
@@ -499,3 +500,103 @@ export async function toggleTopProduct(productId, isTop) {
   revalidatePath("/data");
   return { success: true };
 }
+
+export async function registerTeammateDirect(formData) {
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const name = formData.get("name") || "";
+
+  if (!email || !password) {
+    return { error: "Email and password are required" };
+  }
+
+  // Register user in Supabase Auth (store name in metadata)
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name
+      }
+    }
+  });
+
+  if (signUpError) {
+    return { error: signUpError.message };
+  }
+
+  if (!signUpData?.user) {
+    return { error: "Failed to create user in Auth system" };
+  }
+
+  return { success: true, session: signUpData.session };
+}
+
+export async function getOffers() {
+  try {
+    const { data, error } = await supabase
+      .from("offers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Table public.offers might not exist yet:", error.message);
+      return [];
+    }
+    return data || [];
+  } catch (e) {
+    console.error("Failed to fetch offers", e);
+    return [];
+  }
+}
+
+export async function addOffer(formData) {
+  const description = formData.get("description");
+  const code = formData.get("code") || null;
+  const type = formData.get("type"); // 'product', 'brand', 'category', 'volume'
+  const target_id = formData.get("target_id");
+  const discount_type = formData.get("discount_type"); // 'percent', 'amount', 'volume_price'
+  const discount_value = parseFloat(formData.get("discount_value")) || 0;
+  const min_qty = parseInt(formData.get("min_qty")) || null;
+
+  if (!description || !type || !target_id || !discount_type) {
+    return { error: "Missing required fields for offer" };
+  }
+
+  const { data, error } = await supabase
+    .from("offers")
+    .insert([{
+      description,
+      code,
+      type,
+      target_id,
+      discount_type,
+      discount_value,
+      min_qty
+    }])
+    .select();
+
+  if (error) {
+    console.error("Failed to add offer:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath("/data");
+  return { success: true, offer: data?.[0] };
+}
+
+export async function deleteOffer(id) {
+  const { error } = await supabase
+    .from("offers")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Failed to delete offer:", error);
+    return { error: error.message };
+  }
+
+  revalidatePath("/data");
+  return { success: true };
+}
+

@@ -4,6 +4,7 @@ import Navbar from "../../component/Navbar";
 import { CartNotice } from "../ShopServerUi";
 import { getProductByHandle, getShopPageData } from "../../../lib/catalog";
 import { getCartState } from "../actions";
+import { getOffers } from "../../data/actions";
 import { getStorefrontMode } from "../../../lib/storefront";
 import SocialShareButtons from "../../component/SocialShareButtons";
 import { cookies } from "next/headers";
@@ -59,9 +60,10 @@ export default async function ProductDetailPage({ params, searchParams }) {
   const query = await searchParams;
   const cartStatus = query?.cart || "";
 
-  const [{ product }, { cart }] = await Promise.all([
+  const [{ product }, { cart }, offers] = await Promise.all([
     getProductByHandle(handle),
-    getCartState()
+    getCartState(),
+    getOffers(),
   ]);
 
   if (!product) {
@@ -165,6 +167,9 @@ export default async function ProductDetailPage({ params, searchParams }) {
                   redirectTo={`/shop/${product.handle}`}
                   isEnquiryOnly={storefrontMode.isEnquiryOnly}
                   sellingPlanGroups={product.sellingPlanGroups || []}
+                  offers={offers}
+                  brandName={product.vendor}
+                  categoryName={product.productType}
                 />
 
                   <ProductInfoTabs

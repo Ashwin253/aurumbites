@@ -211,6 +211,9 @@ export function VariantSelector({
   redirectTo,
   isEnquiryOnly,
   sellingPlanGroups = [],
+  offers = [],
+  brandName,
+  categoryName,
 }) {
   const [selectedIdx, setSelectedIdx] = useState(() => {
     const firstAvailable = variants.findIndex((v) => v.availableForSale);
@@ -268,6 +271,15 @@ export function VariantSelector({
     }
   };
 
+  // Calculate discounts based on active offers
+  const applicableOffers = offers.filter((o) => {
+    if (o.type === "product" && o.target_id === handle) return true;
+    if (o.type === "brand" && brandName && o.target_id?.toLowerCase() === brandName.toLowerCase()) return true;
+    if (o.type === "category" && categoryName && o.target_id?.toLowerCase() === categoryName.toLowerCase()) return true;
+    if (o.type === "volume" && o.target_id === handle) return true;
+    return false;
+  });
+
   return (
     <div className="space-y-4">
       {hasMultiple ? (
@@ -303,7 +315,11 @@ export function VariantSelector({
               {selected.compareAtAmount && selected.compareAtAmount > selected.amount ? (
                 <span className="text-neutral-400 line-through text-sm">₹{selected.compareAtAmount}</span>
               ) : null}
-              <span className="font-semibold text-neutral-950 text-lg">₹{selected.amount}</span>
+              
+              <span className="font-semibold text-neutral-950 text-lg">
+                ₹{selected.amount}
+              </span>
+
               {selected.compareAtAmount && selected.compareAtAmount > selected.amount ? (
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
                   {Math.round(((selected.compareAtAmount - selected.amount) / selected.compareAtAmount) * 100)}% OFF
@@ -311,6 +327,7 @@ export function VariantSelector({
               ) : null}
             </div>
           )}
+          
           {!selected.askPrice && selected.compareAtAmount && selected.compareAtAmount > selected.amount ? (
             <p className="mt-0.5 text-xs text-emerald-600 font-medium">
               You save ₹{(selected.compareAtAmount - selected.amount).toFixed(0)}
@@ -360,26 +377,68 @@ export function VariantSelector({
       </div>
 
       <button
-          type="button"
-          onClick={handleAdd}
-          disabled={isOutOfStock || adding}
-          className="w-full rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
-          </svg>
-          <span>
-            {adding
-              ? "Adding…"
-              : isOutOfStock
-              ? "Out of Stock"
-              : isCallForInventory
-              ? "Enquire Availability"
-              : "Add to cart"}
-          </span>
-        </button>
+        type="button"
+        onClick={handleAdd}
+        disabled={isOutOfStock || adding}
+        className="w-full rounded-full bg-neutral-950 px-8 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+        </svg>
+        <span>
+          {adding
+            ? "Adding…"
+            : isOutOfStock
+            ? "Out of Stock"
+            : isCallForInventory
+            ? "Enquire Availability"
+            : "Add to cart"}
+        </span>
+      </button>
+
+      {applicableOffers.length > 0 && (
+        <div className="rounded-3xl border border-amber-200 bg-amber-50/20 p-5 mt-4">
+          <h4 className="text-xs font-bold text-amber-800 flex items-center gap-1.5 uppercase tracking-wider mb-3">
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Available Offers
+          </h4>
+          <div className="space-y-3 divide-y divide-amber-100/50">
+            {applicableOffers.map((o, idx) => {
+              let discountDetail = "";
+              if (selected) {
+                if (o.type === 'volume') {
+                  const unitSavings = Math.round(selected.amount - o.discount_value);
+                  discountDetail = `Get units at ₹${o.discount_value} each (Save ₹${unitSavings}/unit) when you buy ${o.min_qty} or more`;
+                } else if (o.discount_type === 'percent') {
+                  const priceAfterDiscount = Math.round(selected.amount * (1 - o.discount_value / 100));
+                  discountDetail = `Save ${o.discount_value}% (Pay ₹${priceAfterDiscount} at checkout)`;
+                } else if (o.discount_type === 'amount') {
+                  const priceAfterDiscount = Math.max(0, Math.round(selected.amount - o.discount_value));
+                  discountDetail = `Save ₹${o.discount_value} (Pay ₹${priceAfterDiscount} at checkout)`;
+                }
+              }
+
+              return (
+                <div key={o.id} className={`flex items-start justify-between gap-3 text-xs ${idx > 0 ? "pt-2.5" : ""}`}>
+                  <div>
+                    <p className="font-semibold text-neutral-900">{o.description}</p>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">{discountDetail}</p>
+                  </div>
+                  {o.code && (
+                    <span className="shrink-0 rounded bg-amber-100 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-800 uppercase">
+                      {o.code}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

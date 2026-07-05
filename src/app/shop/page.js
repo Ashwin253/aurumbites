@@ -3,6 +3,7 @@ import { CartNotice } from "./ShopServerUi";
 import { ShopCatalog } from "./ShopUi";
 import { getShopPageData } from "../../lib/catalog";
 import { getStorefrontMode } from "../../lib/storefront";
+import { getOffers } from "../data/actions";
 
 export const metadata = {
   title: "Shop | Aurum Bites",
@@ -32,8 +33,10 @@ export default async function ShopPage({ searchParams }) {
       productTypes,
       activeProductType,
     },
+    offers,
   ] = await Promise.all([
     getShopPageData({ first: 9, collectionHandle, brandHandle, productTypeHandle }),
+    getOffers(),
   ]);
 
   const redirectParams = new URLSearchParams();
@@ -77,6 +80,7 @@ export default async function ShopPage({ searchParams }) {
               activeBrand,
               productTypes,
               activeProductType,
+              offers,
             }}
             initialRedirectTo={redirectTo}
             storefrontMode={storefrontMode}

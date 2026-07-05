@@ -540,6 +540,64 @@ export function ShopCatalog({
           </div>
         </div>
 
+        {catalog.offers && catalog.offers.length > 0 && (
+          <div className="mt-6 mb-2">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-xs font-bold uppercase tracking-[0.25em] text-neutral-500 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                Special Shop Offers
+              </h3>
+              <span className="text-[10px] text-neutral-400 font-medium">Scroll to view all →</span>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x scrollbar-none">
+              {catalog.offers.map((offer) => (
+                <div 
+                  key={offer.id} 
+                  className="snap-start shrink-0 w-72 bg-gradient-to-br from-amber-50/40 to-white border border-amber-200/80 rounded-3xl p-5 shadow-sm hover:shadow-md transition duration-250 flex flex-col justify-between"
+                >
+                  <div className="flex gap-3">
+                    <div className="rounded-2xl bg-amber-100 p-2 text-amber-800 shrink-0 h-10 w-10 flex items-center justify-center">
+                      <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M12.89 3a2 2 0 0 0-1.78 0L3.39 6.84a2 2 0 0 0-1.12 1.79v6.74a2 2 0 0 0 1.12 1.79l7.72 3.84a2 2 0 0 0 1.78 0l7.72-3.84a2 2 0 0 0 1.12-1.79V8.63a2 2 0 0 0-1.12-1.79L12.89 3zm-.89 2.11L18 8.11V10H6V8.11l6-3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-neutral-900 text-sm tracking-tight leading-tight">{offer.description}</h4>
+                      <p className="text-[11px] text-neutral-500 capitalize mt-1">
+                        Applied to {offer.type}: <span className="font-semibold text-neutral-700">{offer.target_id}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between border-t border-amber-100/50 pt-3">
+                    <span className="text-xs font-bold text-amber-700 bg-amber-50 rounded-full px-2.5 py-0.5 border border-amber-100">
+                      {offer.discount_type === "percent" 
+                        ? `${offer.discount_value}% OFF` 
+                        : offer.discount_type === "amount" 
+                        ? `₹${offer.discount_value} OFF` 
+                        : `Special ₹${offer.discount_value}`}
+                    </span>
+                    {offer.code ? (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(offer.code);
+                          alert(`Promo code "${offer.code}" copied!`);
+                        }}
+                        className="rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
+                        title="Click to copy code"
+                      >
+                        Copy Code: {offer.code}
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-neutral-400 font-semibold uppercase tracking-wider">No Code Req.</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
           {catalogError ? (
             <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               {catalogError}
@@ -955,7 +1013,8 @@ function ProductSkeleton() {
 }
 
 function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending }) {
-  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const rowSize = gridCols === 1 ? 2 : gridCols === 2 ? 2 : gridCols === 3 ? 3 : 4;
+  const [visibleCount, setVisibleCount] = useState(rowSize);
   const [prevProductKey, setPrevProductKey] = useState("");
   const sentinelRef = useRef(null);
 
@@ -963,7 +1022,7 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
 
   if (productKey !== prevProductKey) {
     setPrevProductKey(productKey);
-    setVisibleCount(BATCH_SIZE);
+    setVisibleCount(rowSize);
   }
 
   useEffect(() => {
@@ -972,18 +1031,18 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, products.length));
+          setVisibleCount((prev) => Math.min(prev + rowSize, products.length));
         }
       },
       { rootMargin: "200px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [products.length, visibleCount]);
+  }, [products.length, visibleCount, rowSize]);
 
   const visible = products.slice(0, visibleCount);
   const hasMore = visibleCount < products.length;
-  const skeletonCount = Math.min(BATCH_SIZE, products.length - visibleCount);
+  const skeletonCount = Math.min(rowSize, products.length - visibleCount);
 
   const gridClass = `grid gap-4 sm:gap-6 ${
     gridCols === 1 ? "grid-cols-1 lg:grid-cols-2" :
@@ -1003,7 +1062,7 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
   if (isPending) {
     return (
       <div className={gridClass}>
-        {Array.from({ length: BATCH_SIZE }).map((_, i) => (
+        {Array.from({ length: rowSize }).map((_, i) => (
           <ProductSkeleton key={i} />
         ))}
       </div>

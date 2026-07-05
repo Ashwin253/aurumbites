@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { addProduct, deleteProduct, addCategory, deleteCategory, addBrand, deleteBrand, updateProduct, updateBrand } from "./actions";
+import ImageEditorModal from "./ImageEditorModal";
 
 function slugifySegment(text) {
   if (!text) return "";
@@ -94,6 +95,21 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingBrand, setEditingBrand] = useState(null);
   const [existingImages, setExistingImages] = useState([]);
+  const [editorFile, setEditorFile] = useState(null);
+  const [editorIndex, setEditorIndex] = useState(-1);
+  const [editorSource, setEditorSource] = useState(null);
+
+  const handleSaveEditedImage = (editedFile) => {
+    if (editorSource === "selected") {
+      setSelectedImages(prev => prev.map((f, i) => i === editorIndex ? editedFile : f));
+    } else if (editorSource === "existing") {
+      setExistingImages(prev => prev.filter((_, i) => i !== editorIndex));
+      setSelectedImages(prev => [...prev, editedFile]);
+    }
+    setEditorFile(null);
+    setEditorIndex(-1);
+    setEditorSource(null);
+  };
 
   // Nutrition table state
   const UNIT_OPTIONS = ["", "g", "mg", "kg", "ml", "l", "kcal","mcg", "%", "IU"];
@@ -777,37 +793,61 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
           {(existingImages.length > 0 || selectedImages.length > 0) && (
              <div className="flex gap-3 mb-3 overflow-x-auto pb-2">
                 {existingImages.map((url, idx) => (
-                   <div key={`existing-${idx}`} className="relative group shrink-0">
+                   <div key={`existing-${idx}`} className="flex flex-col gap-1.5 shrink-0 bg-neutral-50 p-2 rounded-2xl border border-neutral-200">
                       <img 
                          src={url} 
                          alt={`Existing ${idx + 1}`} 
-                         className="w-24 h-24 object-cover rounded-xl border border-neutral-200" 
+                         className="w-24 h-24 object-cover rounded-xl" 
                       />
-                      <button 
-                         type="button" 
-                         onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== idx))}
-                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md"
-                         title="Remove image"
-                      >
-                         âœ•
-                      </button>
+                      <div className="flex gap-1 w-full">
+                         <button 
+                            type="button" 
+                            onClick={() => {
+                               setEditorFile(url);
+                               setEditorIndex(idx);
+                               setEditorSource("existing");
+                            }}
+                            className="flex-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                         >
+                            Edit
+                         </button>
+                         <button 
+                            type="button" 
+                            onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== idx))}
+                            className="rounded-lg bg-red-50 hover:bg-red-100 text-red-600 px-1.5 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                         >
+                            Del
+                         </button>
+                      </div>
                    </div>
                 ))}
                 {selectedImages.map((file, idx) => (
-                   <div key={`selected-${idx}`} className="relative group shrink-0">
+                   <div key={`selected-${idx}`} className="flex flex-col gap-1.5 shrink-0 bg-neutral-50 p-2 rounded-2xl border border-neutral-200">
                       <img 
                          src={URL.createObjectURL(file)} 
                          alt={`Preview ${idx + 1}`} 
-                         className="w-24 h-24 object-cover rounded-xl border border-neutral-200" 
+                         className="w-24 h-24 object-cover rounded-xl" 
                       />
-                      <button 
-                         type="button" 
-                         onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
-                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md"
-                         title="Remove image"
-                      >
-                         âœ•
-                      </button>
+                      <div className="flex gap-1 w-full">
+                         <button 
+                            type="button" 
+                            onClick={() => {
+                               setEditorFile(file);
+                               setEditorIndex(idx);
+                               setEditorSource("selected");
+                            }}
+                            className="flex-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                         >
+                            Edit
+                         </button>
+                         <button 
+                            type="button" 
+                            onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
+                            className="rounded-lg bg-red-50 hover:bg-red-100 text-red-600 px-1.5 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                         >
+                            Del
+                         </button>
+                      </div>
                    </div>
                 ))}
              </div>
@@ -1557,37 +1597,61 @@ ALTER TABLE products
               {(existingImages.length > 0 || selectedImages.length > 0) && (
                  <div className="flex gap-3 mb-3 overflow-x-auto pb-2">
                     {existingImages.map((url, idx) => (
-                       <div key={`existing-${idx}`} className="relative group shrink-0">
+                       <div key={`existing-${idx}`} className="flex flex-col gap-1.5 shrink-0 bg-neutral-50 p-2 rounded-2xl border border-neutral-200">
                           <img 
                              src={url} 
                              alt={`Existing ${idx + 1}`} 
-                             className="w-24 h-24 object-cover rounded-xl border border-neutral-200" 
+                             className="w-24 h-24 object-cover rounded-xl" 
                           />
-                          <button 
-                             type="button" 
-                             onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== idx))}
-                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md"
-                             title="Remove image"
-                          >
-                             ✕
-                          </button>
+                          <div className="flex gap-1 w-full">
+                             <button 
+                                type="button" 
+                                onClick={() => {
+                                   setEditorFile(url);
+                                   setEditorIndex(idx);
+                                   setEditorSource("existing");
+                                }}
+                                className="flex-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                             >
+                                Edit
+                             </button>
+                             <button 
+                                type="button" 
+                                onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== idx))}
+                                className="rounded-lg bg-red-50 hover:bg-red-100 text-red-600 px-1.5 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                             >
+                                Del
+                             </button>
+                          </div>
                        </div>
                     ))}
                     {selectedImages.map((file, idx) => (
-                       <div key={`selected-${idx}`} className="relative group shrink-0">
+                       <div key={`selected-${idx}`} className="flex flex-col gap-1.5 shrink-0 bg-neutral-50 p-2 rounded-2xl border border-neutral-200">
                           <img 
                              src={URL.createObjectURL(file)} 
                              alt={`Preview ${idx + 1}`} 
-                             className="w-24 h-24 object-cover rounded-xl border border-neutral-200" 
+                             className="w-24 h-24 object-cover rounded-xl" 
                           />
-                          <button 
-                             type="button" 
-                             onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
-                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md"
-                             title="Remove image"
-                          >
-                             ✕
-                          </button>
+                          <div className="flex gap-1 w-full">
+                             <button 
+                                type="button" 
+                                onClick={() => {
+                                   setEditorFile(file);
+                                   setEditorIndex(idx);
+                                   setEditorSource("selected");
+                                }}
+                                className="flex-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                             >
+                                Edit
+                             </button>
+                             <button 
+                                type="button" 
+                                onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== idx))}
+                                className="rounded-lg bg-red-50 hover:bg-red-100 text-red-600 px-1.5 py-1 text-[10px] font-bold transition cursor-pointer text-center"
+                             >
+                                Del
+                             </button>
+                          </div>
                        </div>
                     ))}
                  </div>
@@ -2001,6 +2065,17 @@ ALTER TABLE products
           </tbody>
         </table>
       </div>
+      {editorFile && (
+        <ImageEditorModal
+          file={editorFile}
+          onSave={handleSaveEditedImage}
+          onClose={() => {
+            setEditorFile(null);
+            setEditorIndex(-1);
+            setEditorSource(null);
+          }}
+        />
+      )}
     </div>
   );
 }

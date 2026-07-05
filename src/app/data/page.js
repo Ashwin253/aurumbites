@@ -1,4 +1,4 @@
-import { getInventory, getMessages, getCategories, getBrands, getOrders } from "./actions";
+import { getInventory, getMessages, getCategories, getBrands, getOrders, getOffers } from "./actions";
 import DataDashboard from "./DataDashboard";
 import Navbar from "../component/Navbar";
 
@@ -10,12 +10,13 @@ export const metadata = {
 };
 
 export default async function DataPage() {
-  const [products, messages, categories, brands, orders] = await Promise.all([
+  const [products, messages, categories, brands, orders, offers] = await Promise.all([
     getInventory(),
     getMessages(),
     getCategories(),
     getBrands(),
     getOrders(),
+    getOffers(),
   ]);
 
   return (
@@ -28,6 +29,7 @@ export default async function DataPage() {
           initialCategories={categories}
           initialBrands={brands}
           initialOrders={orders}
+          initialOffers={offers}
         />
       </main>
     </>

@@ -1038,7 +1038,7 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [products.length, visibleCount, rowSize]);
+  }, [products.length, rowSize]);
 
   const visible = products.slice(0, visibleCount);
   const hasMore = visibleCount < products.length;

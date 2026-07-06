@@ -4,34 +4,30 @@
 // import QualityBadges from "@/components/QualityBadges";
 // import Footer from "@/components/Footer";
 
-import Brands from "./component/Brands";
-import BusinessesTrustUs from "./component/BusinessesTrustUs";
-import Footer from "./component/Footer";
+"use client";
+
 import Hero from "./component/Hero";
 import Navbar from "./component/Navbar";
-import ProductCategories from "./component/ProductCategories";
-// import ProductCategories from "./component/ProductCategories";
-import QualityBadges from "./component/QualtiyBadges";
-import { Sublistcategory } from "./shop/ShopUi";
-// import HoverListView from "./component/Sublistcategory";
+import dynamic from "next/dynamic";
+
+const Brands = dynamic(() => import("./component/Brands"), { ssr: false });
+const BusinessesTrustUs = dynamic(() => import("./component/BusinessesTrustUs"), { ssr: false });
+const Footer = dynamic(() => import("./component/Footer"), { ssr: false });
+const QualityBadges = dynamic(() => import("./component/QualtiyBadges"), { ssr: false });
+const Sublistcategory = dynamic(() => import("./shop/ShopUi").then(m => m.Sublistcategory), { ssr: false });
 
 export default function HomePage() {
   return (
     <>
       <Navbar />
-<link rel="icon" href="/favicon.ico" sizes="any" />
+      <link rel="icon" href="/favicon.ico" sizes="any" />
       <main>
         <Hero />
-        {/* <HoverListView/> */}
-        {/* <ProductCategories /> */}
         <Sublistcategory />
-        <Brands/>
+        <Brands />
         <BusinessesTrustUs />
-
         <QualityBadges />
-
       </main>
-
       <Footer />
     </>
   );

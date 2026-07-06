@@ -2,8 +2,29 @@
 
 import { cookies } from "next/headers";
 import { supabase } from "../../lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+
+async function getSupabaseClient() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("sb-access-token")?.value;
+  
+  if (token) {
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      }
+    );
+  }
+  return supabase;
+}
 
 export async function getAuthUser() {
   const cookieStore = await cookies();
@@ -66,7 +87,8 @@ export async function getMessages() {
   const user = await getAuthUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const client = await getSupabaseClient();
+  const { data, error } = await client
     .from("contact_messages")
     .select("*")
     .order("created_at", { ascending: false });
@@ -470,7 +492,8 @@ export async function getOrders() {
   const user = await getAuthUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const client = await getSupabaseClient();
+  const { data, error } = await client
     .from("orders")
     .select("*")
     .order("created_at", { ascending: false });
@@ -501,6 +524,117 @@ export async function toggleTopProduct(productId, isTop) {
   return { success: true };
 }
 
+export async function getTeamMembers() {
+  const user = await getAuthUser();
+  if (!user) return [];
+
+  const client = await getSupabaseClient();
+  const { data, error } = await client
+    .from("team_members")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching team members:", error);
+    return [];
+  }
+  return data;
+}
+
+export async function deleteTeammate(id) {
+  const user = await getAuthUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const client = await getSupabaseClient();
+  const { error } = await client
+    .from("team_members")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/data");
+  return { success: true };
+}
+
+export async function getAllowedEmails() {
+  const user = await getAuthUser();
+  if (!user) return [];
+
+  const client = await getSupabaseClient();
+  const { data, error } = await client
+    .from("allowed_emails")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching allowed emails:", error);
+    return [];
+  }
+  return data;
+}
+
+export async function addAllowedEmail(email) {
+  const user = await getAuthUser();
+  if (!user) return { error: "Unauthorized" };
+
+  if (!email || !email.trim()) {
+    return { error: "Email is required" };
+  }
+
+  const client = await getSupabaseClient();
+  const { data, error } = await client
+    .from("allowed_emails")
+    .insert([{ email: email.toLowerCase().trim() }])
+    .select();
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "This email is already whitelisted." };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath("/data");
+  return { success: true, data: data[0] };
+}
+
+export async function deleteAllowedEmail(id) {
+  const user = await getAuthUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const client = await getSupabaseClient();
+  const { error } = await client
+    .from("allowed_emails")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/data");
+  return { success: true };
+}
+
+export async function logoutUser() {
+  const cookieStore = await cookies();
+  cookieStore.delete("sb-access-token");
+  cookieStore.delete("sb-refresh-token");
+
+  try {
+    const client = await getSupabaseClient();
+    await client.auth.signOut();
+  } catch (e) {
+    console.error("Sign out error:", e);
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function registerTeammateDirect(formData) {
   const email = formData.get("email");
   const password = formData.get("password");
@@ -508,6 +642,20 @@ export async function registerTeammateDirect(formData) {
 
   if (!email || !password) {
     return { error: "Email and password are required" };
+  }
+
+  // Check if the email is allowed via the RPC function
+  const { data: isAllowed, error: rpcError } = await supabase.rpc("is_email_allowed", {
+    check_email: email.toLowerCase().trim()
+  });
+
+  if (rpcError) {
+    console.error("Error checking whitelist:", rpcError);
+    return { error: "Error verifying registration permissions. Please make sure the Supabase database functions are correctly configured." };
+  }
+
+  if (!isAllowed) {
+    return { error: "This email is not authorized to register. Only whitelisted emails can create an account." };
   }
 
   // Register user in Supabase Auth (store name in metadata)
@@ -598,5 +746,151 @@ export async function deleteOffer(id) {
 
   revalidatePath("/data");
   return { success: true };
+}
+
+export async function toggleProductArchive(id, isArchived) {
+  const user = await getAuthUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("products")
+    .update({ is_archived: isArchived })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/shop");
+  revalidatePath("/data");
+  return { success: true };
+}
+
+export async function toggleCategoryArchive(id, isArchived) {
+  const user = await getAuthUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("categories")
+    .update({ is_archived: isArchived })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/shop");
+  revalidatePath("/data");
+  return { success: true };
+}
+
+export async function toggleBrandArchive(id, isArchived) {
+  const user = await getAuthUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("brands")
+    .update({ is_archived: isArchived })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/shop");
+  revalidatePath("/data");
+  return { success: true };
+}
+
+export async function updateProductVariants(productId, updatedVariants) {
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const client = await getSupabaseClient();
+  const { error } = await client
+    .from("products")
+    .update({ variants: updatedVariants })
+    .eq("id", productId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/data");
+  revalidatePath("/shop");
+  return { success: true };
+}
+
+export async function addOfflineOrder(orderData) {
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { customer_name, customer_email, customer_phone, items, total_amount, payment_id } = orderData;
+
+  const client = await getSupabaseClient();
+
+  // 1. Insert order
+  const { data: orderResult, error: orderError } = await client
+    .from("orders")
+    .insert([
+      {
+        customer_name: customer_name || "Offline Guest",
+        customer_email: customer_email || "offline@aurumbites.co.in",
+        customer_phone: customer_phone || "",
+        order_items: items.map(i => ({
+          id: i.product_id,
+          title: i.title,
+          variantId: i.variant_id,
+          variantTitle: i.variantTitle,
+          price: parseFloat(i.price) || 0,
+          quantity: parseInt(i.quantity, 10) || 1
+        })),
+        total_amount: parseFloat(total_amount) || 0,
+        payment_provider: "Offline / CRM",
+        payment_id: payment_id || `OFF-${Date.now()}`,
+        payment_status: "paid"
+      }
+    ])
+    .select();
+
+  if (orderError) {
+    return { success: false, error: orderError.message };
+  }
+
+  // 2. Deduct inventory for each item
+  for (const item of items) {
+    const { data: productData, error: fetchError } = await client
+      .from("products")
+      .select("variants")
+      .eq("id", item.product_id)
+      .single();
+
+    if (!fetchError && productData?.variants) {
+      let variants = productData.variants;
+      let updated = false;
+      variants = variants.map(v => {
+        if (v.id === item.variant_id) {
+          if (v.stock !== null && !isNaN(v.stock)) {
+            v.stock = Math.max(0, v.stock - item.quantity);
+            // Update availability based on stock
+            v.availableForSale = v.callForInventory || v.stock > 0;
+            updated = true;
+          }
+        }
+        return v;
+      });
+
+      if (updated) {
+        await client
+          .from("products")
+          .update({ variants })
+          .eq("id", item.product_id);
+      }
+    }
+  }
+
+  revalidatePath("/data");
+  revalidatePath("/shop");
+  return { success: true, order: orderResult ? orderResult[0] : null };
 }
 

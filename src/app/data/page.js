@@ -1,4 +1,4 @@
-import { getInventory, getMessages, getCategories, getBrands, getOrders, getOffers } from "./actions";
+import { getInventory, getMessages, getCategories, getBrands, getOrders, getOffers, getTeamMembers, getAllowedEmails, getAuthUser } from "./actions";
 import DataDashboard from "./DataDashboard";
 import Navbar from "../component/Navbar";
 
@@ -10,13 +10,16 @@ export const metadata = {
 };
 
 export default async function DataPage() {
-  const [products, messages, categories, brands, orders, offers] = await Promise.all([
+  const [products, messages, categories, brands, orders, offers, teamMembers, allowedEmails, currentUser] = await Promise.all([
     getInventory(),
     getMessages(),
     getCategories(),
     getBrands(),
     getOrders(),
     getOffers(),
+    getTeamMembers(),
+    getAllowedEmails(),
+    getAuthUser(),
   ]);
 
   return (
@@ -30,6 +33,9 @@ export default async function DataPage() {
           initialBrands={brands}
           initialOrders={orders}
           initialOffers={offers}
+          initialTeamMembers={teamMembers}
+          initialAllowedEmails={allowedEmails}
+          currentUser={currentUser}
         />
       </main>
     </>

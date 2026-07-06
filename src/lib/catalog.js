@@ -101,13 +101,13 @@ export async function getShopPageData({ collectionHandle = "all", brandHandle = 
       console.warn("Supabase products fetch error, falling back to local catalog:", productsRes.error.message);
       rawProducts = await getLocalCatalog();
     } else if (Array.isArray(productsRes.data) && productsRes.data.length > 0) {
-      rawProducts = productsRes.data;
+      rawProducts = productsRes.data.filter(p => !p.is_archived);
     } else {
       rawProducts = await getLocalCatalog();
     }
 
-    if (categoriesRes.data) dbCategories = categoriesRes.data;
-    if (brandsRes.data) dbBrands = brandsRes.data;
+    if (categoriesRes.data) dbCategories = categoriesRes.data.filter(c => !c.is_archived);
+    if (brandsRes.data) dbBrands = brandsRes.data.filter(b => !b.is_archived);
     if (holdsRes && holdsRes.data) activeHolds = holdsRes.data;
 
   } catch (error) {

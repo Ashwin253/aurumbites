@@ -345,6 +345,39 @@ export default function ImageEditorModal({ file, onSave, onClose }) {
     }
   };
 
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const downloadCanvas = (cv) => {
+      const dataUrl = cv.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = (typeof file === "string" ? "edited-image.png" : file.name) || "edited-product.png";
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    if (isCropActive) {
+      const croppedCanvas = document.createElement("canvas");
+      const ctx = croppedCanvas.getContext("2d");
+
+      const cx = crop.x * canvas.width;
+      const cy = crop.y * canvas.height;
+      const cw = crop.w * canvas.width;
+      const ch = crop.h * canvas.height;
+
+      croppedCanvas.width = cw;
+      croppedCanvas.height = ch;
+
+      ctx.drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
+      downloadCanvas(croppedCanvas);
+    } else {
+      downloadCanvas(canvas);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
       <div className="relative w-full max-w-4xl bg-neutral-900 border border-neutral-800 rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl">
@@ -478,16 +511,26 @@ export default function ImageEditorModal({ file, onSave, onClose }) {
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="rounded-xl border border-neutral-700 hover:bg-neutral-800 px-5 py-2.5 text-xs font-semibold text-neutral-400 hover:text-white transition"
+              className="rounded-xl border border-neutral-700 hover:bg-neutral-800 px-5 py-2.5 text-xs font-semibold text-neutral-400 hover:text-white transition cursor-pointer"
             >
               Cancel
             </button>
             <button
+              onClick={handleDownload}
+              disabled={loading || aiProcessing}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 px-5 py-2.5 text-xs font-semibold text-neutral-200 hover:text-white transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <svg className="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download
+            </button>
+            <button
               onClick={handleSave}
               disabled={loading || aiProcessing}
-              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-xs font-bold text-white transition disabled:opacity-50"
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer shadow-sm"
             >
-              {loading ? "Baking Image..." : "Apply & Save"}
+              {loading ? "Baking..." : "Apply & Save"}
             </button>
           </div>
 

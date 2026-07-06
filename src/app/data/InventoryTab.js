@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { addProduct, deleteProduct, addCategory, deleteCategory, addBrand, deleteBrand, updateProduct, updateBrand } from "./actions";
+import { addProduct, deleteProduct, addCategory, deleteCategory, addBrand, deleteBrand, updateProduct, updateBrand, toggleProductArchive, toggleCategoryArchive, toggleBrandArchive } from "./actions";
 import ImageEditorModal from "./ImageEditorModal";
 
 function slugifySegment(text) {
@@ -23,11 +23,13 @@ function buildRecommendedProductHandle(title, brand, category) {
 
 export default function InventoryTab({ initialProducts, initialCategories, initialBrands }) {
   const [activeSubTab, setActiveSubTab] = useState("products");
+  const [showArchived, setShowArchived] = useState(false);
   
   const [products, setProducts] = useState(initialProducts || []);
   const [categories, setCategories] = useState(initialCategories || []);
   const [brands, setBrands] = useState(initialBrands || []);
   const [brandFilter, setBrandFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   const brandListForDropdown = useMemo(() => {
     const seen = new Set();
@@ -651,6 +653,35 @@ export default function InventoryTab({ initialProducts, initialCategories, initi
     
     if (result?.error) {
       alert("Error deleting entry: " + result.error);
+    }
+  };
+
+  const handleToggleArchive = async (id, isCurrentlyArchived) => {
+    const actionText = isCurrentlyArchived ? "restore" : "archive";
+    if (!confirm(`Are you sure you want to ${actionText} this entry?`)) return;
+
+    let result;
+    const targetStatus = !isCurrentlyArchived;
+
+    if (activeSubTab === "products") {
+      result = await toggleProductArchive(id, targetStatus);
+      if (!result?.error) {
+        setProducts(products.map(p => p.id === id ? { ...p, is_archived: targetStatus } : p));
+      }
+    } else if (activeSubTab === "categories") {
+      result = await toggleCategoryArchive(id, targetStatus);
+      if (!result?.error) {
+        setCategories(categories.map(c => c.id === id ? { ...c, is_archived: targetStatus } : c));
+      }
+    } else if (activeSubTab === "brands") {
+      result = await toggleBrandArchive(id, targetStatus);
+      if (!result?.error) {
+        setBrands(brands.map(b => b.id === id ? { ...b, is_archived: targetStatus } : b));
+      }
+    }
+
+    if (result?.error) {
+      alert(`Error trying to ${actionText} entry: ` + result.error);
     }
   };
 
@@ -1400,9 +1431,21 @@ ALTER TABLE products
     </form>
   );
 
-  const displayedProducts = brandFilter
-    ? products.filter((p) => (p.vendor || "") === brandFilter)
-    : products;
+  const filteredProducts = products.filter(p => showArchived ? p.is_archived : !p.is_archived);
+
+  const displayedProducts = useMemo(() => {
+    let list = filteredProducts;
+    if (brandFilter) {
+      list = list.filter((p) => (p.vendor || "") === brandFilter);
+    }
+    if (categoryFilter) {
+      list = list.filter((p) => (p.productType || "") === categoryFilter);
+    }
+    return list;
+  }, [filteredProducts, brandFilter, categoryFilter]);
+
+  const displayedCategories = categories.filter(c => showArchived ? c.is_archived : !c.is_archived);
+  const displayedBrands = brands.filter(b => showArchived ? b.is_archived : !b.is_archived);
 
   return (
     <div className="space-y-6">
@@ -1429,52 +1472,93 @@ ALTER TABLE products
         </div>
         
         <div className="flex gap-2">
-          {activeSubTab === "products" && (
-            <button
-              onClick={() => { setIsPastingData(!isPastingData); setIsAdding(false); }}
-              className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-200 transition whitespace-nowrap"
-            >
-              {isPastingData ? "Cancel Paste" : "Paste Data"}
-            </button>
-          )}
           <button
             onClick={() => {
-              if (isAdding) {
-                resetFormState();
-              } else {
-                setImportQueue([]);
-                setIsPastingData(false);
-                initNewEntityForm();
-                setIsAdding(true);
-              }
+              setShowArchived(!showArchived);
+              resetFormState();
             }}
-            className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition whitespace-nowrap"
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition whitespace-nowrap border cursor-pointer shadow-sm ${
+              showArchived
+                ? "bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200"
+                : "bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100"
+            }`}
           >
-            {isAdding ? "Cancel" : `Add ${activeSubTab === "products" ? "Product" : activeSubTab === "categories" ? "Category" : "Brand"}`}
+            {showArchived ? "Show Active" : "Show Archived"}
           </button>
+          {!showArchived && (
+            <>
+              {activeSubTab === "products" && (
+                <button
+                  onClick={() => { setIsPastingData(!isPastingData); setIsAdding(false); }}
+                  className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-200 transition whitespace-nowrap cursor-pointer"
+                >
+                  {isPastingData ? "Cancel Paste" : "Paste Data"}
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (isAdding) {
+                    resetFormState();
+                  } else {
+                    setImportQueue([]);
+                    setIsPastingData(false);
+                    initNewEntityForm();
+                    setIsAdding(true);
+                  }
+                }}
+                className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition whitespace-nowrap cursor-pointer"
+              >
+                {isAdding ? "Cancel" : `Add ${activeSubTab === "products" ? "Product" : activeSubTab === "categories" ? "Category" : "Brand"}`}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {activeSubTab === "products" && brandListForDropdown.length > 0 && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium text-neutral-600">Filter by Brand:</span>
-          <select
-            value={brandFilter}
-            onChange={(e) => setBrandFilter(e.target.value)}
-            className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-600"
-          >
-            <option value="">All Brands</option>
-            {brandListForDropdown.map((title, idx) => (
-              <option key={idx} value={title}>{title}</option>
-            ))}
-          </select>
-          {brandFilter && (
+      {activeSubTab === "products" && (brandListForDropdown.length > 0 || categoryListForDropdown.length > 0) && (
+        <div className="flex flex-wrap items-center gap-4 text-sm bg-neutral-50 p-4 rounded-2xl border border-neutral-200 w-fit">
+          {brandListForDropdown.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-neutral-600 text-xs">Filter by Brand:</span>
+              <select
+                value={brandFilter}
+                onChange={(e) => setBrandFilter(e.target.value)}
+                className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-600 outline-none"
+              >
+                <option value="">All Brands</option>
+                {brandListForDropdown.map((title, idx) => (
+                  <option key={idx} value={title}>{title}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {categoryListForDropdown.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-neutral-600 text-xs">Filter by Category:</span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-600 outline-none"
+              >
+                <option value="">All Categories</option>
+                {categoryListForDropdown.map((title, idx) => (
+                  <option key={idx} value={title}>{title}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(brandFilter || categoryFilter) && (
             <button
               type="button"
-              onClick={() => setBrandFilter("")}
-              className="text-xs font-medium text-emerald-600 hover:text-emerald-800 underline"
+              onClick={() => {
+                setBrandFilter("");
+                setCategoryFilter("");
+              }}
+              className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 underline cursor-pointer"
             >
-              Clear
+              Clear Filters
             </button>
           )}
         </div>
@@ -1905,7 +1989,7 @@ ALTER TABLE products
                   <td colSpan={4} className="px-4 py-8 text-center text-neutral-500">
                     {brandFilter 
                       ? `No products found for brand "${brandFilter}".` 
-                      : "No products found. Add some above."}
+                      : showArchived ? "No archived products found." : "No products found. Add some above."}
                   </td>
                 </tr>
               ) : (
@@ -1921,15 +2005,15 @@ ALTER TABLE products
                   
                   const unitPrice = firstVar?.unitPrice?.amount || p.Price?.perKg || null;
                   const packSize = p.variants?.length === 1 ? firstVar.title : (p.weight || p.packSize || "");
-
+ 
                   const isEditingThisProduct = editingProduct?.id === p.id;
-
+ 
                   return (
                     <tr key={p.id} className={`${isEditingThisProduct ? "bg-emerald-50/60 ring-1 ring-inset ring-emerald-200" : "hover:bg-neutral-50"}`}>
                       <td className="px-4 py-3 font-medium text-neutral-900 flex items-center gap-3">
                         <button 
                           onClick={() => handleDelete(p.id)} 
-                          className="text-red-500 hover:text-red-700 transition shrink-0"
+                          className="text-red-500 hover:text-red-700 transition shrink-0 cursor-pointer"
                           title="Delete product"
                         >
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1940,6 +2024,7 @@ ALTER TABLE products
                         </button>
                         <div>
                           {p.title}
+                          {p.is_archived && <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">Archived</span>}
                           <div className="text-xs text-neutral-500 font-normal">{p.handle}</div>
                         </div>
                       </td>
@@ -1977,52 +2062,73 @@ ALTER TABLE products
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         <button
                           type="button"
-                          onClick={() => handleEditClick(p)}
-                          className={`font-medium transition ${
-                            isEditingThisProduct
-                              ? "rounded-full bg-emerald-600 px-3 py-1 text-white hover:bg-emerald-700"
-                              : "text-emerald-600 hover:text-emerald-800"
-                          }`}
-                          aria-pressed={isEditingThisProduct}
+                          onClick={() => handleToggleArchive(p.id, p.is_archived)}
+                          className="mr-2 text-amber-600 hover:text-amber-800 font-semibold text-xs border border-amber-200 bg-amber-50/50 px-3.5 py-1.5 rounded-lg hover:bg-amber-100 transition cursor-pointer shadow-sm"
                         >
-                          {isEditingThisProduct ? "Editing" : "Edit"}
+                          {p.is_archived ? "Restore" : "Archive"}
                         </button>
+                        {!p.is_archived && (
+                          <button
+                            type="button"
+                            onClick={() => handleEditClick(p)}
+                            className={`font-semibold text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer shadow-sm ${
+                              isEditingThisProduct
+                                ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                : "text-emerald-600 hover:text-emerald-800 border border-emerald-200 bg-emerald-50/50"
+                            }`}
+                            aria-pressed={isEditingThisProduct}
+                          >
+                            {isEditingThisProduct ? "Editing" : "Edit"}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )
                 })
               )
             )}
-
+ 
             {activeSubTab === "categories" && (
-              categories.length === 0 ? (
-                <tr><td colSpan={3} className="px-4 py-8 text-center text-neutral-500">No categories found. Add some above.</td></tr>
+              displayedCategories.length === 0 ? (
+                <tr><td colSpan={3} className="px-4 py-8 text-center text-neutral-500">{showArchived ? "No archived categories found." : "No categories found. Add some above."}</td></tr>
               ) : (
-                categories.map((c) => (
+                displayedCategories.map((c) => (
                   <tr key={c.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3">
                       {c.image_url ? <img src={c.image_url} alt={c.title} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-neutral-200" />}
                     </td>
                     <td className="px-4 py-3 font-medium text-neutral-900">
                       {c.title}
+                      {c.is_archived && <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">Archived</span>}
                       <div className="text-xs text-neutral-500 font-normal">{c.handle}</div>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:text-red-800 font-medium">Delete</button>
+                    <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
+                      <button
+                        onClick={() => handleToggleArchive(c.id, c.is_archived)}
+                        className="text-amber-600 hover:text-amber-800 font-semibold text-xs border border-amber-200 bg-amber-50/50 px-3.5 py-1.5 rounded-lg hover:bg-amber-100 transition cursor-pointer shadow-sm"
+                      >
+                        {c.is_archived ? "Restore" : "Archive"}
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(c.id)} 
+                        className="text-red-600 hover:text-red-800 font-semibold text-xs border border-red-200 bg-red-50/50 px-3.5 py-1.5 rounded-lg hover:bg-red-100 transition cursor-pointer shadow-sm"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))
               )
             )}
-
+ 
             {activeSubTab === "brands" && (
-              brands.length === 0 ? (
-                <tr><td colSpan={3} className="px-4 py-8 text-center text-neutral-500">No brands found. Add some above.</td></tr>
+              displayedBrands.length === 0 ? (
+                <tr><td colSpan={3} className="px-4 py-8 text-center text-neutral-500">{showArchived ? "No archived brands found." : "No brands found. Add some above."}</td></tr>
               ) : (
-                brands.map((b) => (
+                displayedBrands.map((b) => (
                   <tr key={b.id} className="hover:bg-neutral-50">
                     <td className="px-4 py-3">
                       {b.image_url ? <img src={b.image_url} alt={b.title} className="w-10 h-10 rounded-lg object-contain bg-neutral-50 p-1 border" /> : <div className="w-10 h-10 rounded-lg bg-neutral-200" />}
@@ -2030,7 +2136,7 @@ ALTER TABLE products
                     <td className="px-4 py-3 font-medium text-neutral-900 flex items-center gap-3">
                       <button 
                         onClick={() => handleDelete(b.id)} 
-                        className="text-red-500 hover:text-red-700 transition shrink-0"
+                        className="text-red-500 hover:text-red-700 transition shrink-0 cursor-pointer"
                         title="Delete brand"
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -2041,22 +2147,31 @@ ALTER TABLE products
                       </button>
                       <div>
                         {b.title}
+                        {b.is_archived && <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">Archived</span>}
                         <div className="text-xs text-neutral-500 font-normal">{b.handle}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
                       <button
-                        type="button"
-                        onClick={() => handleEditBrandClick(b)}
-                        className={`font-medium transition ${
-                          editingBrand?.id === b.id
-                            ? "rounded-full bg-emerald-600 px-3 py-1 text-white hover:bg-emerald-700"
-                            : "text-emerald-600 hover:text-emerald-800"
-                        }`}
-                        aria-pressed={editingBrand?.id === b.id}
+                        onClick={() => handleToggleArchive(b.id, b.is_archived)}
+                        className="text-amber-600 hover:text-amber-800 font-semibold text-xs border border-amber-200 bg-amber-50/50 px-3.5 py-1.5 rounded-lg hover:bg-amber-100 transition cursor-pointer shadow-sm"
                       >
-                        {editingBrand?.id === b.id ? "Editing" : "Edit"}
+                        {b.is_archived ? "Restore" : "Archive"}
                       </button>
+                      {!b.is_archived && (
+                        <button
+                          type="button"
+                          onClick={() => handleEditBrandClick(b)}
+                          className={`font-semibold text-xs px-3.5 py-1.5 rounded-lg transition cursor-pointer shadow-sm ${
+                            editingBrand?.id === b.id
+                              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                              : "text-emerald-600 hover:text-emerald-800 border border-emerald-200 bg-emerald-50/50"
+                          }`}
+                          aria-pressed={editingBrand?.id === b.id}
+                        >
+                          {editingBrand?.id === b.id ? "Editing" : "Edit"}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

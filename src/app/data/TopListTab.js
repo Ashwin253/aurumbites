@@ -51,7 +51,7 @@ export default function TopListTab({ initialProducts = [] }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-neutral-900">Top Searched Products</h2>
+          <h2 className="text-xl font-bold text-neutral-900">Not Found Page Listings</h2>
           <p className="text-xs text-neutral-500 mt-1">Configure which products display on the storefront when a search query returns no matches.</p>
         </div>
         
@@ -97,7 +97,7 @@ export default function TopListTab({ initialProducts = [] }) {
                 <th className="px-4 py-3.5">Product</th>
                 <th className="px-4 py-3.5">Brand</th>
                 <th className="px-4 py-3.5">Category</th>
-                <th className="px-4 py-3.5 text-center">Top Searched</th>
+                <th className="px-4 py-3.5 text-center">Show on Not Found Page</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">

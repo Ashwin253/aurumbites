@@ -46,7 +46,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
 
   return (
     <article className="premium-card group overflow-hidden rounded-[2rem] border border-white/60 bg-white/90 shadow-[0_20px_60px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(15,23,42,0.14)]">
-      <Link href={`/shop/${product.handle}`} className="block">
+      <Link href={`/product/${product.handle}`} className="block">
         <div className="relative aspect-square sm:h-72 overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(212,168,83,0.2),_transparent_48%),linear-gradient(135deg,_#f7f2e8,_#f1eadb_55%,_#e6dcc8)]">
           <div className="absolute top-4 left-4 z-10">
             <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${
@@ -100,7 +100,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
               {product.vendor || "Curated Collection"}
             </p>
             <Link
-              href={`/shop/${product.handle}`}
+              href={`/product/${product.handle}`}
               className="mt-2 block text-[1.35rem] font-semibold leading-tight text-neutral-950 transition hover:text-[#7a5a26]"
             >
               {product.title}
@@ -115,7 +115,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly }) {
 
         <div className="flex gap-3">
           <Link
-            href={`/shop/${product.handle}`}
+            href={`/product/${product.handle}`}
             className="flex-1 rounded-full border border-neutral-300 px-4 py-3 text-center text-sm font-medium text-neutral-700 transition hover:border-[#9a7a3f] hover:text-[#7a5a26]"
           >
             Details

@@ -470,7 +470,7 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
 
   return (
     <article className="min-w-[260px] max-w-[260px] overflow-hidden rounded-[1.5rem] border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-      <Link href={`/shop/${product.handle}`} className="block">
+      <Link href={`/product/${product.handle}`} className="block">
         <div className="relative aspect-square sm:h-52 bg-neutral-100">
           {product.image ? (
             <Image
@@ -498,7 +498,7 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
             </p>
           ) : null}
           <Link
-            href={`/shop/${product.handle}`}
+            href={`/product/${product.handle}`}
             className="mt-2 block text-lg font-semibold leading-tight text-neutral-950 hover:text-neutral-700"
           >
             {product.title}
@@ -514,7 +514,7 @@ export function DetailRelatedCard({ product, isEnquiryOnly }) {
           </span>
           <div className="flex gap-2">
             <Link
-              href={`/shop/${product.handle}`}
+              href={`/product/${product.handle}`}
               className="rounded-full border border-neutral-300 p-2 text-neutral-700 transition hover:bg-neutral-50"
               title="Details"
             >

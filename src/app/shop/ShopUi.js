@@ -195,7 +195,7 @@ export function ShopCatalog({
   const [redirectTo, setRedirectTo] = useState(initialRedirectTo);
   const [catalogError, setCatalogError] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [gridCols, setGridCols] = useState(1);
+  const [gridCols, setGridCols] = useState(2);
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
 
   // Client-side search filters
@@ -236,7 +236,7 @@ export function ShopCatalog({
 
   useEffect(() => {
     const syncGridCols = () => {
-      setGridCols(window.innerWidth < 1024 ? 1 : 4);
+      setGridCols(window.innerWidth < 1024 ? 2 : 4);
     };
 
     syncGridCols();
@@ -1014,7 +1014,9 @@ function ProductSkeleton() {
 
 function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending }) {
   const rowSize = gridCols === 1 ? 2 : gridCols === 2 ? 2 : gridCols === 3 ? 3 : 4;
-  const [visibleCount, setVisibleCount] = useState(rowSize);
+  const INITIAL_COUNT = 12;
+  const STEP = 12;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
   const [prevProductKey, setPrevProductKey] = useState("");
   const sentinelRef = useRef(null);
 
@@ -1022,7 +1024,7 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
 
   if (productKey !== prevProductKey) {
     setPrevProductKey(productKey);
-    setVisibleCount(rowSize);
+    setVisibleCount(INITIAL_COUNT);
   }
 
   useEffect(() => {
@@ -1031,14 +1033,14 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + rowSize, products.length));
+          setVisibleCount((prev) => Math.min(prev + STEP, products.length));
         }
       },
       { rootMargin: "200px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [products.length, rowSize]);
+  }, [products.length]);
 
   const visible = products.slice(0, visibleCount);
   const hasMore = visibleCount < products.length;
@@ -1084,8 +1086,17 @@ function ProductGrid({ products, redirectTo, isEnquiryOnly, gridCols, isPending 
         ))}
       </div>
       {hasMore ? <div ref={sentinelRef} className="h-1" /> : (
-        <div className="mt-8 text-center text-sm font-medium text-neutral-500 py-4">
-           End of the List
+        <div className="mt-12 mb-8 flex flex-col items-center justify-center gap-4 text-center">
+          <p className="text-sm font-medium text-neutral-500">End of the List</p>
+          <a
+            href="/shop"
+            className="flex items-center gap-2 rounded-full bg-neutral-200 px-6 py-2 text-xs font-bold uppercase tracking-wider text-neutral-600 shadow-sm transition-all hover:bg-neutral-300 hover:text-neutral-800 active:scale-95"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear Filters
+          </a>
         </div>
       )}
     </>
@@ -1209,7 +1220,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
 
   return (
     <article className={`glossy-card overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-[#e6dcc8]/60 bg-white/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:shadow-[0_20px_50px_rgba(201,176,122,0.12)] hover:bg-white/60 hover:border-[#c9b07a]/40 ${isList ? 'flex flex-row items-stretch' : 'flex flex-col'}`}>
-      <Link href={`/shop/${product.handle}`} className={`block ${isList ? 'w-2/5 shrink-0' : ''}`}>
+      <Link href={`/product/${product.handle}`} className={`block ${isList ? 'w-2/5 shrink-0' : ''}`}>
         <div className={`relative bg-transparent h-full ${!isList && (isCompact ? 'aspect-square sm:aspect-auto sm:h-48' : 'aspect-square sm:aspect-auto sm:h-72')}`}>
           <div className="absolute top-4 left-4 z-10">
             {/* <span className={`rounded-full px-2 py-0.5 font-bold uppercase tracking-wider shadow-sm backdrop-blur-md ${isCompact ? 'text-[8px]' : 'text-[10px]'} ${
@@ -1240,7 +1251,8 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
         </div>
       </Link>
 
-      <div className={`flex flex-col justify-between ${isList ? 'w-3/5 p-4 sm:p-5' : (isCompact ? 'p-3 sm:p-4 space-y-4' : 'p-6 space-y-4')}`}>
+      {/* Existing Desktop / List View Layout */}
+      <div className={`${!isList ? 'hidden sm:flex' : 'flex'} flex-col justify-between ${isList ? 'w-3/5 p-4 sm:p-5' : (isCompact ? 'p-3 sm:p-4 space-y-4' : 'p-6 space-y-4')} h-full`}>
         <div className={`flex items-start justify-between gap-2 ${isList ? 'mb-4' : ''}`}>
           <div className="min-w-0">
             {product.vendor && !isCompact && !isList ? (
@@ -1249,7 +1261,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
               </p>
             ) : null}
             <Link
-              href={`/shop/${product.handle}`}
+              href={`/product/${product.handle}`}
               className={`mt-1 block font-semibold text-neutral-950 hover:text-neutral-700 ${isCompact ? 'text-sm' : 'text-xl'}`}
             >
               {product.title}
@@ -1307,7 +1319,7 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
 
         <div className={`grid gap-2 w-full ${product.variants && product.variants.length > 1 ? "grid-cols-1" : "grid-cols-2"}`}>
           <Link
-            href={`/shop/${product.handle}`}
+            href={`/product/${product.handle}`}
             className={`flex w-full items-center justify-center rounded-full border transition ${
               product.variants && product.variants.length > 1
                 ? 'bg-neutral-950 text-white border-neutral-950 hover:bg-neutral-800'
@@ -1419,6 +1431,61 @@ export function ProductCard({ product, redirectTo, isEnquiryOnly, gridCols, prio
           ) : null}
         </div>
       </div>
+
+      {/* New Mobile Grid Layout (Myntra style) */}
+      {!isList && (
+        <div className="flex sm:hidden flex-col justify-between p-3 h-full">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-start justify-between gap-2">
+              <Link
+                href={`/product/${product.handle}`}
+                className="block font-semibold text-neutral-950 text-[13px] leading-tight line-clamp-2 flex-1 pr-1"
+              >
+                {product.title}
+              </Link>
+              
+              {!(product.variants && product.variants.length > 1) && product.availableForSale && (
+                <button
+                  type="button"
+                  onClick={handleAdd}
+                  disabled={adding}
+                  className="shrink-0 rounded-full bg-neutral-900 text-white p-2 shadow-sm active:scale-95 transition"
+                  aria-label="Add to cart"
+                >
+                  {adding ? (
+                     <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                       <path className="opacity-75" fill="currentColor" d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2Z" />
+                     </svg>
+                  ) : (
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9h18l-2 11H5L3 9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9a4 4 0 018 0" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 12v4m-2-2h4" />
+                    </svg>
+                  )}
+                </button>
+              )}
+            </div>
+            
+            <div className="flex flex-wrap items-baseline gap-1.5 mt-1">
+              <span className="font-bold text-neutral-900 text-sm">{product.askPrice ? 'Ask Price' : `₹${product.sellingPrice}`}</span>
+              {canShowDiscount && (
+                <span className="text-neutral-400 line-through text-[10px]">₹{product.originalPrice}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-auto pt-3">
+            <Link
+              href={`/product/${product.handle}`}
+              className="block w-full rounded border border-neutral-300 text-center text-[11px] font-semibold text-neutral-700 py-1.5 active:bg-neutral-100 transition"
+            >
+              View Details
+            </Link>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
@@ -1842,62 +1909,55 @@ export function MobileCartWidget({ cart, isConfigured, redirectTo, isEnquiryOnly
 }
 
 const SUB_CATEGORY_DATA = [
+
   {
-    title: "Dairy Spreads & Cream",
-    collection: "cream,butter",
+    title: "Imported Cheese",
+    link: "/category/imported-cheese",
     items: [
-      "Salted Butter",
-      "Unsalted Butter",
-      "Fresh Cream",
-      "Sour Cream",
-      "Cooking Cream",
-      "Whipping Cream",
+      { name: "Blue Cheese", href: "/shop?collection=imported-cheese" },
+      { name: "Parmesan", href: "/shop?collection=imported-cheese" },
+      { name: "Brie", href: "/shop?collection=imported-cheese" },
+      { name: "Camembert", href: "/shop?collection=imported-cheese" },
+      { name: "Feta", href: "/shop?collection=imported-cheese" },
     ],
-    images: ["/categories/saltedbutter.jpg", "/categories/freshcream.jpg", "/categories/whippingcream.png"],
+    images: [
+      { src: "https://gauzrktqyjnoktiwlxjn.supabase.co/storage/v1/object/public/images/1785328301718-jh5nap.jpg", href: "/product/arla-danish-white-arla-imported-cheese" },
+      { src: "https://gauzrktqyjnoktiwlxjn.supabase.co/storage/v1/object/public/images/1785328035154-n2sfg8.jpg", href: "/product/prestige-brie-prestige-imported-cheese" },
+      { src: "https://gauzrktqyjnoktiwlxjn.supabase.co/storage/v1/object/public/images/1785328581194-n5feka.jpg", href: "/product/jacks-classic-edam-cheese-jacks-cheese-imported-cheese" }
+    ],
   },
   {
-    title: "Cheese",
-    collection: "cheese--slice",
+    title: "Popular Brands",
+    link: "/shop",
     items: [
-      "Mozzarella",
-      "Burrata",
-      "Ricotta",
-      "Mascarpone",
-      "Scamorza",
-      "Fiordilatte",
+      { name: "Amul", href: "/brand/amul" },
+      { name: "President", href: "/brand/president" },
+      { name: "Cremeitalia", href: "/brand/cremeitalia" },
+      { name: "D'lecta", href: "/brand/dlecta" },
+      { name: "Gowardhan", href: "/brand/gowardhan" },
     ],
-    images: ["/categories/mozerellacheese.jpg", "/categories/Mascarpone.png", "/categories/FreshCheese.png"],
+    images: [
+      { src: "/brands/cremeitalia.jpg", href: "/brand/cremeitalia" },
+      { src: "/brands/amul.jpg", href: "/brand/amul" },
+      { src: "/brands/dairycraft.jpg", href: "/brand/dairycraft" },
+      { src: "/brands/arla.jpg", href: "/brand/arla" },
+      { src: "/brands/mccain.jpg", href: "/brand/mccain" }
+    ],
   },
   {
-     title: "Imported Cheese",
-    collection: "cheese--slice",
+    title: "Imported Brands",
+    link: "/shop",
     items: [
-      "Blue Cheese",
-      "Parmesan",
-      "Cheddar Mild White",
-      "Cheddar Mild Coloured",
-      "Brie",
-      "Camembert",
-      "Soft Goat Cheese",
-      "Edam Mild Ball",
-      "Feta Cheese",
-      "Emmental",
+      { name: "Zanetti", href: "/brand/zanetti" },
+      { name: "Emborg", href: "/brand/emborg" },
+      { name: "Elle & Vire", href: "/brand/elle-vire" },
+      { name: "Philadelphia", href: "/brand/philadelphia" },
     ],
-    images: ["/categories/CREAMCHEESE.png", "/categories/dlectacheese.webp", "/categories/BriePresident.png"],
-  },
-  {title: "Dry",
-    collection: "dry",
-    items: [
-      "Fries",
-      "Penne",
-      "Spaghetti",
-      "Farfalle",
-      "Fusilli",
-      "Pelati",
-      "Olives",
-      "Olive Oil",
+    images: [
+      { src: "/brands/jackscheese.jpg", href: "/brand/jacks-cheese" },
+      { src: "/brands/arla.jpg", href: "/brand/arla" },
+      { src: "/brands/elleandvire.jpeg", href: "/brand/elle-vire" }
     ],
-    images: ["/products/fries.jpg", "/products/Farfalle.jpg", "/products/spaghetti.jpg"],
   },
 ];
 
@@ -1905,31 +1965,30 @@ export function Sublistcategory() {
  const [active, setActive] = useState(0);
   const [openMobile, setOpenMobile] = useState(null);
 
+  const activeCat = SUB_CATEGORY_DATA[active] || SUB_CATEGORY_DATA[0];
+
   return (
     <section className="max-w-6xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* CATEGORY LIST */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 h-full">
           {SUB_CATEGORY_DATA.map((cat, i) => {
             const isOpen = openMobile === i;
 
             return (
-              <div key={cat.title}>
+              <div key={cat.title} className="flex-1 flex flex-col">
                 {/* CATEGORY CARD */}
                 <div
                   onMouseEnter={() => setActive(i)}
                   onClick={() =>
                     setOpenMobile(isOpen ? null : i)
                   }
-                  className={`h-24 rounded-2xl border p-4 flex items-center justify-between
+                  className={`flex-1 min-h-[96px] rounded-2xl border p-4 flex items-center justify-between
                     cursor-pointer transition-all
-                    border-gray-200 bg-white text-gray-900
-                    hover:shadow-lg
-                    dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:shadow-none
                     ${
                       active === i
-                        ? "md:bg-[#0b1537] md:text-white md:border-[#0b1537]"
-                        : ""
+                        ? "border-amber-500 bg-amber-50 text-amber-900 shadow-md ring-1 ring-amber-500 dark:bg-amber-900/30 dark:border-amber-400 dark:text-white dark:ring-amber-400"
+                        : "border-gray-200 bg-white text-gray-900 hover:scale-[1.01] hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100 dark:hover:shadow-none"
                     }`}
                 >
                   <div>
@@ -1959,15 +2018,15 @@ export function Sublistcategory() {
 
         {/* DESKTOP DETAILS */}
         <div className="hidden md:block md:col-span-2">
-          <div className="min-h-[440px] rounded-3xl border p-8 shadow-lg
+          <div className="h-full flex flex-col justify-center rounded-3xl border p-8 shadow-lg
                           bg-white border-gray-200
                           dark:bg-slate-900 dark:border-slate-700 dark:shadow-none">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-3xl font-bold text-[#0b1537] dark:text-[#fde4bc]">
-                {SUB_CATEGORY_DATA[active].title}
+                {activeCat.title}
               </h2>
               <Link 
-                href={`/shop?collection=${SUB_CATEGORY_DATA[active].collection}&brand=all&type=all`}
+                href={activeCat.link}
                 className="group flex items-center gap-1.5 text-sm font-semibold text-amber-600 hover:text-amber-700 transition-colors"
               >
                 View All
@@ -1976,39 +2035,24 @@ export function Sublistcategory() {
                 </svg>
               </Link>
             </div>
-            <p className="text-md mb-8 text-gray-500 dark:text-gray-400">
-                Explore our a wide variety of {SUB_CATEGORY_DATA[active].title.toLowerCase()}
+            <p className="text-md mb-6 text-gray-500 dark:text-gray-400">
+                Explore our a wide variety of {activeCat.title.toLowerCase()}
             </p>
 
-            {/* ITEMS */}
-            <div className="flex flex-wrap gap-3 mb-8">
-              {SUB_CATEGORY_DATA[active].items.map((item) => (
-                <span
-                  key={item}
-                  className="px-4 py-2 text-sm rounded-full
-                             border border-gray-200 bg-white text-gray-700
-                             hover:bg-gray-50 hover:border-gray-300
-                             dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-700
-                             transition-colors"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-
             {/* IMAGE STRIP */}
-            <div className="grid grid-cols-3 gap-4">
-              {SUB_CATEGORY_DATA[active].images.map((img, idx) => (
-                <div
+            <div className={`grid gap-4 ${activeCat.images.length > 3 ? 'grid-cols-5' : 'grid-cols-3'}`}>
+              {activeCat.images.map((imgObj, idx) => (
+                <Link
+                  href={imgObj.href || '#'}
                   key={idx}
-                  className="h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800"
+                  className="block h-28 rounded-xl overflow-hidden bg-gray-100 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   <img
-                    src={img}
+                    src={imgObj.src}
                     alt=""
-                    className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                    className="h-full w-full object-contain bg-white p-2 hover:scale-105 transition-transform duration-300"
                   />
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -2028,7 +2072,7 @@ function SubCategoryMobileDetails({ cat }) {
           {cat.title}
         </h4>
         <Link 
-          href={`/shop?collection=${cat.collection}&brand=all&type=all`}
+          href={cat.link}
           className="text-xs font-bold text-amber-600 uppercase tracking-wider"
         >
           View All
@@ -2038,31 +2082,19 @@ function SubCategoryMobileDetails({ cat }) {
         Explore our a wide variety of {cat.title.toLowerCase()}
       </p>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {cat.items.map((item) => (
-          <span
-            key={item}
-            className="px-3 py-1.5 text-xs rounded-full
-                       border border-gray-200 bg-white text-gray-700
-                       dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        {cat.images.map((img, i) => (
-          <div
+      <div className={`grid gap-3 ${cat.images.length > 3 ? 'grid-cols-5' : 'grid-cols-3'}`}>
+        {cat.images.map((imgObj, i) => (
+          <Link
             key={i}
-            className="h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800"
+            href={imgObj.href || '#'}
+            className="block h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
             <img
-              src={img}
-              className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+              src={imgObj.src}
+              className="h-full w-full object-contain bg-white p-2 hover:scale-105 transition-transform duration-300"
               alt=""
             />
-          </div>
+          </Link>
         ))}
       </div>
     </div>

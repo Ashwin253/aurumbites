@@ -1,19 +1,24 @@
 # Aurum Bites
 
-> Aurum Bites sources and distributes high-quality dairy products for businesses and consumers.
+> Aurum Bites sources and distributes high-quality dairy products to businesses and consumers.
 
-The site includes an e-commerce shop with filtered product browsing and direct contact information.
+The shop offers filtered browsing of dairy items including cheese, butter, cream, and fries from multiple brands.
 
 ## Main
 
-- [Shop](https://www.aurumbites.co.in/shop): Product catalog with filtering by category and brand, cart, and checkout.
-- [Pasta Zara](https://www.aurumbites.co.in/shop?brand=pasta-zara): Pasta Zara branded products filtered within the main shop catalog.
-- [President](https://www.aurumbites.co.in/shop?brand=president): President branded products filtered within the main shop catalog.
-- [Cremeitalia](https://www.aurumbites.co.in/shop?brand=crme-italia): Crème Italia branded products filtered within the main shop catalog.
-- [View All](https://www.aurumbites.co.in/shop?collection=cream,butter&brand=all&type=all): Cream and butter product collection filtered within the main shop.
-- [View All](https://www.aurumbites.co.in/shop?collection=cheese--slice&brand=all&type=all): Cheese and slice product collection filtered within the main shop.
-- [View All](https://www.aurumbites.co.in/shop?collection=dry&brand=all&type=all): Dry goods product collection filtered within the main shop.
+- [Home](https://www.aurumbites.co.in/): The main landing page.
+- [Shop](https://www.aurumbites.co.in/shop): Browse and purchase dairy products with filtering by category and brand.
+- [About Us](https://www.aurumbites.co.in/about): Learn more about Aurum Bites.
+
+## Collections
+
+- **Categories**: [Butter](https://www.aurumbites.co.in/category/butter), [Cheese Slice](https://www.aurumbites.co.in/category/cheese--slice), [Cream](https://www.aurumbites.co.in/category/cream), [Fresh Cheese](https://www.aurumbites.co.in/category/fresh-cheese), [Fries](https://www.aurumbites.co.in/category/fries), [Oil](https://www.aurumbites.co.in/category/oil), [Imported Cheese](https://www.aurumbites.co.in/category/imported-cheese).
+- **Brands**: Amul, Crème Italia, Dairy Craft, Modern Dairy, Pasta Zara, McCain, Prestige, Jacks Cheese, Gran Mantovano, Vega Gourmet, Fortune, Chevre, Fiorella, Arla, Hungritos, Kanaki, Rich's, Ybarra. (Accessible via `https://www.aurumbites.co.in/brand/{slug}`)
+- **Cities**: Delhi, Delhi NCR, West Delhi, North Delhi. (Accessible via `https://www.aurumbites.co.in/city/{slug}`)
 
 ## Optional
 
-- [Enquire](https://www.aurumbites.co.in/contact): Contact information, phone numbers, email, and physical address.
+- [Contact / Enquire](https://www.aurumbites.co.in/contact): Contact information and business hours for customer inquiries.
+- [Login](https://www.aurumbites.co.in/login): Access your user account.
+- [Register](https://www.aurumbites.co.in/register): Create a new user account.
+- [Quick Shipping](https://www.aurumbites.co.in/quick-shipping): Details on fast delivery options.

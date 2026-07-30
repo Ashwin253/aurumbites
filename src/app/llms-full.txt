@@ -1,0 +1,272 @@
+# Aurum Bites Full Context
+
+> Reliable sourcing and distribution of high-quality dairy products for businesses and consumers.
+
+## Site Structure & Pages
+
+- [Home](https://www.aurumbites.co.in/): The main landing page.
+- [About Us](https://www.aurumbites.co.in/about): Learn more about Aurum Bites.
+- [Contact / Enquire](https://www.aurumbites.co.in/contact): Contact information and business hours for customer inquiries.
+- [Login](https://www.aurumbites.co.in/login): Access your user account.
+- [Register](https://www.aurumbites.co.in/register): Create a new user account.
+- [Quick Shipping](https://www.aurumbites.co.in/quick-shipping): Details on fast delivery options.
+
+## Collections & Filters
+
+- **Categories**: [Butter](https://www.aurumbites.co.in/category/butter), [Cheese Slice](https://www.aurumbites.co.in/category/cheese--slice), [Cream](https://www.aurumbites.co.in/category/cream), [Fresh Cheese](https://www.aurumbites.co.in/category/fresh-cheese), [Fries](https://www.aurumbites.co.in/category/fries), [Oil](https://www.aurumbites.co.in/category/oil), [Imported Cheese](https://www.aurumbites.co.in/category/imported-cheese).
+- **Brands**: Amul, Crème Italia, Dairy Craft, Modern Dairy, Pasta Zara, McCain, Prestige, Jacks Cheese, Gran Mantovano, Vega Gourmet, Fortune, Chevre, Fiorella, Arla, Hungritos, Kanaki, Rich's, Ybarra. (Accessible via `https://www.aurumbites.co.in/brand/{slug}`)
+- **Cities**: Delhi, Delhi NCR, West Delhi, North Delhi. (Accessible via `https://www.aurumbites.co.in/city/{slug}`)
+
+---
+
+## Shop | Aurum Bites
+
+Source: https://www.aurumbites.co.in/shop
+
+Filter selection
+
+Share
+
+Category:All
+
+AllButterCheese & SliceCreamFresh CheeseFriesOilotherImported Cheese
+
+Brand:All
+
+\*AllAmulCrème ItaliaPresidentPrabhatDairy CraftModern DairyYbarraPasta ZaraDlectaRich'sKanakiHungritosMcCainPrestige ArlaJacks CheeseGGran MantovanoFFiorellaCChevreVVega gourmetFFortune
+
+Layout
+
+1234
+
+Crème Italia
+
+[Ricotta](/product/ricotta-25)
+
+500 Grm • ₹600/kg
+
+₹400₹300
+
+25% OFF (Save ₹100)
+
+[Details](/product/ricotta-25 "Details")
+
+Enquire
+
+[Ricotta](/product/ricotta-25)
+
+₹300₹400
+
+[View Details](/product/ricotta-25)
+
+Crème Italia
+
+[Sour Cream](/product/sour-cream-26)
+
+500 Grm • ₹600/kg
+
+₹400₹300
+
+25% OFF (Save ₹100)
+
+[Details](/product/sour-cream-26 "Details")
+
+Enquire
+
+[Sour Cream](/product/sour-cream-26)
+
+₹300₹400
+
+[View Details](/product/sour-cream-26)
+
+Crème Italia
+
+[Cheese Sauce](/product/cheese-sauce-22)
+
+1 K.G. • ₹620/kg
+
+₹620
+
+[Details](/product/cheese-sauce-22 "Details")
+
+Enquire
+
+[Cheese Sauce](/product/cheese-sauce-22)
+
+₹620
+
+[View Details](/product/cheese-sauce-22)
+
+Amul
+
+[Fresh Cream](/product/fresh-cream-18)
+
+1LT • ₹228/kg
+
+₹230₹228
+
+1% OFF (Save ₹2)
+
+[Details](/product/fresh-cream-18 "Details")
+
+Enquire
+
+[Fresh Cream](/product/fresh-cream-18)
+
+₹228₹230
+
+[View Details](/product/fresh-cream-18)
+
+Crème Italia
+
+[Mascarpone](/product/mascarpone-27)
+
+500 Grm • ₹740/kg
+
+₹410₹370
+
+10% OFF (Save ₹40)
+
+[Details](/product/mascarpone-27 "Details")
+
+Enquire
+
+[Mascarpone](/product/mascarpone-27)
+
+₹370₹410
+
+[View Details](/product/mascarpone-27)
+
+Amul
+
+[Cheese Slice](/product/cheese-slice-11)
+
+750 Grm • ₹567/kg
+
+₹425
+
+[Details](/product/cheese-slice-11 "Details")
+
+Enquire
+
+[Cheese Slice](/product/cheese-slice-11)
+
+₹425
+
+[View Details](/product/cheese-slice-11)
+
+Amul
+
+[Processed Cheese](/product/processed-cheese-14)
+
+400 • ₹635/kg
+
+₹254
+
+[Details](/product/processed-cheese-14 "Details")
+
+Enquire
+
+[Processed Cheese](/product/processed-cheese-14)
+
+₹254
+
+[View Details](/product/processed-cheese-14)
+
+Crème Italia
+
+[Buratta](/product/buratta-28)
+
+250 Grm • ₹1200/kg
+
+₹375₹300
+
+20% OFF (Save ₹75)
+
+[Details](/product/buratta-28 "Details")
+
+Enquire
+
+[Buratta](/product/buratta-28)
+
+₹300₹375
+
+[View Details](/product/buratta-28)
+
+Crème Italia
+
+[Fiordilate](/product/fiordilate-30)
+
+1 K.G. • ₹750/kg
+
+₹750
+
+[Details](/product/fiordilate-30 "Details")
+
+Enquire
+
+[Fiordilate](/product/fiordilate-30)
+
+₹750
+
+[View Details](/product/fiordilate-30)
+
+Crème Italia
+
+[Smoke Scarmoza](/product/smoke-scarmoza-31)
+
+150 Grm • ₹932/kg
+
+₹150₹140
+
+7% OFF (Save ₹10)
+
+[Details](/product/smoke-scarmoza-31 "Details")
+
+Enquire
+
+[Smoke Scarmoza](/product/smoke-scarmoza-31)
+
+₹140₹150
+
+[View Details](/product/smoke-scarmoza-31)
+
+Amul
+
+[BUTTER SALTED](/product/butter-salted-3)
+
+500 Grm • ₹570/kg
+
+₹280₹258
+
+8% OFF (Save ₹22)
+
+[Details](/product/butter-salted-3 "Details")
+
+Enquire
+
+[BUTTER SALTED](/product/butter-salted-3)
+
+₹258₹280
+
+[View Details](/product/butter-salted-3)
+
+Prabhat
+
+[BUTTER UNSALTED](/product/butter-unsalted)
+
+500gm • ₹570/kg
+
+₹250₹235
+
+6% OFF (Save ₹15)
+
+[Details](/product/butter-unsalted "Details")
+
+Enquire
+
+[BUTTER UNSALTED](/product/butter-unsalted)
+
+₹235₹250
+
+[View Details](/product/butter-unsalted)

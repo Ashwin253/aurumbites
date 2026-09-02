@@ -18,15 +18,15 @@ function buildShopHref({
 }) {
   const query = new URLSearchParams();
 
-  if (collectionHandle) {
+  if (collectionHandle && collectionHandle !== "all") {
     query.set("collection", collectionHandle);
   }
 
-  if (brandHandle) {
+  if (brandHandle && brandHandle !== "all") {
     query.set("brand", brandHandle);
   }
 
-  if (productTypeHandle) {
+  if (productTypeHandle && productTypeHandle !== "all") {
     query.set("type", productTypeHandle);
   }
 

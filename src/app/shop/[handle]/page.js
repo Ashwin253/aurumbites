@@ -147,7 +147,7 @@ export default async function ProductDetailPage({ params, searchParams }) {
                     </p> */}
                     {product.vendor ? (
                       <Link
-                        href={`/shop?brand=${toBrandHandle(product.vendor)}`}
+                        href={`/brand/${toBrandHandle(product.vendor)}`}
                         className="mt-3 inline-block text-sm font-semibold uppercase tracking-[0.22em] text-neutral-500 transition hover:text-neutral-900"
                       >
                         {product.vendor}

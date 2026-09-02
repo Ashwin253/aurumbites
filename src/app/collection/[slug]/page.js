@@ -7,26 +7,26 @@ import SocialShareButtons from "../../component/SocialShareButtons";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const { brands } = await getShopPageData();
-  const brandObj = brands?.find((b) => b.handle === slug);
-  const brandName = brandObj?.title || (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
+  const { collections } = await getShopPageData();
+  const colObj = collections?.find((c) => c.handle === slug);
+  const colName = colObj?.title || (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
 
   return {
-    title: `${brandName} Products | Aurum Bites`,
-    description: `Shop the finest ${brandName} products at Aurum Bites.`,
+    title: `${colName} | Aurum Bites`,
+    description: colObj?.description || `Explore our curated selection of ${colName} at Aurum Bites.`,
     openGraph: {
-      title: `${brandName} Products | Aurum Bites`,
-      description: `Shop the finest ${brandName} products at Aurum Bites.`,
-      images: brandObj?.image ? [{ url: brandObj.image }] : [],
+      title: `${colName} | Aurum Bites`,
+      description: colObj?.description || `Explore our curated selection of ${colName} at Aurum Bites.`,
+      images: colObj?.image ? [{ url: colObj.image }] : [],
     },
   };
 }
 
-export default async function BrandPage({ params, searchParams }) {
+export default async function CollectionPage({ params, searchParams }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const slug = resolvedParams.slug;
-  const collectionHandle = resolvedSearchParams?.collection || "all";
+  const brandHandle = resolvedSearchParams?.brand || "all";
   const productTypeHandle = resolvedSearchParams?.type || "all";
 
   const storefrontMode = getStorefrontMode();
@@ -46,49 +46,47 @@ export default async function BrandPage({ params, searchParams }) {
     },
     offers,
   ] = await Promise.all([
-    getShopPageData({ first: 9, collectionHandle, brandHandle: slug, productTypeHandle }),
+    getShopPageData({ first: 9, collectionHandle: slug, brandHandle, productTypeHandle }),
     getOffers(),
   ]);
 
   const redirectParams = new URLSearchParams();
-  if (collectionHandle !== "all") {
-    redirectParams.set("collection", collectionHandle);
+  if (brandHandle !== "all") {
+    redirectParams.set("brand", brandHandle);
   }
   if (productTypeHandle !== "all") {
     redirectParams.set("type", productTypeHandle);
   }
 
   const redirectTo = redirectParams.toString()
-    ? `/brand/${slug}?${redirectParams.toString()}`
-    : `/brand/${slug}`;
+    ? `/collection/${slug}?${redirectParams.toString()}`
+    : `/collection/${slug}`;
 
-  // activeBrand is the slug
-  const brandObj = brands?.find(b => b.handle === slug);
-  const brandName = brandObj?.title || (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
+  const categoryName = activeCollection?.title || (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
 
   return (
     <>
       <Navbar />
       <main className="shop-page-bg">
-        {/* Brand Header */}
+        {/* Collection Header */}
         <div className="bg-[#fcf8f1] border-b border-[#e9dfcf] pt-8 pb-6">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 sm:gap-6">
-              {brandObj?.image && (
+              {activeCollection?.image && (
                 <img
-                  src={brandObj.image}
-                  alt={brandName}
+                  src={activeCollection.image}
+                  alt={categoryName}
                   className="h-16 w-auto object-contain rounded-lg bg-white p-2 border border-[#e9dfcf]"
                 />
               )}
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#9a7a3f] mb-1">{brandName}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#9a7a3f] mb-1">{categoryName}</h1>
                 <p className="text-neutral-600 text-sm sm:text-base max-w-2xl">
-                  Shop all premium products from {brandName}.
+                  {activeCollection?.description || `Explore our curated selection of ${categoryName}.`}
                 </p>
               </div>
             </div>
-            <SocialShareButtons title={`${brandName} on Aurum Bites`} />
+            <SocialShareButtons title={`${categoryName} Collection on Aurum Bites`} />
           </div>
         </div>
 
@@ -103,7 +101,7 @@ export default async function BrandPage({ params, searchParams }) {
               collections,
               activeCollection,
               brands,
-              activeBrand: slug,
+              activeBrand,
               productTypes,
               activeProductType,
               offers,
